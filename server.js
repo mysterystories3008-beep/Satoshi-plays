@@ -11,6 +11,16 @@ const cors = require("cors");
 const { ethers } = require("ethers");
 
 const app = express();
+
+app.use((req, res, next) => {
+    res.setHeader(
+        "Content-Security-Policy",
+        "default-src 'self' https: http: data: blob: 'unsafe-inline' 'unsafe-eval';"
+    );
+    next();
+});
+
+
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: { origin: "*" }
