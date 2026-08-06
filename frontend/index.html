@@ -1055,10 +1055,10 @@ if (window.ethereum) {
 
 async function loadLeaderboards(){
     try{
-        const dailyResponse = await fetch('http://localhost:3000/get-scores/daily');
+        const dailyResponse = await fetch('/get-scores/daily');
         const dailyData = await dailyResponse.json();
 
-        const weeklyResponse = await fetch('http://localhost:3000/get-scores/weekly');
+        const weeklyResponse = await fetch('/get-scores/weekly');
         const weeklyData = await weeklyResponse.json();
 
         const weeklyTable = document.getElementById('weeklyTable');
