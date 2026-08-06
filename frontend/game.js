@@ -338,7 +338,7 @@ class GameScene extends Phaser.Scene {
         };
 
         if (!socket) {
-            socket = io("http://localhost:3000");
+           socket = io();
 
             socket.on("game-started", (data) => {
                 currentGameId = data.gameId;
