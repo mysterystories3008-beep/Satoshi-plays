@@ -1,5 +1,5 @@
 /* ==========================================================
-   GAME.JS - SUNCE KOJE IDE IZA OBLAKA
+   GAME.JS - SUNCE KOJE IDE IZA OBLAKA (Optimizovano za trenutni skok)
 ========================================================== */
 
 let highScore = localStorage.getItem("highScore") || 0;
@@ -27,31 +27,28 @@ class BackgroundManager {
         this.cloudsGraphics = scene.add.graphics().setDepth(-23);
         this.cloudX = -150; // Početna pozicija oblaka
 
-
         // ===============================
-// PTICE I AVION U DALJINI
-// ===============================
+        // PTICE I AVION U DALJINI
+        // ===============================
 
-this.birdsGraphics = scene.add.graphics();
-this.birdsGraphics.setDepth(-22);
+        this.birdsGraphics = scene.add.graphics();
+        this.birdsGraphics.setDepth(-22);
 
-this.birds = [
-    {x:120, y:120, size:1},
-    {x:280, y:90, size:0.7},
-    {x:520, y:135, size:0.9},
-    {x:720, y:105, size:0.6}
-];
+        this.birds = [
+            {x:120, y:120, size:1},
+            {x:280, y:90, size:0.7},
+            {x:520, y:135, size:0.9},
+            {x:720, y:105, size:0.6}
+        ];
 
+        // avion
+        this.planeGraphics = scene.add.graphics();
+        this.planeGraphics.setDepth(-22);
 
-// avion
-this.planeGraphics = scene.add.graphics();
-this.planeGraphics.setDepth(-22);
-
-this.plane = {
-    x:900,
-    y:75
-};
-
+        this.plane = {
+            x:900,
+            y:75
+        };
 
         // Slojevi smešteni duboko u pozadini (iza sunca i oblaka)
         this.layer1 = scene.add.graphics().setDepth(-20);
@@ -72,7 +69,7 @@ this.plane = {
 
         this.totalWidth = 2200;
 
-        // SMANJENE I NIŽE ZGRADE: Prilagođene dimenzije (manja širina i manja visina)
+        // SMANJENE I NIŽE ZGRADE: Prilagođene dimenzije
         this.buildingsL1 = this.generateBuildings(10, 18, 10, 25);
         this.buildingsL2 = this.generateBuildings(12, 20, 14, 32);
         this.buildingsL3 = this.generateBuildings(14, 22, 18, 40);
@@ -110,7 +107,7 @@ this.plane = {
             // Crtamo nižu zgradu
             graphics.fillRect(x, groundY - b.height, b.width, b.height);
 
-            // Belo svetlo prozora prilagođeno manjim dimenzijama
+            // Belo svetlo prozora
             if (b.height > 35 && b.width > 15) {
                 graphics.fillStyle(0xffffff, 0.7);
                 let windowSize = 1.5;
@@ -135,12 +132,12 @@ this.plane = {
         // Pomeranje oblaka preko ekrana
         this.cloudX += speed * 0.015;
         if (this.cloudX > 950) {
-            this.cloudX = -200; // Vraća se na početak kad prođe ekran
+            this.cloudX = -200;
         }
 
-        // Crtanje potpuno neprozirnog belog oblaka koji prelazi preko Sunca
+        // Crtanje oblaka
         this.cloudsGraphics.clear();
-        this.cloudsGraphics.fillStyle(0xffffff, 1.0); // Alfa je 1.0 (neprozirno) da sakrije sunce
+        this.cloudsGraphics.fillStyle(0xffffff, 1.0);
         
         let cx = this.cloudX;
         let cy = 95;
@@ -149,88 +146,57 @@ this.plane = {
         this.cloudsGraphics.fillCircle(cx + 52, cy, 25);
         this.cloudsGraphics.fillRect(cx - 10, cy, 80, 25);
 
+        // ===============================
+        // CRTANJE PTICA
+        // ===============================
+        this.birdsGraphics.clear();
+        this.birdsGraphics.lineStyle(2, 0x111111, 1);
 
-// ===============================
-// CRTANJE PTICA
-// ===============================
+        for(let bird of this.birds){
+            bird.x += speed * 0.025;
+            if(bird.x > 850){
+                bird.x = -50;
+            }
 
-this.birdsGraphics.clear();
+            let x = bird.x;
+            let y = bird.y;
+            let s = bird.size;
 
-this.birdsGraphics.lineStyle(2, 0x111111, 1);
+            // levo krilo
+            this.birdsGraphics.beginPath();
+            this.birdsGraphics.moveTo(x - 12*s, y);
+            this.birdsGraphics.lineTo(x - 5*s, y - 7*s);
+            this.birdsGraphics.lineTo(x, y);
+            this.birdsGraphics.strokePath();
 
-for(let bird of this.birds){
+            // desno krilo
+            this.birdsGraphics.beginPath();
+            this.birdsGraphics.moveTo(x, y);
+            this.birdsGraphics.lineTo(x + 5*s, y - 7*s);
+            this.birdsGraphics.lineTo(x + 12*s, y);
+            this.birdsGraphics.strokePath();
+        }
 
-    bird.x += speed * 0.025;
+        // ===============================
+        // AVION U DALJINI
+        // ===============================
+        this.planeGraphics.clear();
+        this.plane.x -= speed * 0.015;
 
-    if(bird.x > 850){
-        bird.x = -50;
-    }
+        if(this.plane.x < -100){
+            this.plane.x = 950;
+            this.plane.y = Phaser.Math.Between(60,120);
+        }
 
-    let x = bird.x;
-    let y = bird.y;
-    let s = bird.size;
+        let px = this.plane.x;
+        let py = this.plane.y;
 
+        this.planeGraphics.fillStyle(0x222222,0.8);
+        this.planeGraphics.fillRect(px,py,35,3);
 
-    // levo krilo
-    this.birdsGraphics.beginPath();
-    this.birdsGraphics.moveTo(x - 12*s, y);
-    this.birdsGraphics.lineTo(x - 5*s, y - 7*s);
-    this.birdsGraphics.lineTo(x, y);
-    this.birdsGraphics.strokePath();
-
-
-    // desno krilo
-    this.birdsGraphics.beginPath();
-    this.birdsGraphics.moveTo(x, y);
-    this.birdsGraphics.lineTo(x + 5*s, y - 7*s);
-    this.birdsGraphics.lineTo(x + 12*s, y);
-    this.birdsGraphics.strokePath();
-
-}
-
-
-
-// ===============================
-// AVION U DALJINI
-// ===============================
-
-this.planeGraphics.clear();
-
-this.plane.x -= speed * 0.015;
-
-if(this.plane.x < -100){
-    this.plane.x = 950;
-    this.plane.y = Phaser.Math.Between(60,120);
-}
-
-
-let px = this.plane.x;
-let py = this.plane.y;
-
-
-// telo aviona
-this.planeGraphics.fillStyle(0x222222,0.8);
-this.planeGraphics.fillRect(px,py,35,3);
-
-
-// krila
-this.planeGraphics.fillTriangle(
-    px+10, py,
-    px+25, py-8,
-    px+28, py
-);
-
-this.planeGraphics.fillTriangle(
-    px+10, py+3,
-    px+25, py+10,
-    px+28, py+3
-);
-
-
-// rep
-this.planeGraphics.fillRect(px,py-4,8,8);
-
-
+        this.planeGraphics.fillTriangle(px+10, py, px+25, py-8, px+28, py);
+        this.planeGraphics.fillTriangle(px+10, py+3, px+25, py+10, px+28, py+3);
+        this.planeGraphics.fillRect(px,py-4,8,8);
 
         let speeds = [0.0025, 0.005, 0.01, 0.0175, 0.025, 0.035, 0.0475, 0.065, 0.085, 0.11];
         let colors = [
@@ -270,6 +236,7 @@ class GameScene extends Phaser.Scene {
     restartGame() {
         this.gameOver = false;
         this.gameStarted = false;
+        this.isJumping = false;
         this.playerSprite.clearTint();
         this.playerSprite.rotation = 0;
         this.playerSprite.setScale(0.8);
@@ -302,6 +269,7 @@ class GameScene extends Phaser.Scene {
     create() {
         this.gameStarted = false;
         this.gameOver = false;
+        this.isJumping = false;
         this.score = 0;
         this.speed = 5;
         this.gameOverText = null;
@@ -369,7 +337,7 @@ class GameScene extends Phaser.Scene {
             });
         }
 
-        // UNIFIKOVANA FUNKCIJA ZA SKOK (koriste je i Space i Touch/Click)
+        // TRENUTNI LOKALNI SKOK (Bez čekanja servera)
         const handleJump = () => {
             if (this.gameOver) {
                 this.scene.restart();
@@ -380,11 +348,25 @@ class GameScene extends Phaser.Scene {
                 return;
             }
 
-            if (this.playerSprite.y >= 310) {
-                this.playerSprite.y -= 15; 
-            }
+            if (!this.isJumping && this.playerSprite.y >= 315) {
+                this.isJumping = true;
+                
+                // Brza lokalna animacija skoka
+                this.tweens.add({
+                    targets: this.playerSprite,
+                    y: 220,
+                    duration: 220,
+                    yoyo: true,
+                    ease: 'Quad.easeInOut',
+                    onComplete: () => {
+                        this.isJumping = false;
+                        this.playerSprite.y = 330;
+                    }
+                });
 
-            socket.emit("jump");
+                // Obaveštavamo server
+                socket.emit("jump");
+            }
         };
 
         // Slušanje tastature (Space)
@@ -419,6 +401,7 @@ class GameScene extends Phaser.Scene {
         if (this.gameOver) return;
         this.gameOver = true;
         this.gameStarted = false;
+        this.isJumping = false;
 
         if (this.serverObstacles && this.serverObstacles.length > 0) {
             let hitObstacle = this.serverObstacles.reduce((prev, curr) => {
@@ -472,7 +455,11 @@ class GameScene extends Phaser.Scene {
     update(time, delta) {
         if (!this.gameStarted || this.gameOver) return;
 
-        this.playerSprite.y = Phaser.Math.Linear(this.playerSprite.y, this.serverPlayerY, 0.35);
+        // Ako igrač ne skokuje lokalno, prati poziciju, a u toku skoka ignoriše server da ne bi seckalo
+        if (!this.isJumping) {
+            let targetY = (this.serverPlayerY !== undefined) ? this.serverPlayerY : 330;
+            this.playerSprite.y = Phaser.Math.Linear(this.playerSprite.y, targetY, 0.35);
+        }
 
         if (this.playerSprite.y < 330) {
             this.playerSprite.rotation += 0.12;
