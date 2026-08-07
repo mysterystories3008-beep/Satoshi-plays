@@ -167,7 +167,7 @@
 
 #game-container {
     width: 800px !important;
-    height: 370px !important;
+    height: 400px !important;
     margin: 0 auto !important;
     border: 2px solid #f3ba2f;
     border-radius: 12px;
@@ -418,31 +418,23 @@
     color: #b5b5b5;
 }
 
-.rules-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 15px;
-}
-
-.rule-box {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
+.rules-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 15px 0;
     font-size: 13px;
 }
 
-.rule-box .bullet {
+.rules-list li {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.rules-list li span.bullet {
     color: #f3ba2f;
     font-weight: bold;
-}
-
-.rule-title {
-    color: #fff;
-}
-
-.rule-text {
-    color: #aaa;
 }
 
 .appeal-box {
@@ -537,7 +529,7 @@
     background: #ffcc33;
 }
 
-/* LEADERBOARDS */
+/* LEADERBOARDS (Fixed height containers with smooth scroll for top 10) */
 #leaderboards {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -687,15 +679,30 @@
         </div>
     </div>
 
-    <!-- Mode Selection Buttons (Normal / Low game selection) -->
+    <!-- Mode Selection Buttons -->
     <div class="play-section-wrapper" id="modeSelectionWrapper">
-        <button id="btnNormalGame" class="btn-play-action">
-            🖥️ NORMAL GAME
+        <button id="btnPlayWallet" class="btn-play-action">
+            🎮 PLAY WITH WALLET (Leaderboard)
         </button>
-        <button id="btnLowGame" class="btn-guest-action">
-            📱 LOW GAME
+        <button id="btnPlayGuest" class="btn-guest-action">
+            👤 PLAY AS GUEST (No Leaderboard)
         </button>
     </div>
+
+
+
+<div class="play-section-wrapper" id="gameSizeWrapper">
+
+    <button id="btnNormalGame" class="btn-play-action">
+        🖥️ NORMAL GAME
+    </button>
+
+    <button id="btnLowGame" class="btn-guest-action">
+        📱 LOW GAME
+    </button>
+
+</div>
+
 
     <!-- GAME CONTAINER -->
     <div id="game-wrapper-box">
@@ -737,37 +744,38 @@
             <h3>📜 Competition Rules & Rewards</h3>
             <p>Welcome to the official Satoshi Plays arena! Compete, dodge obstacles, and secure your spot on the top players leaderboard.</p>
             
-            <div class="rules-container">
-                <div class="rule-box">
-                    <span class="bullet">▪️</span>
-                    <div class="rule-content">
-                        <strong class="rule-title">Reward Payouts:</strong>
-                        <span class="rule-text">The reward pool is automatically distributed every <strong>7 days</strong> to the top-performing players.</span>
-                    </div>
-                </div>
+ <div class="rules-container">
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <strong class="rule-title">Reward Payouts:</strong>
+            <span class="rule-text">The reward pool is automatically distributed every <strong>7 days</strong> to the top-performing players.</span>
+        </div>
+    </div>
 
-                <div class="rule-box">
-                    <span class="bullet">▪️</span>
-                    <div class="rule-content">
-                        <strong class="rule-title">Verification Period:</strong>
-                        <span class="rule-text">After each cycle ends, there is a <strong>3-day appeal period</strong> for result review.</span>
-                    </div>
-                </div>
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <strong class="rule-title">Verification Period:</strong>
+            <span class="rule-text">After each cycle ends, there is a <strong>3-day appeal period</strong> for result review.</span>
+        </div>
+    </div>
 
-                <div class="rule-box">
-                    <span class="bullet">▪️</span>
-                    <div class="rule-content">
-                        <strong class="rule-title">Fair Play:</strong>
-                        <span class="rule-text">The use of bots or unauthorized scripts will automatically disqualify the connected MetaMask wallet.</span>
-                    </div>
-                </div>
-            </div>
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <strong class="rule-title">Fair Play:</strong>
+            <span class="rule-text">The use of bots or unauthorized scripts will automatically disqualify the connected MetaMask wallet.</span>
+        </div>
+    </div>
+</div>
+
 
             <div class="appeal-box">
-                <strong>Have a complaint or notice irregularities?</strong><br>
-                Send evidence (screenshot/video) to our official appeals email:<br>
-                <a href="mailto:mysterystories3008@gmail.com?subject=Appeal%20/%20Inquiry%20-%20Satoshi%20Plays" class="appeal-email">support@satoshiplays.io</a>
-            </div>
+    <strong>Have a complaint or notice irregularities?</strong><br>
+    Send evidence (screenshot/video) to our official appeals email:<br>
+    <a href="mailto:mysterystories3008@gmail.com?subject=Appeal%20/%20Inquiry%20-%20Satoshi%20Plays" class="appeal-email">support@satoshiplays.io</a>
+</div>
         </div>
 
         <!-- Right Card: Community Live Chat -->
@@ -803,7 +811,7 @@
         <p id="walletStatus">Status: Playing as Guest</p>
     </div>
 
-    <!-- LEADERBOARDS -->
+    <!-- LEADERBOARDS (Top 10 limit with scrolling) -->
     <section id="leaderboards">
         <div class="table-wrap">
             <h3>Weekly Total Score</h3>
@@ -841,11 +849,11 @@
 
 <!-- Scripts -->
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script id="gameScript"></script>
 
 <script>
 function updateUI(wallet){
-    const statusEl = document.getElementById('walletStatus');
-    if(statusEl) statusEl.innerText = "Status: Player (" + wallet.slice(0,6) + "...)";
+    document.getElementById('walletStatus').innerText = "Status: Player (" + wallet.slice(0,6) + "...)";
 }
 
 function formatAddress(address) {
@@ -878,7 +886,11 @@ function launchGameContainer(isGuest) {
     document.getElementById('top-hero-showcase').style.display = 'none';
     document.getElementById('modeSelectionWrapper').style.display = 'none';
 
+
+
+
     document.getElementById('game-wrapper-box').style.display = 'block';
+
     document.getElementById('in-game-login-bar').style.display = 'flex';
     refreshAuthBarState();
 
@@ -889,11 +901,9 @@ function launchGameContainer(isGuest) {
 }
 
 function returnToMainScreen() {
-    localStorage.removeItem("gameMode");
     document.getElementById('game-wrapper-box').style.display = 'none';
     document.getElementById('top-hero-showcase').style.display = 'grid';
     document.getElementById('modeSelectionWrapper').style.display = 'flex';
-    window.location.reload();
 }
 
 document.getElementById('btnBackToMenu').addEventListener('click', returnToMainScreen);
@@ -929,42 +939,30 @@ async function connectMetaMaskAndSign() {
     }
 }
 
-let gameStarted = false;
+document.getElementById('btnPlayWallet').addEventListener('click', async () => {
+    let activeWallet = localStorage.getItem("userWallet");
+    let activeSignature = localStorage.getItem("userSignature");
 
-function loadSelectedGame(file){
-    if(gameStarted) return;
-    let script = document.createElement("script");
-    script.src = file;
-    script.onload = function(){
-        gameStarted = true;
-        if(typeof startGame === "function") {
-            startGame();
-            gameInitialized = true;
-        }
-    };
-    document.body.appendChild(script);
-}
+    if (!activeWallet || !activeSignature) {
+        const success = await connectMetaMaskAndSign();
+        if (!success) return;
+    }
 
-document.getElementById('btnNormalGame').addEventListener('click', () => {
-    localStorage.setItem("gameMode", "normal");
-    document.getElementById("top-hero-showcase").style.display = "none";
-    document.getElementById("modeSelectionWrapper").style.display = "none";
+    window.isGuestMode = false;
     launchGameContainer(false);
-    loadSelectedGame("game.js");
 });
 
-document.getElementById('btnLowGame').addEventListener('click', () => {
-    localStorage.setItem("gameMode", "low");
-    document.getElementById("top-hero-showcase").style.display = "none";
-    document.getElementById("modeSelectionWrapper").style.display = "none";
-    launchGameContainer(false);
-    loadSelectedGame("gamelow.js");
+document.getElementById('btnPlayGuest').addEventListener('click', () => {
+    window.isGuestMode = true;
+    launchGameContainer(true);
 });
 
 document.getElementById('btnInGameConnect').addEventListener('click', async () => {
     const success = await connectMetaMaskAndSign();
     if (success) {
+        window.isGuestMode = false;
         refreshAuthBarState();
+        
         if (typeof socket !== 'undefined' && socket.connected) {
             const wallet = localStorage.getItem("userWallet");
             const signature = localStorage.getItem("userSignature");
@@ -981,9 +979,9 @@ document.getElementById('btnInGameLogout').addEventListener('click', () => {
     localStorage.removeItem("userSignature");
     window.userWallet = null;
     window.userSignature = null;
+    window.isGuestMode = true;
 
-    const statusEl = document.getElementById('walletStatus');
-    if(statusEl) statusEl.innerText = "Status: Playing as Guest";
+    document.getElementById('walletStatus').innerText = "Status: Playing as Guest";
     refreshAuthBarState();
 
     if (typeof socket !== 'undefined' && socket.connected) {
@@ -1037,19 +1035,6 @@ window.addEventListener('load', () => {
     setInterval(() => {
         loadLeaderboards();
     }, 15000);
-
-    // Automatsko pokretanje igre ako je mod već sačuvan u localStorage
-    const mode = localStorage.getItem("gameMode");
-    if(mode){
-        document.getElementById("top-hero-showcase").style.display = "none";
-        document.getElementById("modeSelectionWrapper").style.display = "none";
-        launchGameContainer(false);
-        if(mode === "low"){
-            loadSelectedGame("gamelow.js");
-        } else {
-            loadSelectedGame("game.js");
-        }
-    }
 });
 
 if (window.ethereum) {
@@ -1058,8 +1043,7 @@ if (window.ethereum) {
             localStorage.removeItem("userWallet");
             localStorage.removeItem("userSignature");
             window.userWallet = null;
-            const statusEl = document.getElementById('walletStatus');
-            if(statusEl) statusEl.innerText = "Status: Playing as Guest";
+            document.getElementById('walletStatus').innerText = "Status: Playing as Guest";
             refreshAuthBarState();
         } else {
             window.userWallet = accounts[0];
@@ -1071,6 +1055,7 @@ if (window.ethereum) {
 
 async function loadLeaderboards(){
     try{
+        // Automatski bira localhost za razvoj ili prazno (relativnu putanju) za Render/produkciju
         const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
 
         const dailyResponse = await fetch(`${baseUrl}/get-scores/daily`);
@@ -1132,6 +1117,72 @@ async function loadLeaderboards(){
         console.log("Error loading leaderboards:", e);
     }
 }
+
+
+let gameStarted = false;
+
+
+window.addEventListener("load", () => {
+
+    const mode = localStorage.getItem("gameMode");
+
+    if(mode){
+
+        document.getElementById("top-hero-showcase").style.display = "none";
+        document.getElementById("modeSelectionWrapper").style.display = "none";
+
+        launchGameContainer(false);
+
+        if(mode === "low"){
+            loadSelectedGame("gamelow.js");
+        } 
+        else {
+            loadSelectedGame("game.js");
+        }
+
+    }
+
+});
+
+
+function loadSelectedGame(file){
+
+    if(gameStarted) return;
+
+    let script = document.createElement("script");
+
+    script.src = file;
+
+    script.onload = function(){
+
+        gameStarted = true;
+
+        startGame();
+
+    };
+
+    document.body.appendChild(script);
+
+}
+
+
+document.getElementById("btnNormalGame").onclick = function(){
+
+    localStorage.setItem("gameMode", "normal");
+    location.reload();
+
+};
+
+
+document.getElementById("btnLowGame").onclick = function(){
+
+    localStorage.setItem("gameMode", "low");
+    location.reload();
+
+};
+
+
+
 </script>
 
 </body>
