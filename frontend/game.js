@@ -1,5 +1,5 @@
 /* ==========================================================
-   GAME.JS - OPTIMIZOVANO ZA GLATKO KRETANJE I TRENUTAN SKOK
+   GAME.JS - LOKALNA FIZIKA, PREPREKE I SKOK (BEZ LAGA)
 ========================================================== */
 
 let highScore = localStorage.getItem("highScore") || 0;
@@ -30,11 +30,6 @@ class BackgroundManager {
 
         this.layers = [];
         this.buildingsLayers = [];
-        let speeds = [0.0025, 0.005, 0.01, 0.0175, 0.025, 0.035, 0.0475, 0.065, 0.085, 0.11];
-        let colors = [
-            0x0b0b14, 0x0f0f1c, 0x131324, 0x17172c, 0x1b1b36,
-            0x1f1f40, 0x24244a, 0x292955, 0x2e2e60, 0x34346b
-        ];
         this.totalWidth = 2200;
         this.offsets = new Array(10).fill(0);
 
@@ -69,7 +64,6 @@ class BackgroundManager {
         this.cloudsGraphics.fillCircle(this.cloudX + 52, 95, 25);
         this.cloudsGraphics.fillRect(this.cloudX - 10, 95, 80, 25);
 
-        // Ptice i avion
         this.birdsGraphics.clear();
         this.birdsGraphics.lineStyle(2, 0x111111, 1);
         for(let bird of this.birds){
@@ -141,7 +135,7 @@ class GameScene extends Phaser.Scene {
         this.gameOver = false;
         this.isJumping = false;
         this.score = 0;
-        this.speed = 5;
+        this.speed = 6;
         this.gameOverText = null;
 
         this.ground = this.add.rectangle(400, 360, 800, 40, 0x34a853).setDepth(5);
@@ -150,6 +144,7 @@ class GameScene extends Phaser.Scene {
         this.localObstacles = [];
         this.obstacleSpritesMap = new Map();
         this.obstacleCounter = 0;
+        this.spawnTimer = 0;
 
         this.scoreText = this.add.text(20, 20, "Score: 0", {
             fontSize: "24px", fill: "#f3ba2f", fontStyle: "bold", stroke: "#000", strokeThickness: 3
@@ -171,16 +166,9 @@ class GameScene extends Phaser.Scene {
 
             socket.on("game-started", (data) => {
                 currentGameId = data.gameId;
-                this.speed = data.speed || 5;
                 this.gameStarted = true;
                 this.gameOver = false;
                 if (this.startText) this.startText.destroy();
-            });
-
-            socket.on("state", (state) => {
-                if (!this.gameStarted || this.gameOver) return;
-                // Sinhronizujemo samo osnovni tempo i skor sa serverom, prepreke se kreću lokalno tečno
-                this.speed = state.speed;
             });
 
             socket.on("game-over", (result) => {
@@ -202,7 +190,7 @@ class GameScene extends Phaser.Scene {
                 this.isJumping = true;
                 this.tweens.add({
                     targets: this.playerSprite,
-                    y: 215,
+                    y: 210,
                     duration: 210,
                     yoyo: true,
                     ease: 'Quad.easeInOut',
@@ -247,7 +235,7 @@ class GameScene extends Phaser.Scene {
         this.cameras.main.shake(400, 0.025);
         this.playerSprite.setTint(0xff0000);
 
-        const finalScore = result.score || this.score;
+        const finalScore = result.score || Math.floor(this.score);
         if (finalScore > highScore) {
             highScore = finalScore;
             localStorage.setItem("highScore", highScore);
@@ -255,6 +243,7 @@ class GameScene extends Phaser.Scene {
         }
 
         this.time.delayedCall(300, () => {
+            if (!this.gameOver) return;
             this.gameOverText = this.add.text(400, 110, "GAME OVER\n\nTAP OR SPACE", {
                 fontSize: "34px", fill: "#ff3333", align: "center", fontStyle: "bold", stroke: "#000", strokeThickness: 5
             }).setOrigin(0.5).setDepth(30);
@@ -264,48 +253,46 @@ class GameScene extends Phaser.Scene {
     update(time, delta) {
         if (!this.gameStarted || this.gameOver) return;
 
-        // Povećavamo skor glatko lokalno
         this.score += 0.05;
+        this.speed = Math.min(6 + (this.score * 0.005), 12);
         this.scoreText.setText("Score: " + Math.floor(this.score));
 
-        // Generisanje prepreka lokalno da nema laga
-        if (Phaser.Math.Between(1, 100) === 1 && (this.localObstacles.length === 0 || this.localObstacles[this.localObstacles.length - 1].x < 500)) {
-            let types = ["fud", "rug", "meteor", "liquidation"];
+        this.spawnTimer++;
+        if (this.spawnTimer > 90 && (this.localObstacles.length === 0 || this.localObstacles[this.localObstacles.length - 1].x < 500)) {
+            this.spawnTimer = 0;
+            let types = ["rug", "fud", "liquidation"];
             let chosenType = types[Phaser.Math.Between(0, types.length - 1)];
+            let obsY = (chosenType === "fud") ? 240 : 335;
+
             this.localObstacles.push({
                 id: this.obstacleCounter++,
                 x: 850,
-                y: 335,
+                y: obsY,
+                w: 40,
+                h: 40,
                 type: chosenType
             });
         }
 
-        // Pomeranje prepreka
         for (let i = this.localObstacles.length - 1; i >= 0; i--) {
             let obs = this.localObstacles[i];
             obs.x -= this.speed;
 
-            // Detekcija sudara lokalno (trenutna reakcija)
-            let distX = Math.abs(obs.x - this.playerSprite.x);
-            let distY = Math.abs(obs.y - this.playerSprite.y);
-            if (distX < 30 && distY < 30) {
-                // Udari u prepreku -> šaljemo kraj igre serveru
-                socket.emit("game-over-local", { score: Math.floor(this.score) });
+            let playerBox = { x: this.playerSprite.x - 15, y: this.playerSprite.y - 15, w: 30, h: 30 };
+            let obsBox = { x: obs.x - 20, y: obs.y - 20, w: obs.w, h: obs.h };
+
+            if (playerBox.x < obsBox.x + obsBox.w && playerBox.x + playerBox.w > obsBox.x &&
+                playerBox.y < obsBox.y + obsBox.h && playerBox.y + playerBox.h > obsBox.y) {
+                
+                socket.emit("player-died", { score: Math.floor(this.score) });
                 this.onGameOver({ score: Math.floor(this.score) });
             }
 
-            if (obs.x < -50) {
-                let sprObj = this.obstacleSpritesMap.get(obs.id);
-                if (sprObj) {
-                    if (sprObj.sprite) sprObj.sprite.destroy();
-                    if (sprObj.text) sprObj.text.destroy();
-                    this.obstacleSpritesMap.delete(obs.id);
-                }
+            if (obs.x < -60) {
                 this.localObstacles.splice(i, 1);
             }
         }
 
-        // Renderovanje prepreka na ekranu bez čekanja servera
         let activeIds = new Set(this.localObstacles.map(obs => obs.id));
         this.obstacleSpritesMap.forEach((obj, id) => {
             if (!activeIds.has(id)) {
@@ -319,9 +306,8 @@ class GameScene extends Phaser.Scene {
             let key = "rugpull";
             let label = "";
             if (obs.type === "fud") key = "fud";
-            if (obs.type === "meteor") { key = "rekt"; label = "REKT"; }
-            if (obs.type === "liquidation") { key = "liquidation"; label = "LIQUIDATED"; }
-            if (obs.type === "rug") label = "rugpull";
+            if (obs.type === "liquidation") { key = "liquidation"; label = "LIQ"; }
+            if (obs.type === "rug") label = "rug";
 
             let obj = this.obstacleSpritesMap.get(obs.id);
             if (!obj) {
