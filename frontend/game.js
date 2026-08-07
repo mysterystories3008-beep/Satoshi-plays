@@ -338,7 +338,7 @@ class GameScene extends Phaser.Scene {
         };
 
         if (!socket) {
-           const backendUrl = window.location.hostname === "localhost" ? "http://localhost:3000" : undefined;
+           const backendUrl = window.location.hostname === "localhost" ? "http://localhost:3000" : "https://satoshi-plays.onrender.com";
            socket = io(backendUrl);
 
             socket.on("game-started", (data) => {
