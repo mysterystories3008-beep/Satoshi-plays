@@ -1,6 +1,6 @@
 
 /* ==========================================================
-   GAME.JS - OPTIMIZOVANO SA CLIENT-SIDE PREDICTION, LERP & SCREEN SHAKE
+   GAMELOW.JS - OPTIMIZOVANO SA CLIENT-SIDE PREDICTION & MOBILE TOUCH
 ========================================================== */
 
 let highScore = localStorage.getItem("highScore") || 0;
@@ -10,9 +10,9 @@ let currentGameId = null;
 class GameScene extends Phaser.Scene {
     constructor() {
         super("GameScene");
+        this.globalKeyHandler = null;
     }
 
-    // Globalno dostupna funkcija unutar scene za resetovanje stanja nakon naknadnog logovanja
     restartGame() {
         this.gameOver = false;
         this.gameStarted = false;
@@ -21,20 +21,18 @@ class GameScene extends Phaser.Scene {
         this.playerSprite.setScale(0.8);
         this.playerSprite.y = 330;
 
-        // Ukloni tekst poruke "GAME OVER" ako postoji
         if (this.gameOverText) {
             this.gameOverText.destroy();
             this.gameOverText = null;
         }
 
-        // Postavi početni tekst da igrač može ponovo da startuje ili odmah pokreni
         if (!this.startText) {
-            this.startText = this.add.text(400, 130, "PRESS SPACE TO START", {
+            this.startText = this.add.text(400, 130, "TAP OR SPACE TO START", {
                 fontSize: "32px", fill: "#f3ba2f", fontStyle: "bold",
                 stroke: "#000", strokeThickness: 4
             }).setOrigin(0.5);
         } else {
-            this.startText.setText("PRESS SPACE TO START");
+            this.startText.setText("TAP OR SPACE TO START");
         }
     }
 
@@ -54,7 +52,6 @@ class GameScene extends Phaser.Scene {
         this.speed = 5;
         this.gameOverText = null;
 
-        // Ciljne pozicije sa servera prema kojima radimo Lerp
         this.serverPlayerY = 330;
         this.serverObstacles = [];
 
@@ -63,35 +60,33 @@ class GameScene extends Phaser.Scene {
         this.playerSprite = this.add.sprite(120, 330, "bitcoin").setScale(0.8);
         this.obstacleSprites = [];
 
-        // Stilizovan Score tekst (zlatna boja, bold, crni obrub)
         this.scoreText = this.add.text(20, 20, "Score: 0", {
             fontSize: "24px", fill: "#f3ba2f", fontStyle: "bold",
             stroke: "#000", strokeThickness: 3
         });
         
-        // Stilizovan Best tekst (svetla/bela boja da se lepo vidi, bold, obrub)
         this.bestText = this.add.text(20, 50, "Best: " + highScore, {
             fontSize: "20px", fill: "#ffffff", fontStyle: "bold",
             stroke: "#000", strokeThickness: 3
         });
 
-        // Početni tekst za start
-        this.startText = this.add.text(400, 130, "PRESS SPACE TO START", {
+        this.startText = this.add.text(400, 130, "TAP OR SPACE TO START", {
             fontSize: "32px", fill: "#f3ba2f", fontStyle: "bold",
             stroke: "#000", strokeThickness: 4
         }).setOrigin(0.5);
 
         this.background = new BackgroundManager(this);
 
-        // Poveži globalnu funkciju za resetovanje Game Over ekrana
         window.resetGameOverScreen = () => {
             if (this && typeof this.restartGame === "function") {
                 this.restartGame();
             }
         };
 
+        // KONEKCIJA SA SERVEROM - PRILAGOĐENA ZA CLOUDFLARE TUNEL
         if (!socket) {
-            socket = io("http://localhost:3000");
+            const backendUrl = window.location.hostname === "localhost" ? "http://localhost:3000" : undefined;
+            socket = io(backendUrl);
 
             socket.on("game-started", (data) => {
                 currentGameId = data.gameId;
@@ -107,7 +102,6 @@ class GameScene extends Phaser.Scene {
                 this.speed = state.speed;
                 this.scoreText.setText("Score: " + state.score);
 
-                // Prihvatamo server podatke za sinhronizaciju
                 this.serverPlayerY = state.player.y;
                 this.serverObstacles = state.obstacles;
             });
@@ -121,10 +115,8 @@ class GameScene extends Phaser.Scene {
             });
         }
 
-        this.input.keyboard.off("keydown-SPACE");
-        this.input.keyboard.on("keydown-SPACE", (event) => {
-            if (event) event.preventDefault();
-
+        // UNIFIKOVANA LOGIKA ZA START I SKOK (RADI I NA SPACE I NA DODIR EKRANA)
+        const handleJump = () => {
             if (this.gameOver) {
                 this.scene.restart();
                 return;
@@ -134,12 +126,32 @@ class GameScene extends Phaser.Scene {
                 return;
             }
 
-            // CLIENT-SIDE PREDICTION ZA SKOK:
-            if (this.playerSprite.y >= 320) {
+            if (this.playerSprite && this.playerSprite.y >= 320) {
                 this.playerSprite.y -= 15; 
             }
 
-            socket.emit("jump");
+            if (socket) {
+                socket.emit("jump");
+            }
+        };
+
+        // Slušanje Space tastera
+        if (this.globalKeyHandler) {
+            window.removeEventListener("keydown", this.globalKeyHandler);
+        }
+
+        this.globalKeyHandler = (event) => {
+            if (event.code === "Space") {
+                event.preventDefault();
+                handleJump();
+            }
+        };
+
+        window.addEventListener("keydown", this.globalKeyHandler);
+
+        // Slušanje dodira na ekranu mobilnog / klik mišem
+        this.input.on('pointerdown', () => {
+            handleJump();
         });
     }
 
@@ -156,7 +168,6 @@ class GameScene extends Phaser.Scene {
         this.gameOver = true;
         this.gameStarted = false;
 
-        // Blago pomeranje ka najbližoj prepreci da udarac bude uočljiv
         if (this.serverObstacles && this.serverObstacles.length > 0) {
             let hitObstacle = this.serverObstacles.reduce((prev, curr) => {
                 return (Math.abs(curr.x - this.playerSprite.x) < Math.abs(prev.x - this.playerSprite.x)) ? curr : prev;
@@ -167,10 +178,8 @@ class GameScene extends Phaser.Scene {
             }
         }
 
-        // ** SNAŽAN UDARAC I EFEKAT TREŠENJA KAMERE **
         this.cameras.main.shake(400, 0.025);
 
-        // Vizuelni efekat udara na samom liku (zakucavanje i rotacija)
         this.tweens.add({
             targets: this.playerSprite,
             angle: 360,
@@ -191,10 +200,9 @@ class GameScene extends Phaser.Scene {
         }
 
         this.time.delayedCall(300, () => {
-            if (!this.gameOver) return; // Spreči ispis ako se u međuvremenu resetovalo
+            if (!this.gameOver) return;
             
-            // Stilizovan Game Over i Restart tekst (podebljano, crvena/zlatna kombinacija sa obrubom)
-            this.gameOverText = this.add.text(400, 140, "GAME OVER\n\nPRESS SPACE", {
+            this.gameOverText = this.add.text(400, 140, "GAME OVER\n\nTAP OR SPACE", {
                 fontSize: "34px", 
                 fill: "#ff3333", 
                 align: "center", 
@@ -209,12 +217,11 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    // 60 FPS RENDER PETLJA SA LERPOM (GLATKO KRETANJE BEZ SECKANJA)
     update(time, delta) {
         if (!this.gameStarted || this.gameOver) return;
 
-        // 1. Glatko pomeranje igrača (Lerp prema server poziciji)
-        this.playerSprite.y = Phaser.Math.Linear(this.playerSprite.y, this.serverPlayerY, 0.35);
+        // 1. Glatko pomeranje igrača (povećano sa 0.35 na 0.6 da brže hvata korak)
+        this.playerSprite.y = Phaser.Math.Linear(this.playerSprite.y, this.serverPlayerY, 0.6);
 
         if (this.playerSprite.y < 330) {
             this.playerSprite.rotation += 0.12;
@@ -222,13 +229,23 @@ class GameScene extends Phaser.Scene {
             this.playerSprite.rotation = Phaser.Math.Linear(this.playerSprite.rotation, 0, 0.2);
         }
 
-        // 2. Kreiranje i glatko pomeranje prepreka
-        this.obstacleSprites.forEach(s => {
-            if (s.sprite) s.sprite.destroy();
-            if (s.text) s.text.destroy();
-        });
-        this.obstacleSprites = [];
+        // Ako mapa prepreka ne postoji, napravi je
+        if (!this.obstacleSpritesMap) {
+            this.obstacleSpritesMap = new Map();
+        }
 
+        let activeIds = new Set(this.serverObstacles.map(obs => obs.id));
+
+        // 2. Ukloni sa ekrana samo onu prepreku koja je prošla (nema više brisanja svega!)
+        this.obstacleSpritesMap.forEach((obj, id) => {
+            if (!activeIds.has(id)) {
+                if (obj.sprite) obj.sprite.destroy();
+                if (obj.text) obj.text.destroy();
+                this.obstacleSpritesMap.delete(id);
+            }
+        });
+
+        // 3. Kreiraj novu prepreku samo kad se pojavi, a postojeće glatko pomeraj
         this.serverObstacles.forEach(obs => {
             let key = "rugpull";
             let label = "";
@@ -237,18 +254,34 @@ class GameScene extends Phaser.Scene {
             if (obs.type === "liquidation") { key = "liquidation"; label = "LIQUIDATED"; }
             if (obs.type === "rug") label = "rugpull";
 
-            const spr = this.add.sprite(obs.x, obs.type === "rug" ? obs.y + 10 : obs.y, key).setScale(obs.type === "fud" ? 0.7 : 0.8);
-            if (obs.type === "meteor") spr.setTint(0xff0000);
+            let obj = this.obstacleSpritesMap.get(obs.id);
 
-            let txt = null;
-            if (label) {
-                txt = this.add.text(obs.x, obs.y + 15, label, {
-                    fontSize: "12px", fill: "#fff", fontStyle: "bold",
-                    stroke: "#000", strokeThickness: 3
-                }).setOrigin(0.5);
+            // Ako prepreka već ne postoji na ekranu, napravi je jednom
+            if (!obj) {
+                const spr = this.add.sprite(obs.x, obs.type === "rug" ? obs.y + 10 : obs.y, key)
+                    .setScale(obs.type === "fud" ? 0.7 : 0.8);
+                if (obs.type === "meteor") spr.setTint(0xff0000);
+
+                let txt = null;
+                if (label) {
+                    txt = this.add.text(obs.x, obs.y + 15, label, {
+                        fontSize: "12px", fill: "#fff", fontStyle: "bold",
+                        stroke: "#000", strokeThickness: 3
+                    }).setOrigin(0.5);
+                }
+
+                obj = { sprite: spr, text: txt };
+                this.obstacleSpritesMap.set(obs.id, obj);
             }
 
-            this.obstacleSprites.push({ sprite: spr, text: txt });
+            // Glatko klizanje prepreke ka novoj poziciji sa servera
+            obj.sprite.x = Phaser.Math.Linear(obj.sprite.x, obs.x, 0.6);
+            obj.sprite.y = Phaser.Math.Linear(obj.sprite.y, (obs.type === "rug" ? obs.y + 10 : obs.y), 0.6);
+
+            if (obj.text) {
+                obj.text.x = obj.sprite.x;
+                obj.text.y = obj.sprite.y + 15;
+            }
         });
 
         this.background.update(this.speed);
@@ -269,11 +302,9 @@ class BackgroundManager {
 function startGame() {
     const config = {
         type: Phaser.AUTO,
-        parent: "game-container",
-        width: 400,
-        height: 200,
         scale: {
             mode: Phaser.Scale.FIT,
+            parent: 'game-container',
             autoCenter: Phaser.Scale.CENTER_BOTH,
             width: 800,
             height: 400
