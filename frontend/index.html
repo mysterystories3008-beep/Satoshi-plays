@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Satoshi plays | $SPLAY</title>
 
 <meta name="description" content="Book of Bitcoin - BBTC Web3 browser game.">
@@ -725,14 +725,8 @@
         </div>
         
         <div id="game-container">
-
-    <button id="fullscreenBtn" type="button">
-        ⛶ FULLSCREEN
-    </button>
-
-    <div id="phaser-game"></div>
-
-</div>
+            <div id="phaser-game"></div>
+        </div>
     </div>
 
     <!-- STYLISH STATUS BAR -->
@@ -1061,13 +1055,10 @@ if (window.ethereum) {
 
 async function loadLeaderboards(){
     try{
-        // Automatski bira localhost za razvoj ili prazno (relativnu putanju) za Render/produkciju
-        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
-
-        const dailyResponse = await fetch(`${baseUrl}/get-scores/daily`);
+        const dailyResponse = await fetch('http://localhost:3000/get-scores/daily');
         const dailyData = await dailyResponse.json();
 
-        const weeklyResponse = await fetch(`${baseUrl}/get-scores/weekly`);
+        const weeklyResponse = await fetch('http://localhost:3000/get-scores/weekly');
         const weeklyData = await weeklyResponse.json();
 
         const weeklyTable = document.getElementById('weeklyTable');
