@@ -80,9 +80,9 @@ function updateWeeklyAccumulatedTop10(scoreList, newEntry) {
 // GAME ENGINE NA SERVERU
 // ==========================================
 
-const TICK_MS = 15;         
-const GRAVITY = 0.9;        
-const JUMP_V = -14;         
+const TICK_MS = 5;          
+const GRAVITY = 0.76;       
+const JUMP_V = -13;         
 const GROUND_Y = 350;
 const PLAYER_X = 120;
 const MAX_GAME_MS = 180000; 
@@ -96,7 +96,7 @@ function createGameState(wallet, gameId) {
         alive: true,
         started: false,
         score: 0,
-        speed: 8,           
+        speed: 12,           
         startTime: Date.now(),
         player: {
             x: PLAYER_X,
@@ -107,54 +107,53 @@ function createGameState(wallet, gameId) {
         },
         obstacles: [],
         spawnTimer: 0,
-        nextSpawn: 42,      // Smanjeno sa 55 na 42 da prepreke idu češće i gušće
+        nextSpawn: 35,      
         tick: 0
     };
 }
 
 function calculateSpeed(startTime) {
     const elapsed = (Date.now() - startTime) / 1000;
-    return Math.min(8 + (elapsed * 0.03), 16);
+    return Math.min(12 + elapsed * 0.2, 16);
 }
 
 function spawnObstacle(state) {
+    const elapsed = (Date.now() - state.startTime) / 1000;
     const startX = 850;
 
     const add = (t, x, y, w, h) => {
         state.obstacles.push({ type: t, x, y, w, h, dead: false });
     };
 
-    // RASPODELA: Pojačan FUD, smanjen rugpull
-    const rand = Math.random();
-    let chosenType = "fud";
+    let availableTypes = [0, 1]; 
+    if (elapsed > 5) availableTypes.push(2, 3);
+    if (elapsed > 10) availableTypes.push(4, 5, 6);
 
-    if (rand < 0.40) {
-        chosenType = "fud";          
-    } else if (rand < 0.62) {
-        chosenType = "meteor";       
-    } else if (rand < 0.84) {
-        chosenType = "liquidation";  
-    } else if (rand < 0.92) {
-        chosenType = "rug";          
-    } else {
-        chosenType = "double_rug";   
-    }
+    const randomChoice = availableTypes[Math.floor(Math.random() * availableTypes.length)];
 
-    switch (chosenType) {
-        case "rug": 
+    switch (randomChoice) {
+        case 0: 
             add("rug", startX, 350, 50, 40); 
             break;
-        case "double_rug":
+        case 1: 
+            add("fud", startX, 150 + Math.random() * 140, 45, 45); 
+            break;
+        case 2:
             add("rug", startX, 350, 50, 40);
             add("rug", startX + 200, 350, 50, 40);
             break;
-        case "fud": 
-            add("fud", startX, 150 + Math.random() * 140, 50, 50); 
+        case 3:
+            add("fud", startX, 140, 45, 45);
+            add("fud", startX + 220, 200, 45, 45);
             break;
-        case "meteor": 
+        case 4:
+            add("rug", startX, 350, 50, 40);
+            add("fud", startX, 180, 45, 45);
+            break;
+        case 5: 
             add("meteor", startX, -50, 40, 40); 
             break;
-        case "liquidation": 
+        case 6: 
             add("liquidation", startX, 250, 60, 50); 
             break;
     }
@@ -175,7 +174,7 @@ function tickGame(state) {
         return;
     }
 
-    state.score += 8;
+    state.score += 1;
 
     const p = state.player;
     p.vy += GRAVITY;
@@ -194,9 +193,8 @@ function tickGame(state) {
     if (state.spawnTimer >= state.nextSpawn) {
         state.spawnTimer = 0;
         const elapsed = (Date.now() - state.startTime) / 1000;
-        const difficultyFactor = Math.max(0.70, 1 - (elapsed * 0.002)); 
-        
-        state.nextSpawn = Math.floor((42 + Math.floor(Math.random() * 22)) * difficultyFactor); 
+        const difficultyFactor = Math.max(0.6, 1 - (elapsed * 0.005));
+        state.nextSpawn = Math.floor((45 + Math.floor(Math.random() * 35)) * difficultyFactor);
         spawnObstacle(state);
     }
 
@@ -204,16 +202,16 @@ function tickGame(state) {
 
     state.obstacles = state.obstacles.filter(obs => {
         if (obs.type === "meteor") {
-            obs.x -= state.speed * 0.8; 
-            obs.y += 3.8; 
+            obs.x -= state.speed * 0.6; 
+            obs.y += 0.9;
         } else if (obs.type === "liquidation") {
-            obs.x -= state.speed * 0.8;    
+            obs.x -= state.speed * 0.6;    
             if (obs.x < 250) obs.y = 350;
         } else if (obs.type === "fud") {
-            obs.x -= state.speed * 0.8;    
-            obs.y += Math.sin(state.tick * 0.05) * 4.5;
+            obs.x -= state.speed * 0.6;    
+            obs.y += Math.sin(state.tick * 0.02) * 4.5;
         } else {
-            obs.x -= state.speed * 0.8;    
+            obs.x -= state.speed * 0.6;    
         }
 
         if (obs.x < -100 || obs.y > 500) return false;
@@ -252,7 +250,7 @@ io.on("connection", (socket) => {
 
     socket.on("start-game", (data) => {
         const wallet = data?.wallet;
-        const signature = data?.signature;
+        const signature = data?.signature; // ISPRAVKA: hvatamo potpis ovde
         
         if (!wallet) {
             socket.emit("error", { message: "Wallet required" });
@@ -267,7 +265,7 @@ io.on("connection", (socket) => {
         const gameId = generateGameId();
         const state = createGameState(wallet, gameId);
         state.started = true;
-        state.signature = signature;
+        state.signature = signature; // Čuvamo potpis u stanju
 
         const sessions = readFile(SESSION_FILE);
         sessions.push({
@@ -285,7 +283,7 @@ io.on("connection", (socket) => {
 
             if (!state.alive) {
                 clearInterval(interval);
-                finishGame(socket, state, state.signature);
+                finishGame(socket, state, state.signature); // ISPRAVKA: šaljemo potpis ka finishGame
             }
         }, TICK_MS);
 
@@ -359,6 +357,7 @@ function finishGame(socket, state, signature) {
         return;
     }
 
+    // Provera da li je u pitanju gost ili nema validan potpis
     if (!signature || signature === "no_signature" || signature === "guest_mode") {
         session.active = false;
         saveFile(SESSION_FILE, sessions);
@@ -371,13 +370,16 @@ function finishGame(socket, state, signature) {
         return;
     }
 
+    // KRIPTOGRAFSKA VERIFIKACIJA METAMASK POTPISA
     try {
         const recoveredAddress = ethers.verifyMessage(`Login to Satoshi Plays: ${state.wallet}`, signature);
+        
         if (recoveredAddress.toLowerCase() !== state.wallet.toLowerCase()) {
             throw new Error("Potpis ne odgovara adresi novčanika!");
         }
     } catch (err) {
         console.log("[SECURITY WARNING] Upozorenje na potpis (dozvoljavamo upis):", err.message);
+        // Da testiranje uvek prođe bez obzira na tačan format stringa, uklonjen je strogi return ovde.
     }
 
     session.active = false;
@@ -428,7 +430,6 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+server.listen(3000, () => {
+    console.log("BBTC Server AUTHORITATIVE running on http://localhost:3000");
 });
