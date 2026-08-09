@@ -83,10 +83,15 @@ class GameScene extends Phaser.Scene {
             }
         };
 
-        // KONEKCIJA SA SERVEROM - PRILAGOĐENA ZA CLOUDFLARE TUNEL
         if (!socket) {
-            const backendUrl = window.location.hostname === "localhost" ? "http://localhost:3000" : undefined;
-            socket = io(backendUrl);
+
+    const backendUrl =
+        window.location.hostname === "localhost"
+            ? "http://localhost:3000"
+            : "https://satoshi-plays.onrender.com"; // <--- Ovde upisujes svoj Render URL
+
+    socket = io(backendUrl);
+
 
             socket.on("game-started", (data) => {
                 currentGameId = data.gameId;
