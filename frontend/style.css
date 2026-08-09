@@ -1,1124 +1,1280 @@
-/* ==========================================================
-GAME.JS - 1200x555 RESOLUTION
-========================================================== */
-
-let highScore = localStorage.getItem("highScore") || 0;
-let socket = null;
-let currentGameId = null;
-const GAME_SCALE = 1.5;
-const GAME_WIDTH = 1200;
-const GAME_HEIGHT = 555;
-
-const S = (value) => value * GAME_SCALE;
-
-
-/* ==========================================================:
-BACKGROUND MANAGER
-========================================================== */
-
-class BackgroundManager {
-    constructor(scene) {
-        this.scene = scene;
-
-        this.sky = scene.add.tileSprite(
-            GAME_WIDTH / 2,
-            300,
-            GAME_WIDTH,
-            600,
-            "sky"
-        );
-        this.sky.setDepth(-25);
-
-        // SUNCE
-        this.sun = scene.add.graphics();
-        this.sun.setDepth(-24);
-        this.sun.fillStyle(0xffaa22, 1);
-        this.sun.fillCircle(S(650), S(95), S(30));
-
-        // OBLACI
-        this.cloudsGraphics = scene.add.graphics().setDepth(-23);
-        this.cloudX = S(-150);
-
-        // ===============================
-        // PTICE I AVION
-        // ===============================
-
-        this.birdsGraphics = scene.add.graphics();
-        this.birdsGraphics.setDepth(-22);
-
-        this.birds = [
-            { x: S(120), y: S(120), size: 1 },
-            { x: S(280), y: S(90), size: 0.7 },
-            { x: S(520), y: S(135), size: 0.9 },
-            { x: S(720), y: S(105), size: 0.6 }
-        ];
-
-        // AVION
-        this.planeGraphics = scene.add.graphics();
-        this.planeGraphics.setDepth(-22);
-
-        this.plane = {
-            x: S(900),
-            y: S(75)
-        };
-
-        // ===============================
-        // SLOJEVI
-        // ===============================
-
-        this.layer1 = scene.add.graphics().setDepth(-20);
-        this.layer2 = scene.add.graphics().setDepth(-19);
-        this.layer3 = scene.add.graphics().setDepth(-18);
-        this.layer4 = scene.add.graphics().setDepth(-17);
-        this.layer5 = scene.add.graphics().setDepth(-16);
-        this.layer6 = scene.add.graphics().setDepth(-15);
-        this.layer7 = scene.add.graphics().setDepth(-14);
-        this.layer8 = scene.add.graphics().setDepth(-13);
-        this.layer9 = scene.add.graphics().setDepth(-12);
-        this.layer10 = scene.add.graphics().setDepth(-11);
-
-        this.offsets = {
-            l1: 0,
-            l2: 0,
-            l3: 0,
-            l4: 0,
-            l5: 0,
-            l6: 0,
-            l7: 0,
-            l8: 0,
-            l9: 0,
-            l10: 0
-        };
-
-        this.totalWidth = S(2200);
-
-        this.buildingsL1 = this.generateBuildings(10, 18, 10, 25);
-        this.buildingsL2 = this.generateBuildings(12, 20, 14, 32);
-        this.buildingsL3 = this.generateBuildings(14, 22, 18, 40);
-        this.buildingsL4 = this.generateBuildings(16, 25, 22, 48);
-        this.buildingsL5 = this.generateBuildings(18, 28, 26, 56);
-        this.buildingsL6 = this.generateBuildings(20, 31, 30, 65);
-        this.buildingsL7 = this.generateBuildings(22, 34, 35, 75);
-        this.buildingsL8 = this.generateBuildings(25, 38, 40, 85);
-        this.buildingsL9 = this.generateBuildings(28, 42, 45, 95);
-        this.buildingsL10 = this.generateBuildings(31, 46, 50, 105);
-    }
-
-    generateBuildings(minW, maxW, minH, maxH) {
-        let arr = [];
-        let x = 0;
-
-        minW = S(minW);
-        maxW = S(maxW);
-        minH = S(minH);
-        maxH = S(maxH);
-
-        while (x < this.totalWidth) {
-            let w = Phaser.Math.Between(minW, maxW);
-            let h = Phaser.Math.Between(minH, maxH);
-
-            arr.push({
-                x,
-                width: w,
-                height: h,
-                type: Phaser.Math.Between(0, 2)
-            });
-
-            x += w + Phaser.Math.Between(S(80), S(150));
-        }
-
-        return arr;
-    }
-
-    drawLayer(graphics, buildings, offset, color, alpha) {
-        graphics.clear();
-        graphics.fillStyle(color, alpha);
-
-        let groundY = S(345);
-
-        for (let b of buildings) {
-            let x = b.x - offset;
-
-            while (x < -b.width) {
-                x += this.totalWidth;
-            }
-
-            graphics.fillRect(
-                x,
-                groundY - b.height,
-                b.width,
-                b.height
-            );
-
-            if (b.height > S(35) && b.width > S(15)) {
-                graphics.fillStyle(0xffffff, 0.7);
-
-                let windowSize = S(1.5);
-                let gapX = S(4);
-                let gapY = S(6);
-
-                for (
-                    let wx = x + S(3);
-                    wx < x + b.width - S(3);
-                    wx += gapX
-                ) {
-                    for (
-                        let wy = groundY - b.height + S(5);
-                        wy < groundY - S(6);
-                        wy += gapY
-                    ) {
-                        if ((wx + wy) % S(5) !== 0) {
-                            graphics.fillRect(
-                                wx,
-                                wy,
-                                windowSize,
-                                windowSize
-                            );
-                        }
-                    }
-                }
-
-                graphics.fillStyle(color, alpha);
-            }
-        }
-    }
-
-    update(speed) {
-
-        // SKY
-        this.sky.tilePositionX += speed * 0.08 * GAME_SCALE;
-
-        // ===============================
-        // OBLACI
-        // ===============================
-
-        this.cloudX += speed * 0.015 * GAME_SCALE;
-
-        if (this.cloudX > S(950)) {
-            this.cloudX = S(-200);
-        }
-
-        this.cloudsGraphics.clear();
-        this.cloudsGraphics.fillStyle(0xffffff, 1.0);
-
-        let cx = this.cloudX;
-        let cy = S(95);
-
-        this.cloudsGraphics.fillCircle(cx, cy, S(28));
-        this.cloudsGraphics.fillCircle(
-            cx + S(25),
-            cy - S(12),
-            S(35)
-        );
-        this.cloudsGraphics.fillCircle(
-            cx + S(52),
-            cy,
-            S(25)
-        );
-        this.cloudsGraphics.fillRect(
-            cx - S(10),
-            cy,
-            S(80),
-            S(25)
-        );
-
-        // ===============================
-        // PTICE
-        // ===============================
-
-        this.birdsGraphics.clear();
-        this.birdsGraphics.lineStyle(
-            S(2),
-            0x111111,
-            1
-        );
-
-        for (let bird of this.birds) {
-
-            bird.x += speed * 0.025 * GAME_SCALE;
-
-            if (bird.x > S(850)) {
-                bird.x = S(-50);
-            }
-
-            let x = bird.x;
-            let y = bird.y;
-            let s = bird.size;
-
-            this.birdsGraphics.beginPath();
-
-            this.birdsGraphics.moveTo(
-                x - S(12) * s,
-                y
-            );
-
-            this.birdsGraphics.lineTo(
-                x - S(5) * s,
-                y - S(7) * s
-            );
-
-            this.birdsGraphics.lineTo(
-                x,
-                y
-            );
-
-            this.birdsGraphics.strokePath();
-
-            this.birdsGraphics.beginPath();
-
-            this.birdsGraphics.moveTo(
-                x,
-                y
-            );
-
-            this.birdsGraphics.lineTo(
-                x + S(5) * s,
-                y - S(7) * s
-            );
-
-            this.birdsGraphics.lineTo(
-                x + S(12) * s,
-                y
-            );
-
-            this.birdsGraphics.strokePath();
-        }
-
-        // ===============================
-        // AVION
-        // ===============================
-
-        this.planeGraphics.clear();
-
-        this.plane.x -= speed * 0.015 * GAME_SCALE;
-
-        if (this.plane.x < S(-100)) {
-            this.plane.x = S(950);
-            this.plane.y = Phaser.Math.Between(
-                S(60),
-                S(120)
-            );
-        }
-
-        let px = this.plane.x;
-        let py = this.plane.y;
-
-        this.planeGraphics.fillStyle(
-            0x222222,
-            0.8
-        );
-
-        this.planeGraphics.fillRect(
-            px,
-            py,
-            S(35),
-            S(3)
-        );
-
-        this.planeGraphics.fillTriangle(
-            px + S(10),
-            py,
-            px + S(25),
-            py - S(8),
-            px + S(28),
-            py
-        );
-
-        this.planeGraphics.fillTriangle(
-            px + S(10),
-            py + S(3),
-            px + S(25),
-            py + S(10),
-            px + S(28),
-            py + S(3)
-        );
-
-        this.planeGraphics.fillRect(
-            px,
-            py - S(4),
-            S(8),
-            S(8)
-        );
-
-        // ===============================
-        // BUILDING LAYERS
-        // ===============================
-
-        let speeds = [
-            0.0025,
-            0.005,
-            0.01,
-            0.0175,
-            0.025,
-            0.035,
-            0.0475,
-            0.065,
-            0.085,
-            0.11
-        ];
-
-        let colors = [
-            0x0b0b14,
-            0x0f0f1c,
-            0x131324,
-            0x17172c,
-            0x1b1b36,
-            0x1f1f40,
-            0x24244a,
-            0x292955,
-            0x2e2e60,
-            0x34346b
-        ];
-
-        let layers = [
-            this.layer1,
-            this.layer2,
-            this.layer3,
-            this.layer4,
-            this.layer5,
-            this.layer6,
-            this.layer7,
-            this.layer8,
-            this.layer9,
-            this.layer10
-        ];
-
-        let buildings = [
-            this.buildingsL1,
-            this.buildingsL2,
-            this.buildingsL3,
-            this.buildingsL4,
-            this.buildingsL5,
-            this.buildingsL6,
-            this.buildingsL7,
-            this.buildingsL8,
-            this.buildingsL9,
-            this.buildingsL10
-        ];
-
-        for (let i = 0; i < 10; i++) {
-
-            this.offsets["l" + (i + 1)] +=
-                speed * speeds[i] * GAME_SCALE;
-
-            if (
-                this.offsets["l" + (i + 1)] >=
-                this.totalWidth
-            ) {
-                this.offsets["l" + (i + 1)] = 0;
-            }
-
-            this.drawLayer(
-                layers[i],
-                buildings[i],
-                this.offsets["l" + (i + 1)],
-                colors[i],
-                0.95
-            );
-        }
-    }
+/* ==========================================
+   BOOK OF BITCOIN - BBTC HTML5 CSS
+========================================== */
+
+:root {
+    --bitcoin-orange: #F7931A;
+    --bg-dark: #050505;
+    --glass-bg: rgba(255,255,255,0.04);
+    --border-color: rgba(255,255,255,0.12);
+    --text-gray: #ccc;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin:0;
+    min-height:100vh;
+
+    background:
+    radial-gradient(circle at 50% -20%, #3a2205, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(247,147,26,.08), transparent 30%),
+    #050505;
+
+    color:white;
+    font-family:'Inter',sans-serif;
+}
+
+/* ==========================
+        NAVBAR
+========================== */
+
+.navbar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 50px;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(7px);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    flex-wrap: wrap;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--bitcoin-orange);
+}
+
+.nav-links a {
+    color: #ccc;
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 14px;
+    transition: .3s;
+}
+
+.nav-links a:hover {
+    color: var(--bitcoin-orange);
+}
+
+.social-links {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-social {
+    background: #222;
+    color: white;
+    padding: 8px 18px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-size: 12px;
+    border: 1px solid #444;
+    transition: .3s;
+}
+
+.btn-social:hover {
+    background: var(--bitcoin-orange);
+    color: black;
 }
 
 
-/* ==========================================================
-GAME SCENE
-========================================================== */
+/* ==========================
+        GAME AREA
+========================== */
 
-class GameScene extends Phaser.Scene {
-
-    constructor() {
-        super("GameScene");
-        this.globalKeyHandler = null;
-    }
-
-    restartGame() {
-
-        this.gameOver = false;
-        this.gameStarted = false;
-
-        this.playerSprite.clearTint();
-        this.playerSprite.rotation = 0;
-        this.playerSprite.setScale(1.2);
-        this.playerSprite.x = S(120);
-        this.playerSprite.y = S(330);
-
-        if (this.gameOverText) {
-            this.gameOverText.destroy();
-            this.gameOverText = null;
-        }
-
-        if (!this.startText) {
-
-           this.startText = this.add.text(600, 150, "TAP OR SPACE TO START", {
-    fontSize: "48px",
-    fill: "#f3ba2f",
-    fontStyle: "bold",
-    stroke: "#000",
-    strokeThickness: 6
-}).setOrigin(0.5).setDepth(20);
-
-        } else {
-
-            this.startText.setText(
-                "TAP OR SPACE TO START"
-            );
-        }
-    }
-
-    preload() {
-
-        this.load.image(
-            "bitcoin",
-            "assets/bitcoin.png"
-        );
-
-        this.load.image(
-            "fud",
-            "assets/fud.png"
-        );
-
-        this.load.image(
-            "rugpull",
-            "assets/rugpull.png"
-        );
-
-        this.load.image(
-            "sky",
-            "assets/sky.png"
-        );
-
-        this.load.image(
-            "rekt",
-            "assets/rekt.png"
-        );
-
-        this.load.image(
-            "liquidation",
-            "assets/liquidation.png"
-        );
-    }
-
-    create() {
-
-        this.gameStarted = false;
-        this.gameOver = false;
-
-        this.score = 0;
-        this.speed = 5;
-
-        this.gameOverText = null;
-
-        this.serverPlayerY = S(330);
-        this.serverObstacles = [];
-
-      this.ground = this.add.rectangle(600, 540, 1200, 60, 0x34a853).setDepth(5);
-
-this.playerSprite = this.add.sprite(180, 495, "bitcoin")
-    .setScale(1.2)
-    .setDepth(10);
-
-        this.obstacleSpritesMap = new Map();
-
-        this.scoreText = this.add.text(30, 30, "Score: 0", {
-    fontSize: "36px",
-    fill: "#f3ba2f",
-    fontStyle: "bold",
-    stroke: "#000",
-    strokeThickness: 4
-}).setDepth(20);
-
-this.bestText = this.add.text(30, 75, "Best: " + highScore, {
-    fontSize: "30px",
-    fill: "#ffffff",
-    fontStyle: "bold",
-    stroke: "#000",
-    strokeThickness: 4
-}).setDepth(20);
-
-        // START TEXT
-        this.startText = this.add.text(
-            GAME_WIDTH / 2,
-            S(100),
-            "TAP OR SPACE TO START",
-            {
-                fontSize: "48px",
-                fill: "#f3ba2f",
-                fontStyle: "bold",
-                stroke: "#000",
-                strokeThickness: 4
-            }
-        )
-        .setOrigin(0.5)
-        .setDepth(20);
-
-        this.background = new BackgroundManager(this);
-
-        window.resetGameOverScreen = () => {
-
-            if (
-                this &&
-                typeof this.restartGame === "function"
-            ) {
-                this.restartGame();
-            }
-        };
-
-        // ===============================
-        // SOCKET
-        // ===============================
-
-        if (!socket) {
-
-            const backendUrl =
-                window.location.hostname === "localhost"
-                    ? "http://localhost:3000"
-                    : undefined;
-
-            socket = io(backendUrl);
-
-            socket.on(
-                "game-started",
-                (data) => {
-
-                    currentGameId = data.gameId;
-
-                    this.speed = data.speed;
-
-                    this.gameStarted = true;
-                    this.gameOver = false;
-
-                    if (this.startText) {
-                        this.startText.destroy();
-                    }
-                }
-            );
-
-            socket.on(
-                "state",
-                (state) => {
-
-                    if (
-                        !this.gameStarted ||
-                        this.gameOver
-                    ) {
-                        return;
-                    }
-
-                    this.score = state.score;
-                    this.speed = state.speed;
-
-                    this.scoreText.setText(
-                        "Score: " + state.score
-                    );
-
-                    let playerGroundOffset = 15;
-
-this.serverPlayerY =
-    (state.player.y - playerGroundOffset) * GAME_SCALE;
-
-this.serverObstacles = state.obstacles.map(obs => ({
-    ...obs,
-    x: obs.x * GAME_SCALE,
-    y: obs.y * GAME_SCALE
-}));
-                }
-            );
-
-            socket.on(
-                "game-over",
-                (result) => {
-                    this.onGameOver(result);
-                }
-            );
-
-            socket.on(
-                "error",
-                (err) => {
-                    console.error(
-                        "Server error:",
-                        err
-                    );
-                }
-            );
-        }
-
-        // ===============================
-        // JUMP
-        // ===============================
-
-        const handleJump = () => {
-
-            if (this.gameOver) {
-                this.scene.restart();
-                return;
-            }
-
-            if (!this.gameStarted) {
-                this.requestStart();
-                return;
-            }
-
-            if (this.playerSprite.y >= 465) {
-    this.playerSprite.y -= 22.5;
+.game-intro {
+    width: 100%;
+    text-align: center;
+    margin: 20px auto 0;
 }
 
-            socket.emit("jump");
-        };
-
-        if (this.globalKeyHandler) {
-
-            window.removeEventListener(
-                "keydown",
-                this.globalKeyHandler
-            );
-        }
-
-        this.globalKeyHandler = (event) => {
-
-            if (event.code === "Space") {
-
-                event.preventDefault();
-
-                handleJump();
-            }
-        };
-
-        window.addEventListener(
-            "keydown",
-            this.globalKeyHandler
-        );
-
-        this.input.on(
-            "pointerdown",
-            () => {
-                handleJump();
-            }
-        );
-    }
-
-    requestStart() {
-
-        const wallet =
-            localStorage.getItem("userWallet") ||
-            "0xTestWallet1234567890abcdef";
-
-        const signature =
-            localStorage.getItem("userSignature") ||
-            "no_signature";
-
-        if (this.startText) {
-            this.startText.setText(
-                "Connecting..."
-            );
-        }
-
-        socket.emit(
-            "start-game",
-            {
-                wallet,
-                signature
-            }
-        );
-    }
-
-    onGameOver(result) {
-
-        if (this.gameOver) {
-            return;
-        }
-
-        this.gameOver = true;
-        this.gameStarted = false;
-
-        if (
-            this.serverObstacles &&
-            this.serverObstacles.length > 0
-        ) {
-
-            let hitObstacle =
-                this.serverObstacles.reduce(
-                    (prev, curr) => {
-
-                        return (
-                            Math.abs(
-                                curr.x -
-                                this.playerSprite.x
-                            ) <
-                            Math.abs(
-                                prev.x -
-                                this.playerSprite.x
-                            )
-                        )
-                            ? curr
-                            : prev;
-                    }
-                );
-
-            if (hitObstacle) {
-
-                this.playerSprite.x =
-                    (
-                        this.playerSprite.x +
-                        hitObstacle.x
-                    ) / 2;
-
-                this.playerSprite.y =
-                    hitObstacle.y -
-                    S(15);
-            }
-        }
-
-        this.cameras.main.shake(
-            400,
-            0.025
-        );
-
-        this.tweens.add({
-
-            targets: this.playerSprite,
-
-            angle: 360,
-
-            scaleX: 1.2,
-            scaleY: 0.6,
-
-            duration: 150,
-
-            yoyo: true,
-
-            onComplete: () => {
-
-                this.playerSprite.setTint(
-                    0xff0000
-                );
-            }
-        });
-
-        const finalScore =
-            result.score || this.score;
-
-        if (finalScore > highScore) {
-
-            highScore = finalScore;
-
-            localStorage.setItem(
-                "highScore",
-                highScore
-            );
-
-            this.bestText.setText(
-                "Best: " + highScore
-            );
-        }
-
-        this.time.delayedCall(
-            300,
-            () => {
-
-                if (!this.gameOver) {
-                    return;
-                }
-
-                this.gameOverText = this.add.text(600, 165, "GAME OVER\n\nTAP OR SPACE", {
-    fontSize: "51px",
-    fill: "#ff3333",
-    align: "center",
-    fontStyle: "bold",
-    stroke: "#000",
-    strokeThickness: 7
-}).setOrigin(0.5).setDepth(30);
-            }
-        );
-
-        if (result.success) {
-
-            window.dispatchEvent(
-                new Event("scoreSubmitted")
-            );
-        }
-    }
-
-    update(time, delta) {
-
-        if (
-            !this.gameStarted ||
-            this.gameOver
-        ) {
-            return;
-        }
-
-        // PLAYER
-        this.playerSprite.y =
-            Phaser.Math.Linear(
-                this.playerSprite.y,
-                this.serverPlayerY,
-                0.8
-            );
-
-        if (this.playerSprite.y < S(330)) {
-
-            this.playerSprite.rotation += 0.12;
-
-        } else {
-
-            this.playerSprite.rotation =
-                Phaser.Math.Linear(
-                    this.playerSprite.rotation,
-                    0,
-                    0.2
-                );
-        }
-
-        // ===============================
-        // OBSTACLES
-        // ===============================
-
-        let activeIds = new Set(
-            this.serverObstacles.map(
-                obs => obs.id
-            )
-        );
-
-        this.obstacleSpritesMap.forEach(
-            (obj, id) => {
-
-                if (!activeIds.has(id)) {
-
-                    if (obj.sprite) {
-                        obj.sprite.destroy();
-                    }
-
-                    if (obj.text) {
-                        obj.text.destroy();
-                    }
-
-                    this.obstacleSpritesMap.delete(id);
-                }
-            }
-        );
-
-        this.serverObstacles.forEach(
-            obs => {
-
-                let key = "rugpull";
-                let label = "";
-
-                if (obs.type === "fud") {
-                    key = "fud";
-                }
-
-                if (obs.type === "meteor") {
-                    key = "rekt";
-                    label = "REKT";
-                }
-
-                if (
-                    obs.type === "liquidation"
-                ) {
-                    key = "liquidation";
-                    label = "LIQUIDATED";
-                }
-
-                if (obs.type === "rug") {
-                    label = "rugpull";
-                }
-
-                let obj =
-                    this.obstacleSpritesMap.get(
-                        obs.id
-                    );
-
-                if (!obj) {
-
-                    const spr =
-                        this.add.sprite(
-                            obs.x,
-                            obs.y,
-                            key
-                        )
-                        .setScale(
-                            obs.type === "fud"
-                                ? 1.05
-                                : 1.2
-                        )
-                        .setDepth(8);
-
-                    if (
-                        obs.type === "meteor"
-                    ) {
-                        spr.setTint(
-                            0xff0000
-                        );
-                    }
-
-                    let txt = null;
-
-                    if (label) {
-
-                        txt =
-                            this.add.text(
-                                obs.x,
-                                obs.y + S(15),
-                                label,
-                                {
-                                    fontSize: "18px",
-                                    fill: "#fff",
-                                    fontStyle: "bold",
-                                    stroke: "#000",
-                                    strokeThickness: 3
-                                }
-                            )
-                            .setOrigin(0.5)
-                            .setDepth(9);
-                    }
-
-                    obj = {
-                        sprite: spr,
-                        text: txt
-                    };
-
-                    this.obstacleSpritesMap.set(
-                        obs.id,
-                        obj
-                    );
-                }
-
-                obj.sprite.x =
-                    Phaser.Math.Linear(
-                        obj.sprite.x,
-                        obs.x,
-                        0.8
-                    );
-
-                obj.sprite.y =
-                    Phaser.Math.Linear(
-                        obj.sprite.y,
-                        obs.y,
-                        0.8
-                    );
-
-                if (obj.text) {
-
-                    obj.text.x =
-                        obj.sprite.x;
-
-                    obj.text.y =
-                        obj.sprite.y +
-                        S(15);
-                }
-            }
-        );
-
-        this.background.update(
-            this.speed
-        );
-    }
+.game-intro h1 {
+    margin: 0 0 8px;
+    font-size: 42px;
+    color: var(--bitcoin-orange);
+
+    text-shadow:
+    0 0 10px rgba(247,147,26,.7),
+    0 0 30px rgba(247,147,26,.4),
+    0 0 60px rgba(247,147,26,.2);
+}
+
+.game-intro p {
+    margin: 0;
+    color: #aaa;
+    font-size: 16px;
 }
 
 
-/* ==========================================================
-PHASER START
-========================================================== */
 
-function startGame() {
 
-    const config = {
-
-        type: Phaser.AUTO,
-
-        render: {
-            antialias: true,
-            pixelArt: false,
-            resolution: Math.min(
-                window.devicePixelRatio || 1,
-                2
-            )
-        },
-
-        scale: {
-            mode: Phaser.Scale.FIT,
-            parent: "phaser-game",
-            autoCenter: Phaser.Scale.CENTER_BOTH,
-
-            width: 1200,
-            height: 555
-        },
-
-        roundPixels: true,
-
-        physics: {
-            default: "arcade",
-            arcade: {
-                gravity: {
-                    y: 0
-                },
-                debug: false
-            }
-        },
-
-        scene: [GameScene]
-    };
-
-    new Phaser.Game(config);
+.game-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
 }
 
 
-// ==========================
-// FULLSCREEN BUTTON
-// ==========================
+/*
 
-const fullscreenBtn =
-    document.getElementById(
-        "fullscreenBtn"
+#game-container {
+    width: min(800px, 95vw);
+    aspect-ratio: 2 / 1;
+    padding: 5px;
+
+    background:
+    linear-gradient(135deg,
+    var(--bitcoin-orange),
+    #333,
+    var(--bitcoin-orange));
+
+    border-radius: 24px;
+
+    box-shadow:
+    0 0 30px rgba(247,147,26,.35),
+    0 0 80px rgba(247,147,26,.15),
+    inset 0 0 25px rgba(255,255,255,.08);
+
+    margin-bottom:30px;
+    overflow:hidden;
+
+    position:relative;
+
+    animation: none;
+}
+
+
+*/
+
+
+
+@keyframes gameGlow {
+
+from {
+
+    box-shadow:
+    0 0 30px rgba(247,147,26,.25),
+    0 0 60px rgba(247,147,26,.10),
+    inset 0 0 25px rgba(255,255,255,.05);
+
+}
+
+
+to {
+
+    box-shadow:
+    0 0 45px rgba(247,147,26,.55),
+    0 0 100px rgba(247,147,26,.20),
+    inset 0 0 35px rgba(255,255,255,.10);
+
+}
+
+}
+
+
+
+/*
+
+#game-container canvas {
+    width:100% !important;
+    height:100% !important;
+    display:block;
+    border-radius:16px;
+}
+
+
+*/
+
+
+/* ==========================
+        GLASS CARDS
+========================== */
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(7px);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 30px;
+    text-align: center;
+    width: 300px;
+    transition: .4s;
+}
+
+.glass-card:hover {
+    border-color: var(--bitcoin-orange);
+    box-shadow: 0 0 30px rgba(247,147,26,.25);
+    transform: translateY(-5px);
+}
+
+.glass-card,
+.table-wrap,
+.stat-card {
+    animation: fadeUp .8s ease;
+}
+
+
+@keyframes fadeUp {
+
+    from {
+        opacity:0;
+        transform:translateY(20px);
+    }
+
+
+    to {
+        opacity:1;
+        transform:translateY(0);
+    }
+
+}
+
+
+#web3-ui {
+    margin-top: 30px;
+}
+
+
+/* ==========================
+        CONNECT BUTTON
+========================== */
+
+button {
+    background: var(--bitcoin-orange);
+    border: none;
+
+    padding: 15px 30px;
+
+    color: black;
+    font-weight: 800;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+    text-transform: uppercase;
+
+    transition: .3s;
+
+    box-shadow:
+    0 0 20px rgba(247,147,26,.4),
+    0 0 40px rgba(247,147,26,.15);
+}
+
+button:hover {
+
+    background:white;
+
+    color:black;
+
+    transform:scale(1.05);
+
+    box-shadow:
+    0 0 30px rgba(247,147,26,.8),
+    0 0 60px rgba(247,147,26,.3);
+
+}
+
+
+/* ==========================
+      PREMIUM LEADERBOARD
+========================== */
+
+#leaderboards {
+    display:flex;
+    gap:35px;
+    justify-content:center;
+    flex-wrap:wrap;
+    width:100%;
+    max-width:900px;
+    margin-top:40px;
+}
+
+
+.table-wrap {
+
+    position:relative;
+
+    background:
+    linear-gradient(
+        145deg,
+        rgba(255,255,255,0.08),
+        rgba(255,255,255,0.02)
     );
 
-if (fullscreenBtn) {
+    backdrop-filter:blur(7px);
 
-    fullscreenBtn.addEventListener(
-        "click",
-        async () => {
+    border:1px solid rgba(247,147,26,.25);
 
-            const gameContainer =
-                document.getElementById(
-                    "game-container"
-                );
+    padding:30px;
 
-            try {
+    border-radius:25px;
 
-                if (!document.fullscreenElement) {
+    width:380px;
 
-                    await gameContainer.requestFullscreen();
+    overflow:hidden;
 
-                } else {
+    box-shadow:
+    0 0 30px rgba(247,147,26,.12),
+    inset 0 0 30px rgba(255,255,255,.03);
 
-                    await document.exitFullscreen();
+    transition:.4s;
+}
 
-                }
 
-            } catch (error) {
+.table-wrap::before {
 
-                console.error(
-                    "Fullscreen error:",
-                    error
-                );
-            }
-        }
+    content:"";
+
+    position:absolute;
+
+    top:-80px;
+    left:50%;
+
+    width:200px;
+    height:200px;
+
+    transform:translateX(-50%);
+
+    background:rgba(247,147,26,.25);
+
+    filter:blur(40px);
+
+}
+
+
+.table-wrap:hover {
+
+    transform:translateY(-8px);
+
+    border-color:#F7931A;
+
+    box-shadow:
+    0 0 50px rgba(247,147,26,.35);
+
+}
+
+
+
+.table-wrap h3 {
+
+    position:relative;
+
+    text-align:center;
+
+    font-size:22px;
+
+    color:#F7931A;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+    text-shadow:
+    0 0 15px rgba(247,147,26,.8);
+
+}
+
+
+
+table {
+
+    position:relative;
+
+    width:100%;
+
+    border-collapse:separate;
+
+    border-spacing:0 10px;
+
+}
+
+
+
+th {
+
+    color:#999;
+
+    font-size:11px;
+
+    text-transform:uppercase;
+
+    letter-spacing:1px;
+
+}
+
+
+
+td {
+
+    padding:16px 10px;
+
+    background:
+    rgba(255,255,255,.04);
+
+    border-top:1px solid rgba(255,255,255,.08);
+
+    border-bottom:1px solid rgba(255,255,255,.08);
+
+    font-family:'Courier New',monospace;
+
+    font-weight:700;
+
+}
+
+
+
+td:first-child {
+
+    border-radius:12px 0 0 12px;
+
+}
+
+
+td:last-child {
+
+    border-radius:0 12px 12px 0;
+
+}
+
+
+
+
+/* ======================
+      TOP 3 PLAYERS
+====================== */
+
+
+.gold-row td {
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(255,215,0,.25),
+    rgba(255,215,0,.05)
     );
 
-    document.addEventListener(
-        "fullscreenchange",
-        () => {
+}
 
-            if (document.fullscreenElement) {
 
-                fullscreenBtn.textContent =
-                    "✕ EXIT";
 
-            } else {
+.silver-row td {
 
-                fullscreenBtn.textContent =
-                    "⛶ FULLSCREEN";
-            }
-        }
+    background:
+    linear-gradient(
+    90deg,
+    rgba(192,192,192,.25),
+    rgba(192,192,192,.05)
     );
+
+}
+
+
+
+.bronze-row td {
+
+    background:
+    linear-gradient(
+    90deg,
+    rgba(205,127,50,.25),
+    rgba(205,127,50,.05)
+    );
+
+}
+
+
+
+/* GOLD GLOW */
+
+.gold-row {
+
+animation:
+goldPulse 2s infinite;
+
+}
+
+
+@keyframes goldPulse {
+
+0%,100% {
+
+box-shadow:
+0 0 10px rgba(255,215,0,.2);
+
+}
+
+
+50% {
+
+box-shadow:
+0 0 35px rgba(255,215,0,.6);
+
+}
+
+}
+
+
+
+/* MEDAL STYLE */
+
+
+.rank-gold,
+.rank-silver,
+.rank-bronze {
+
+font-size:24px;
+
+filter:
+drop-shadow(0 0 8px currentColor);
+
+}
+
+
+
+/* NORMAL ROW */
+
+
+.normal-row:hover td {
+
+background:
+rgba(247,147,26,.12);
+
+}
+
+
+
+tr {
+
+transition:.3s;
+
+animation:
+slideIn .5s ease;
+
+}
+
+
+
+tr:hover {
+
+transform:
+translateX(8px);
+
+}
+
+
+
+@keyframes slideIn {
+
+from {
+
+opacity:0;
+
+transform:translateY(15px);
+
+}
+
+to {
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+
+
+
+
+/* ==========================
+        INFO SECTION
+========================== */
+
+.info-section {
+    margin-top: 80px;
+    text-align: center;
+    max-width: 900px;
+}
+
+.info-section h1 {
+    font-size: 48px;
+    color: var(--bitcoin-orange);
+}
+
+.info-section p {
+    color: #aaa;
+    font-size: 18px;
+}
+
+.stats {
+    margin-top: 40px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 25px;
+    width: 180px;
+}
+
+.stat-card h2 {
+    color: var(--bitcoin-orange);
+    margin: 0;
+    font-size: 30px;
+}
+
+.stat-card span {
+    color: #aaa;
+}
+
+
+/* ==========================
+        FEATURES
+========================== */
+
+.features {
+    display: flex;
+    gap: 25px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 50px;
+}
+
+.features .glass-card {
+    width: 250px;
+}
+
+.features h3 {
+    color: var(--bitcoin-orange);
+}
+
+
+/* ==========================
+        FOOTER
+========================== */
+
+footer {
+    width: 100%;
+    margin-top: 80px;
+    padding: 30px;
+    text-align: center;
+    background: #111;
+    color: #777;
+}
+
+
+/* ==========================
+        MOBILE
+========================== */
+
+@media(max-width:850px) {
+
+    .navbar {
+        flex-direction: row;
+        justify-content: center;
+        gap: 15px;
+    }
+
+}
+
+
+@media(max-width:700px) {
+
+    .navbar {
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .info-section h1 {
+        font-size: 36px;
+    }
+
+}
+
+/* ==========================
+        CONNECT BUTTON TEXT
+========================== */
+
+/* ==========================
+        CONNECT BUTTON TEXT
+========================== */
+
+#connectBtn,
+#disconnectBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+
+    width: 220px;
+    height: 70px;
+
+    padding: 0;
+    line-height: 1;
+}
+
+.btn-main {
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 18px;
+}
+
+.btn-sub {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.8;
+    margin-top: 3px;
+    line-height: 12px;
+}
+
+.wallet-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.wallet-buttons button {
+    min-width: 180px;
+}
+
+#web3-ui {
+    width: fit-content;
+    min-width: 300px;
+}
+
+/* ==========================
+   LEADERBOARD ROW ANIMATIONS
+========================== */
+
+@keyframes pulse-gold {
+    0% { box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.2); }
+    50% { box-shadow: inset 0 0 25px rgba(255, 215, 0, 0.5), 0 0 15px rgba(255, 215, 0, 0.3); }
+    100% { box-shadow: inset 0 0 15px rgba(255, 215, 0, 0.2); }
+}
+
+@keyframes pulse-silver {
+    0% { box-shadow: inset 0 0 15px rgba(192, 192, 192, 0.2); }
+    50% { box-shadow: inset 0 0 25px rgba(192, 192, 192, 0.5), 0 0 15px rgba(192, 192, 192, 0.3); }
+    100% { box-shadow: inset 0 0 15px rgba(192, 192, 192, 0.2); }
+}
+
+@keyframes pulse-bronze {
+    0% { box-shadow: inset 0 0 15px rgba(205, 127, 50, 0.2); }
+    50% { box-shadow: inset 0 0 25px rgba(205, 127, 50, 0.5), 0 0 15px rgba(205, 127, 50, 0.3); }
+    100% { box-shadow: inset 0 0 15px rgba(205, 127, 50, 0.2); }
+}
+
+.gold-row {
+    background: rgba(255, 215, 0, 0.08);
+    animation: pulse-gold 2.5s infinite ease-in-out;
+}
+
+.silver-row {
+    background: rgba(192, 192, 192, 0.08);
+    animation: pulse-silver 2.5s infinite ease-in-out;
+    animation-delay: 0.4s;
+}
+
+.bronze-row {
+    background: rgba(205, 127, 50, 0.08);
+    animation: pulse-bronze 2.5s infinite ease-in-out;
+    animation-delay: 0.8s;
+}
+
+
+/* =========================
+   GAME + LEADERBOARD LAYOUT
+========================= */
+
+
+.game-layout {
+
+    width:100%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:25px;
+
+}
+
+
+
+.side-table {
+
+    width:300px;
+
+}
+
+
+
+.side-table .table-wrap {
+
+    width:100%;
+}
+
+
+
+/* desktop */
+
+@media(max-width:1400px){
+
+.game-layout{
+
+    flex-direction:column;
+
+}
+
+
+.side-table{
+
+    width:320px;
+
+}
+
+}
+
+
+/* =====================================
+   PREMIUM LOGO EFFECT
+===================================== */
+
+.logoSplash {
+    position: relative;
+    font-size: 28px;
+    font-weight: 800;
+    color: #f3ba2f;
+    letter-spacing: 1px;
+    cursor: pointer;
+
+    text-shadow:
+        0 0 5px #f3ba2f,
+        0 0 15px rgba(243,186,47,0.8),
+        0 0 30px rgba(243,186,47,0.5);
+
+    animation:
+        logoPulse 3s infinite ease-in-out,
+        logoFloat 4s infinite ease-in-out;
+
+    overflow: hidden;
+}
+
+
+/* svetlosni prelaz */
+.logoSplash::after {
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:-120%;
+
+    width:50%;
+    height:100%;
+
+    background:linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,0.9),
+        transparent
+    );
+
+    transform:skewX(-25deg);
+
+    animation:logoShine 4s infinite;
+}
+
+
+/* pulsiranje */
+@keyframes logoPulse {
+
+    0%,100% {
+        transform:scale(1);
+    }
+
+    50% {
+        transform:scale(1.08);
+    }
+}
+
+
+/* lebdenje */
+@keyframes logoFloat {
+
+    0%,100% {
+        margin-top:0;
+    }
+
+    50% {
+        margin-top:-4px;
+    }
+}
+
+
+/* shimmer */
+@keyframes logoShine {
+
+    0% {
+        left:-120%;
+    }
+
+    25% {
+        left:150%;
+    }
+
+    100% {
+        left:150%;
+    }
+}
+
+
+
+
+/* ==========================
+   SUN HALO EFFECT
+========================== */
+
+.sun {
+
+    position: relative;
+
+    filter:
+    drop-shadow(0 0 15px #ffd86b)
+    drop-shadow(0 0 40px rgba(255,190,50,.8));
+
+    animation:
+    sunGlow 3s infinite ease-in-out;
+
+}
+
+
+.sun::before {
+
+    content:"";
+
+    position:absolute;
+
+    top:50%;
+    left:50%;
+
+    width:220px;
+    height:220px;
+
+    transform:
+    translate(-50%,-50%);
+
+    border-radius:50%;
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(255,220,120,.55),
+        rgba(255,180,50,.25),
+        transparent 70%
+    );
+
+    filter:blur(7px);
+
+    z-index:-1;
+
+}
+
+
+
+@keyframes sunGlow {
+
+0%,100% {
+
+    filter:
+    drop-shadow(0 0 15px #ffd86b)
+    drop-shadow(0 0 40px rgba(255,190,50,.6));
+
+}
+
+
+50% {
+
+    filter:
+    drop-shadow(0 0 30px #fff0a0)
+    drop-shadow(0 0 70px rgba(255,190,50,1));
+
+}
+
+}
+
+
+
+@media(max-width:700px){
+
+.logoSplash {
+    animation:none;
+}
+
+.table-wrap,
+.glass-card {
+    backdrop-filter:blur(5px);
+}
+
+}
+
+
+.rules-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rule-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+    margin-top: 14px; /* Ovo će odvojiti svaki red/kućicu od prethodne */
+}
+
+.rule-box .bullet {
+    color: #f3ba2f;
+    flex-shrink: 0;
+}
+
+.rule-content {
+    color: #ccc;
+}
+
+/* Boja i stil za naslove (Reward Payouts, Verification Period, Fair Play) */
+.rule-title {
+    color: #f3ba2f; /* Stavi boju koju želiš, npr. žuta kao tema */
+    margin-right: 4px; /* Razmak posle dve tačke */
+}
+
+/* Stil za boldovane delove u tekstu (7 days, 3-day appeal period) */
+.rule-text strong {
+    color: #fff; /* Bela i podebljana slova da se istaknu */
+}
+
+
+canvas {
+    touch-action: none;
+    user-select: none;
+}
+
+
+
+
+/* ==========================================
+   GAME CONTAINER
+========================================== */
+
+#game-container {
+    position: relative;
+    width: min(1200px, 100%);
+    max-width: 1200px;
+    margin: 0 auto 20px auto;
+    padding: 5px;
+    box-sizing: border-box;
+
+    background: linear-gradient(
+        135deg,
+        var(--bitcoin-orange),
+        #333,
+        var(--bitcoin-orange)
+    );
+
+    border-radius: 24px;
+
+    box-shadow:
+        0 0 30px rgba(247,147,26,.35),
+        0 0 80px rgba(247,147,26,.15);
+
+    overflow: hidden;
+}
+
+
+/* ==========================================
+   PHASER GAME
+========================================== */
+
+#phaser-game {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    overflow: hidden;
+}
+
+#phaser-game canvas {
+    display: block;
+    width: 100% !important;  /* Izmena: tera canvas da popuni širinu */
+    height: 100% !important; /* Izmena: tera canvas da popuni visinu */
+    object-fit: cover;       /* Izmena: popunjava narandžasti okvir (izbaci ako želiš 'contain') */
+    margin: 0 auto;
+
+    border-radius: 16px;
+
+    touch-action: none;
+    user-select: none;
+}
+
+/* ==========================================
+   FULLSCREEN BUTTON
+========================================== */
+
+#fullscreenBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    z-index: 1000;
+
+    padding: 8px 12px;
+
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 8px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: none;
+    text-transform: uppercase;
+}
+
+#fullscreenBtn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    transform: none;
+}
+
+
+/* ==========================================
+   FULLSCREEN
+========================================== */
+
+#game-container:fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: #000 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    overflow: hidden !important;
+
+    border-radius: 0 !important;
+}
+
+#game-container:fullscreen #phaser-game {
+    width: 100vw !important;
+    height: 100vh !important;
+
+    max-width: none !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    overflow: hidden !important;
+}
+
+#game-container:fullscreen canvas {
+    display: block !important;
+
+    max-width: 100% !important;
+    max-height: 100% !important;
+
+    width: auto !important;
+    height: auto !important;
+
+    border-radius: 0 !important;
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 700px) {
+
+    #game-container {
+        width: 100%;
+        max-width: 100%;
+        padding: 3px;
+        border-radius: 14px;
+
+        /* PODEŠAVANJE VISINE OKVIRA: */
+        /* Odnos stranica 2.2 / 1 (širok a nizak okvir) */
+        aspect-ratio: 2.2 / 1; 
+        max-height: 250px; /* Možeš smanjiti npr. na 200px ako želiš još niži okvir */
+    }
+
+    #phaser-game {
+        width: 100%;
+        height: 100%;
+        max-width: 100%;
+    }
+
+    #phaser-game canvas {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain; /* Igrica se uklapa unutar nižeg okvira bez izobličenja */
+        border-radius: 10px;
+    }
+
+    #fullscreenBtn {
+        top: 6px;
+        right: 6px;
+        padding: 6px 8px;
+        font-size: 9px;
+    }
 }
