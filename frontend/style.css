@@ -1347,3 +1347,41 @@ canvas {
         font-size: 9px;
     }
 }
+
+
+
+/* ==========================================
+   FORSIRANJE DESKTOP PRIKAZA ZA METAMASK
+   ========================================== */
+
+/* 1. Zabrani da se cela stranica skuplja ispod 1000px */
+body, html {
+  min-width: 1000px !important;
+  overflow-x: auto !important;
+}
+
+/* 2. Zabrani prelamanje za Rules & Chat sekciju */
+.chat-and-rules-wrapper,
+div:has(> .rules-box):has(> .chat-box) { /* Pokriva generičke div kontejnere */
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+}
+
+/* 3. Zabrani prelamanje za tabele (Weekly Total & Best Single) */
+.leaderboards-wrapper,
+div:has(> .leaderboard-box) {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+}
+
+/* 4. Osiguraj da obe polovine budu jednake širine */
+.rules-box, 
+.chat-box, 
+.leaderboard-box {
+  width: 50% !important;
+  flex: 1 1 50% !important;
+}
