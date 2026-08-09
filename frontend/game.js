@@ -23,37 +23,34 @@ class BackgroundManager {
         this.sun.fillStyle(0xffaa22, 1);
         this.sun.fillCircle(650, 95, 30);
 
-        // Oblaci su na dubini -23 (ISPRED sunca, pa ga potpuno sakrivaju kad pređu preko njega)
+        // Oblaci su na dubini -23 (ISPRED sunca)
         this.cloudsGraphics = scene.add.graphics().setDepth(-23);
         this.cloudX = -150; // Početna pozicija oblaka
 
-
         // ===============================
-// PTICE I AVION U DALJINI
-// ===============================
+        // PTICE I AVION U DALJINI
+        // ===============================
 
-this.birdsGraphics = scene.add.graphics();
-this.birdsGraphics.setDepth(-22);
+        this.birdsGraphics = scene.add.graphics();
+        this.birdsGraphics.setDepth(-22);
 
-this.birds = [
-    {x:120, y:120, size:1},
-    {x:280, y:90, size:0.7},
-    {x:520, y:135, size:0.9},
-    {x:720, y:105, size:0.6}
-];
+        this.birds = [
+            {x:120, y:120, size:1},
+            {x:280, y:90, size:0.7},
+            {x:520, y:135, size:0.9},
+            {x:720, y:105, size:0.6}
+        ];
 
+        // Avion
+        this.planeGraphics = scene.add.graphics();
+        this.planeGraphics.setDepth(-22);
 
-// avion
-this.planeGraphics = scene.add.graphics();
-this.planeGraphics.setDepth(-22);
+        this.plane = {
+            x:900,
+            y:75
+        };
 
-this.plane = {
-    x:900,
-    y:75
-};
-
-
-        // Slojevi smešteni duboko u pozadini (iza sunca i oblaka)
+        // Slojevi smešteni duboko u pozadini
         this.layer1 = scene.add.graphics().setDepth(-20);
         this.layer2 = scene.add.graphics().setDepth(-19);
         this.layer3 = scene.add.graphics().setDepth(-18);
@@ -72,7 +69,6 @@ this.plane = {
 
         this.totalWidth = 2200;
 
-        // SMANJENE I NIŽE ZGRADE: Prilagođene dimenzije (manja širina i manja visina)
         this.buildingsL1 = this.generateBuildings(10, 18, 10, 25);
         this.buildingsL2 = this.generateBuildings(12, 20, 14, 32);
         this.buildingsL3 = this.generateBuildings(14, 22, 18, 40);
@@ -107,10 +103,8 @@ this.plane = {
             let x = b.x - offset;
             while(x < -b.width) x += this.totalWidth;
             
-            // Crtamo nižu zgradu
             graphics.fillRect(x, groundY - b.height, b.width, b.height);
 
-            // Belo svetlo prozora prilagođeno manjim dimenzijama
             if (b.height > 35 && b.width > 15) {
                 graphics.fillStyle(0xffffff, 0.7);
                 let windowSize = 1.5;
@@ -132,15 +126,13 @@ this.plane = {
     update(speed) {
         this.sky.tilePositionX += speed * 0.08;
 
-        // Pomeranje oblaka preko ekrana
         this.cloudX += speed * 0.015;
         if (this.cloudX > 950) {
-            this.cloudX = -200; // Vraća se na početak kad prođe ekran
+            this.cloudX = -200;
         }
 
-        // Crtanje potpuno neprozirnog belog oblaka koji prelazi preko Sunca
         this.cloudsGraphics.clear();
-        this.cloudsGraphics.fillStyle(0xffffff, 1.0); // Alfa je 1.0 (neprozirno) da sakrije sunce
+        this.cloudsGraphics.fillStyle(0xffffff, 1.0);
         
         let cx = this.cloudX;
         let cy = 95;
@@ -149,88 +141,62 @@ this.plane = {
         this.cloudsGraphics.fillCircle(cx + 52, cy, 25);
         this.cloudsGraphics.fillRect(cx - 10, cy, 80, 25);
 
+        // PTICE
+        this.birdsGraphics.clear();
+        this.birdsGraphics.lineStyle(2, 0x111111, 1);
 
-// ===============================
-// CRTANJE PTICA
-// ===============================
+        for(let bird of this.birds){
+            bird.x += speed * 0.025;
 
-this.birdsGraphics.clear();
+            if(bird.x > 850){
+                bird.x = -50;
+            }
 
-this.birdsGraphics.lineStyle(2, 0x111111, 1);
+            let x = bird.x;
+            let y = bird.y;
+            let s = bird.size;
 
-for(let bird of this.birds){
+            this.birdsGraphics.beginPath();
+            this.birdsGraphics.moveTo(x - 12*s, y);
+            this.birdsGraphics.lineTo(x - 5*s, y - 7*s);
+            this.birdsGraphics.lineTo(x, y);
+            this.birdsGraphics.strokePath();
 
-    bird.x += speed * 0.025;
+            this.birdsGraphics.beginPath();
+            this.birdsGraphics.moveTo(x, y);
+            this.birdsGraphics.lineTo(x + 5*s, y - 7*s);
+            this.birdsGraphics.lineTo(x + 12*s, y);
+            this.birdsGraphics.strokePath();
+        }
 
-    if(bird.x > 850){
-        bird.x = -50;
-    }
+        // AVION
+        this.planeGraphics.clear();
+        this.plane.x -= speed * 0.015;
 
-    let x = bird.x;
-    let y = bird.y;
-    let s = bird.size;
+        if(this.plane.x < -100){
+            this.plane.x = 950;
+            this.plane.y = Phaser.Math.Between(60,120);
+        }
 
+        let px = this.plane.x;
+        let py = this.plane.y;
 
-    // levo krilo
-    this.birdsGraphics.beginPath();
-    this.birdsGraphics.moveTo(x - 12*s, y);
-    this.birdsGraphics.lineTo(x - 5*s, y - 7*s);
-    this.birdsGraphics.lineTo(x, y);
-    this.birdsGraphics.strokePath();
+        this.planeGraphics.fillStyle(0x222222,0.8);
+        this.planeGraphics.fillRect(px,py,35,3);
 
+        this.planeGraphics.fillTriangle(
+            px+10, py,
+            px+25, py-8,
+            px+28, py
+        );
 
-    // desno krilo
-    this.birdsGraphics.beginPath();
-    this.birdsGraphics.moveTo(x, y);
-    this.birdsGraphics.lineTo(x + 5*s, y - 7*s);
-    this.birdsGraphics.lineTo(x + 12*s, y);
-    this.birdsGraphics.strokePath();
+        this.planeGraphics.fillTriangle(
+            px+10, py+3,
+            px+25, py+10,
+            px+28, py+3
+        );
 
-}
-
-
-
-// ===============================
-// AVION U DALJINI
-// ===============================
-
-this.planeGraphics.clear();
-
-this.plane.x -= speed * 0.015;
-
-if(this.plane.x < -100){
-    this.plane.x = 950;
-    this.plane.y = Phaser.Math.Between(60,120);
-}
-
-
-let px = this.plane.x;
-let py = this.plane.y;
-
-
-// telo aviona
-this.planeGraphics.fillStyle(0x222222,0.8);
-this.planeGraphics.fillRect(px,py,35,3);
-
-
-// krila
-this.planeGraphics.fillTriangle(
-    px+10, py,
-    px+25, py-8,
-    px+28, py
-);
-
-this.planeGraphics.fillTriangle(
-    px+10, py+3,
-    px+25, py+10,
-    px+28, py+3
-);
-
-
-// rep
-this.planeGraphics.fillRect(px,py-4,8,8);
-
-
+        this.planeGraphics.fillRect(px,py-4,8,8);
 
         let speeds = [0.0025, 0.005, 0.01, 0.0175, 0.025, 0.035, 0.0475, 0.065, 0.085, 0.11];
         let colors = [
@@ -281,12 +247,12 @@ class GameScene extends Phaser.Scene {
         }
 
         if (!this.startText) {
-            this.startText = this.add.text(400, 100, "PRESS SPACE TO START", {
+            this.startText = this.add.text(400, 100, "TAP OR SPACE TO START", {
                 fontSize: "32px", fill: "#f3ba2f", fontStyle: "bold",
                 stroke: "#000", strokeThickness: 4
             }).setOrigin(0.5).setDepth(20);
         } else {
-            this.startText.setText("PRESS SPACE TO START");
+            this.startText.setText("TAP OR SPACE TO START");
         }
     }
 
@@ -324,7 +290,7 @@ class GameScene extends Phaser.Scene {
             stroke: "#000", strokeThickness: 3
         }).setDepth(20);
 
-        this.startText = this.add.text(400, 100, "PRESS SPACE TO START", {
+        this.startText = this.add.text(400, 100, "TAP OR SPACE TO START", {
             fontSize: "32px", fill: "#f3ba2f", fontStyle: "bold",
             stroke: "#000", strokeThickness: 4
         }).setOrigin(0.5).setDepth(20);
@@ -338,7 +304,8 @@ class GameScene extends Phaser.Scene {
         };
 
         if (!socket) {
-            socket = io("http://localhost:3000");
+            const backendUrl = window.location.hostname === "localhost" ? "http://localhost:3000" : undefined;
+            socket = io(backendUrl);
 
             socket.on("game-started", (data) => {
                 currentGameId = data.gameId;
@@ -368,6 +335,23 @@ class GameScene extends Phaser.Scene {
             });
         }
 
+        const handleJump = () => {
+            if (this.gameOver) {
+                this.scene.restart();
+                return;
+            }
+            if (!this.gameStarted) {
+                this.requestStart();
+                return;
+            }
+
+            if (this.playerSprite.y >= 310) {
+                this.playerSprite.y -= 15; 
+            }
+
+            socket.emit("jump");
+        };
+
         if (this.globalKeyHandler) {
             window.removeEventListener("keydown", this.globalKeyHandler);
         }
@@ -375,25 +359,15 @@ class GameScene extends Phaser.Scene {
         this.globalKeyHandler = (event) => {
             if (event.code === "Space") {
                 event.preventDefault();
-
-                if (this.gameOver) {
-                    this.scene.restart();
-                    return;
-                }
-                if (!this.gameStarted) {
-                    this.requestStart();
-                    return;
-                }
-
-                if (this.playerSprite.y >= 310) {
-                    this.playerSprite.y -= 15; 
-                }
-
-                socket.emit("jump");
+                handleJump();
             }
         };
 
         window.addEventListener("keydown", this.globalKeyHandler);
+
+        this.input.on('pointerdown', (pointer) => {
+            handleJump();
+        });
     }
 
     requestStart() {
@@ -443,7 +417,7 @@ class GameScene extends Phaser.Scene {
         this.time.delayedCall(300, () => {
             if (!this.gameOver) return;
             
-            this.gameOverText = this.add.text(400, 110, "GAME OVER\n\nPRESS SPACE", {
+            this.gameOverText = this.add.text(400, 110, "GAME OVER\n\nTAP OR SPACE", {
                 fontSize: "34px", 
                 fill: "#ff3333", 
                 align: "center", 
@@ -461,7 +435,7 @@ class GameScene extends Phaser.Scene {
     update(time, delta) {
         if (!this.gameStarted || this.gameOver) return;
 
-        this.playerSprite.y = Phaser.Math.Linear(this.playerSprite.y, this.serverPlayerY, 0.35);
+        this.playerSprite.y = Phaser.Math.Linear(this.playerSprite.y, this.serverPlayerY, 0.8 );
 
         if (this.playerSprite.y < 330) {
             this.playerSprite.rotation += 0.12;
@@ -507,8 +481,8 @@ class GameScene extends Phaser.Scene {
                 this.obstacleSpritesMap.set(obs.id, obj);
             }
 
-            obj.sprite.x = Phaser.Math.Linear(obj.sprite.x, obs.x, 0.35);
-            obj.sprite.y = Phaser.Math.Linear(obj.sprite.y, obs.y, 0.35);
+            obj.sprite.x = Phaser.Math.Linear(obj.sprite.x, obs.x, 0.8);
+            obj.sprite.y = Phaser.Math.Linear(obj.sprite.y, obs.y, 0.8);
 
             if (obj.text) {
                 obj.text.x = obj.sprite.x;
@@ -527,15 +501,21 @@ class GameScene extends Phaser.Scene {
 function startGame() {
     const config = {
         type: Phaser.AUTO,
-        parent: "game-container",
-        width: 800,
-        height: 370,
+
+        render: {
+             antialias: true,
+             pixelArt: false,
+             resolution: Math.min(window.devicePixelRatio || 1, 2)
+        },
+
         scale: {
             mode: Phaser.Scale.FIT,
+            parent: 'phaser-game',
             autoCenter: Phaser.Scale.CENTER_BOTH,
             width: 800,
             height: 370
         },
+
         roundPixels: true,
         physics: {
             default: "arcade",
@@ -544,4 +524,54 @@ function startGame() {
         scene: [GameScene]
     };
     new Phaser.Game(config);
+}
+
+
+// ==========================
+// FULLSCREEN BUTTON
+// ==========================
+
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+if (fullscreenBtn) {
+
+    fullscreenBtn.addEventListener("click", async () => {
+
+        const gameContainer = document.getElementById("game-container");
+
+        try {
+
+            if (!document.fullscreenElement) {
+
+                await gameContainer.requestFullscreen();
+
+            } else {
+
+                await document.exitFullscreen();
+
+            }
+
+        } catch (error) {
+
+            console.error("Fullscreen error:", error);
+
+        }
+
+    });
+
+
+    document.addEventListener("fullscreenchange", () => {
+
+        if (document.fullscreenElement) {
+
+            fullscreenBtn.textContent = "✕ EXIT";
+
+        } else {
+
+            fullscreenBtn.textContent = "⛶ FULLSCREEN";
+
+        }
+
+    });
+
 }
