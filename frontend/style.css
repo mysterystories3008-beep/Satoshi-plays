@@ -125,9 +125,6 @@ body {
     font-size: 16px;
 }
 
-
-
-
 .game-wrapper {
     width: 100%;
     display: flex;
@@ -135,40 +132,6 @@ body {
     align-items: center;
     padding: 40px 20px;
 }
-
-
-/*
-
-#game-container {
-    width: min(800px, 95vw);
-    aspect-ratio: 2 / 1;
-    padding: 5px;
-
-    background:
-    linear-gradient(135deg,
-    var(--bitcoin-orange),
-    #333,
-    var(--bitcoin-orange));
-
-    border-radius: 24px;
-
-    box-shadow:
-    0 0 30px rgba(247,147,26,.35),
-    0 0 80px rgba(247,147,26,.15),
-    inset 0 0 25px rgba(255,255,255,.08);
-
-    margin-bottom:30px;
-    overflow:hidden;
-
-    position:relative;
-
-    animation: none;
-}
-
-
-*/
-
-
 
 @keyframes gameGlow {
 
@@ -181,7 +144,6 @@ from {
 
 }
 
-
 to {
 
     box-shadow:
@@ -192,20 +154,6 @@ to {
 }
 
 }
-
-
-
-/*
-
-#game-container canvas {
-    width:100% !important;
-    height:100% !important;
-    display:block;
-    border-radius:16px;
-}
-
-
-*/
 
 
 /* ==========================
@@ -235,7 +183,6 @@ to {
     animation: fadeUp .8s ease;
 }
 
-
 @keyframes fadeUp {
 
     from {
@@ -243,14 +190,12 @@ to {
         transform:translateY(20px);
     }
 
-
     to {
         opacity:1;
         transform:translateY(0);
     }
 
 }
-
 
 #web3-ui {
     margin-top: 30px;
@@ -298,19 +243,19 @@ button:hover {
 
 
 /* ==========================
-      PREMIUM LEADERBOARD
+      PREMIUM LEADERBOARD (PODEŠENO)
 ========================== */
 
 #leaderboards {
-    display:flex;
-    gap:35px;
-    justify-content:center;
-    flex-wrap:wrap;
-    width:100%;
-    max-width:900px;
-    margin-top:40px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 40px auto 0 auto;
+    box-sizing: border-box;
 }
-
 
 .table-wrap {
 
@@ -331,7 +276,9 @@ button:hover {
 
     border-radius:25px;
 
-    width:380px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
 
     overflow:hidden;
 
@@ -341,7 +288,6 @@ button:hover {
 
     transition:.4s;
 }
-
 
 .table-wrap::before {
 
@@ -363,7 +309,6 @@ button:hover {
 
 }
 
-
 .table-wrap:hover {
 
     transform:translateY(-8px);
@@ -374,8 +319,6 @@ button:hover {
     0 0 50px rgba(247,147,26,.35);
 
 }
-
-
 
 .table-wrap h3 {
 
@@ -396,8 +339,6 @@ button:hover {
 
 }
 
-
-
 table {
 
     position:relative;
@@ -410,8 +351,6 @@ table {
 
 }
 
-
-
 th {
 
     color:#999;
@@ -423,8 +362,6 @@ th {
     letter-spacing:1px;
 
 }
-
-
 
 td {
 
@@ -443,14 +380,11 @@ td {
 
 }
 
-
-
 td:first-child {
 
     border-radius:12px 0 0 12px;
 
 }
-
 
 td:last-child {
 
@@ -459,12 +393,9 @@ td:last-child {
 }
 
 
-
-
 /* ======================
       TOP 3 PLAYERS
 ====================== */
-
 
 .gold-row td {
 
@@ -477,8 +408,6 @@ td:last-child {
 
 }
 
-
-
 .silver-row td {
 
     background:
@@ -489,8 +418,6 @@ td:last-child {
     );
 
 }
-
-
 
 .bronze-row td {
 
@@ -503,17 +430,12 @@ td:last-child {
 
 }
 
-
-
-/* GOLD GLOW */
-
 .gold-row {
 
 animation:
 goldPulse 2s infinite;
 
 }
-
 
 @keyframes goldPulse {
 
@@ -524,7 +446,6 @@ box-shadow:
 
 }
 
-
 50% {
 
 box-shadow:
@@ -533,11 +454,6 @@ box-shadow:
 }
 
 }
-
-
-
-/* MEDAL STYLE */
-
 
 .rank-gold,
 .rank-silver,
@@ -550,19 +466,12 @@ drop-shadow(0 0 8px currentColor);
 
 }
 
-
-
-/* NORMAL ROW */
-
-
 .normal-row:hover td {
 
 background:
 rgba(247,147,26,.12);
 
 }
-
-
 
 tr {
 
@@ -573,16 +482,12 @@ slideIn .5s ease;
 
 }
 
-
-
 tr:hover {
 
 transform:
 translateX(8px);
 
 }
-
-
 
 @keyframes slideIn {
 
@@ -603,9 +508,6 @@ transform:translateY(0);
 }
 
 }
-
-
-
 
 
 /* ==========================
@@ -704,7 +606,6 @@ footer {
 
 }
 
-
 @media(max-width:700px) {
 
     .navbar {
@@ -725,12 +626,9 @@ footer {
 
 }
 
-/* ==========================
-        CONNECT BUTTON TEXT
-========================== */
 
 /* ==========================
-        CONNECT BUTTON TEXT
+    CONNECT BUTTON TEXT
 ========================== */
 
 #connectBtn,
@@ -821,7 +719,6 @@ footer {
    GAME + LEADERBOARD LAYOUT
 ========================= */
 
-
 .game-layout {
 
     width:100%;
@@ -832,24 +729,16 @@ footer {
 
 }
 
-
-
 .side-table {
 
     width:300px;
 
 }
 
-
-
 .side-table .table-wrap {
 
     width:100%;
 }
-
-
-
-/* desktop */
 
 @media(max-width:1400px){
 
@@ -858,7 +747,6 @@ footer {
     flex-direction:column;
 
 }
-
 
 .side-table{
 
@@ -870,7 +758,7 @@ footer {
 
 
 /* =====================================
-   PREMIUM LOGO EFFECT
+    PREMIUM LOGO EFFECT
 ===================================== */
 
 .logoSplash {
@@ -893,8 +781,6 @@ footer {
     overflow: hidden;
 }
 
-
-/* svetlosni prelaz */
 .logoSplash::after {
 
     content:"";
@@ -919,8 +805,6 @@ footer {
     animation:logoShine 4s infinite;
 }
 
-
-/* pulsiranje */
 @keyframes logoPulse {
 
     0%,100% {
@@ -932,8 +816,6 @@ footer {
     }
 }
 
-
-/* lebdenje */
 @keyframes logoFloat {
 
     0%,100% {
@@ -945,8 +827,6 @@ footer {
     }
 }
 
-
-/* shimmer */
 @keyframes logoShine {
 
     0% {
@@ -963,10 +843,8 @@ footer {
 }
 
 
-
-
 /* ==========================
-   SUN HALO EFFECT
+    SUN HALO EFFECT
 ========================== */
 
 .sun {
@@ -981,7 +859,6 @@ footer {
     sunGlow 3s infinite ease-in-out;
 
 }
-
 
 .sun::before {
 
@@ -1014,8 +891,6 @@ footer {
 
 }
 
-
-
 @keyframes sunGlow {
 
 0%,100% {
@@ -1026,7 +901,6 @@ footer {
 
 }
 
-
 50% {
 
     filter:
@@ -1036,8 +910,6 @@ footer {
 }
 
 }
-
-
 
 @media(max-width:700px){
 
@@ -1052,7 +924,6 @@ footer {
 
 }
 
-
 .rules-container {
     display: flex;
     flex-direction: column;
@@ -1065,7 +936,7 @@ footer {
     gap: 8px;
     font-size: 13px;
     line-height: 1.4;
-    margin-top: 14px; /* Ovo će odvojiti svaki red/kućicu od prethodne */
+    margin-top: 14px;
 }
 
 .rule-box .bullet {
@@ -1077,17 +948,14 @@ footer {
     color: #ccc;
 }
 
-/* Boja i stil za naslove (Reward Payouts, Verification Period, Fair Play) */
 .rule-title {
-    color: #f3ba2f; /* Stavi boju koju želiš, npr. žuta kao tema */
-    margin-right: 4px; /* Razmak posle dve tačke */
+    color: #f3ba2f;
+    margin-right: 4px;
 }
 
-/* Stil za boldovane delove u tekstu (7 days, 3-day appeal period) */
 .rule-text strong {
-    color: #fff; /* Bela i podebljana slova da se istaknu */
+    color: #fff;
 }
-
 
 canvas {
     touch-action: none;
@@ -1095,10 +963,8 @@ canvas {
 }
 
 
-
-
 /* ==========================================
-   GAME CONTAINER
+    GAME CONTAINER
 ========================================== */
 
 #game-container {
@@ -1127,7 +993,7 @@ canvas {
 
 
 /* ==========================================
-   PHASER GAME
+    PHASER GAME
 ========================================== */
 
 #phaser-game {
@@ -1144,9 +1010,9 @@ canvas {
 
 #phaser-game canvas {
     display: block;
-    width: 100% !important;  /* Izmena: tera canvas da popuni širinu */
-    height: 100% !important; /* Izmena: tera canvas da popuni visinu */
-    object-fit: cover;       /* Izmena: popunjava narandžasti okvir (izbaci ako želiš 'contain') */
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover;
     margin: 0 auto;
 
     border-radius: 16px;
@@ -1156,7 +1022,7 @@ canvas {
 }
 
 /* ==========================================
-   FULLSCREEN BUTTON
+    FULLSCREEN BUTTON
 ========================================== */
 
 #fullscreenBtn {
@@ -1191,7 +1057,7 @@ canvas {
 
 
 /* ==========================================
-   FULLSCREEN
+    FULLSCREEN
 ========================================== */
 
 #game-container:fullscreen {
@@ -1241,8 +1107,8 @@ canvas {
 
 
 /* ==========================================
-   FINAL GAME VIEW - METAMASK / MOBILE
-   CELOKUPNA IGRA MORA BITI VIDLJIVA
+    FINAL GAME VIEW - METAMASK / MOBILE
+    CELOKUPNA IGRA MORA BITI VIDLJIVA
 ========================================== */
 
 #game-container {
@@ -1298,7 +1164,7 @@ canvas {
 }
 
 /* ==========================================
-   METAMASK / SMALL SCREEN
+    METAMASK / SMALL SCREEN
 ========================================== */
 
 @media (max-width: 700px) {
@@ -1310,7 +1176,6 @@ canvas {
         margin: 0 auto 15px auto;
         border-radius: 14px;
 
-        /* NEMA fiksne visine */
         height: auto;
         aspect-ratio: auto;
         max-height: none;
@@ -1349,27 +1214,23 @@ canvas {
 }
 
 
-
 /* ==========================================
-   FORSIRANJE DESKTOP PRIKAZA ZA METAMASK
-   ========================================== */
+    FORSIRANJE DESKTOP PRIKAZA ZA METAMASK
+========================================== */
 
-/* 1. Zabrani da se cela stranica skuplja ispod 1000px */
 body, html {
   min-width: 1000px !important;
   overflow-x: auto !important;
 }
 
-/* 2. Zabrani prelamanje za Rules & Chat sekciju */
 .chat-and-rules-wrapper,
-div:has(> .rules-box):has(> .chat-box) { /* Pokriva generičke div kontejnere */
+div:has(> .rules-box):has(> .chat-box) {
   display: flex !important;
   flex-direction: row !important;
   flex-wrap: nowrap !important;
   width: 100% !important;
 }
 
-/* 3. Zabrani prelamanje za tabele (Weekly Total & Best Single) */
 .leaderboards-wrapper,
 div:has(> .leaderboard-box) {
   display: flex !important;
@@ -1378,10 +1239,38 @@ div:has(> .leaderboard-box) {
   width: 100% !important;
 }
 
-/* 4. Osiguraj da obe polovine budu jednake širine */
 .rules-box, 
 .chat-box, 
 .leaderboard-box {
   width: 50% !important;
   flex: 1 1 50% !important;
+}
+
+/* ==========================================
+   STANDARD & LITE DUGMAD - ŠIRINA PO TEKSTU
+========================================== */
+
+/* Kontejner drži raspored u dve jednake kolone */
+#gameSizeWrapper {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 20px !important;
+  width: 100% !important;
+  max-width: 1000px !important;
+  margin: 0 auto 15px auto !important;
+  box-sizing: border-box !important;
+}
+
+/* Levo dugme se prislanja uz desnu ivicu svoje kolone (ka sredini) */
+#btnNormalGame {
+  width: auto !important;
+  justify-self: end !important;
+  padding: 12px 24px !important;
+}
+
+/* Desno dugme se prislanja uz levu ivicu svoje kolone (ka sredini) */
+#btnLowGame {
+  width: auto !important;
+  justify-self: start !important;
+  padding: 12px 24px !important;
 }
