@@ -563,35 +563,35 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
             }
         };
 
-        // ===============================
-        // SOCKET
-        // ===============================
+       // ===============================
+// SOCKET
+// ===============================
 
-        if (!socket) {
+if (!socket) {
 
-            const backendUrl =
-                window.location.hostname === "localhost"
-                    ? "http://localhost:3000"
-                    : undefined;
+    const backendUrl =
+        window.location.hostname === "localhost"
+            ? "http://localhost:3000"
+            : "https://satoshi-plays.onrender.com"; // <--- Ovde upisujes svoj Render URL
 
-            socket = io(backendUrl);
+    socket = io(backendUrl);
 
-            socket.on(
-                "game-started",
-                (data) => {
+    socket.on(
+        "game-started",
+        (data) => {
 
-                    currentGameId = data.gameId;
+            currentGameId = data.gameId;
 
-                    this.speed = data.speed;
+            this.speed = data.speed;
 
-                    this.gameStarted = true;
-                    this.gameOver = false;
+            this.gameStarted = true;
+            this.gameOver = false;
 
-                    if (this.startText) {
-                        this.startText.destroy();
-                    }
-                }
-            );
+            if (this.startText) {
+                this.startText.destroy();
+            }
+        }
+    );
 
             socket.on(
                 "state",
