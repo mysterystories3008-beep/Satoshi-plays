@@ -1144,8 +1144,9 @@ canvas {
 
 #phaser-game canvas {
     display: block;
-    max-width: 100%;
-    height: auto;
+    width: 100% !important;  /* Izmena: tera canvas da popuni širinu */
+    height: 100% !important; /* Izmena: tera canvas da popuni visinu */
+    object-fit: cover;       /* Izmena: popunjava narandžasti okvir (izbaci ako želiš 'contain') */
     margin: 0 auto;
 
     border-radius: 16px;
@@ -1153,7 +1154,6 @@ canvas {
     touch-action: none;
     user-select: none;
 }
-
 
 /* ==========================================
    FULLSCREEN BUTTON
@@ -1251,17 +1251,23 @@ canvas {
         max-width: 100%;
         padding: 3px;
         border-radius: 14px;
+
+        /* PODEŠAVANJE VISINE OKVIRA: */
+        /* Odnos stranica 2.2 / 1 (širok a nizak okvir) */
+        aspect-ratio: 2.2 / 1; 
+        max-height: 250px; /* Možeš smanjiti npr. na 200px ako želiš još niži okvir */
     }
 
     #phaser-game {
         width: 100%;
+        height: 100%;
         max-width: 100%;
     }
 
     #phaser-game canvas {
-        max-width: 100%;
-        width: auto !important;
-        height: auto !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain; /* Igrica se uklapa unutar nižeg okvira bez izobličenja */
         border-radius: 10px;
     }
 
