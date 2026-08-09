@@ -1097,6 +1097,115 @@ canvas {
 
 
 
+
+
+
+
+
+
+/* POPRAVKA ZA MOBILNI PRIKAZ IGRICE */
+#game-container {
+    width: 100% !important;
+    max-width: 650px !important;
+    margin: 0 auto 20px auto !important;
+    padding: 5px !important;
+    box-sizing: border-box !important;
+
+    background: linear-gradient(135deg, var(--bitcoin-orange), #333, var(--bitcoin-orange)) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 0 30px rgba(247,147,26,.35), 0 0 80px rgba(247,147,26,.15) !important;
+
+    overflow: hidden !important;
+}
+
+#game-container canvas {
+    width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    border-radius: 16px !important;
+}
+
+/* ==========================
+   FULLSCREEN GAME
+========================== */
+
+#game-container {
+    position: relative;
+}
+
+/* Fullscreen dugme */
+#fullscreenBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    z-index: 1000;
+
+    padding: 8px 12px;
+
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 8px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow: none;
+
+    text-transform: uppercase;
+}
+
+#fullscreenBtn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    transform: none;
+}
+
+/* ==========================================
+   FINAL FULLSCREEN
+   ========================================== */
+
+#game-container:fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    background: #000 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    overflow: hidden !important;
+}
+
+#game-container:fullscreen #phaser-game {
+    width: 100vw !important;
+    height: 100vh !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    overflow: hidden !important;
+}
+
+#game-container:fullscreen canvas {
+    width: 100% !important;
+    height: 100% !important;
+
+    max-width: none !important;
+    max-height: none !important;
+
+    display: block !important;
+}
+
 /* ==========================================
    GAME CONTAINER
 ========================================== */
