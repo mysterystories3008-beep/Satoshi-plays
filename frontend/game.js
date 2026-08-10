@@ -2,6 +2,56 @@
 GAME.JS - 1200x555 RESOLUTION
 ========================================================== */
 
+
+// ==========================================
+// LIVE STATUS BAR
+// ==========================================
+
+async function updateLiveStatus() {
+    try {
+        const response = await fetch("/api/status");
+
+        if (!response.ok) {
+            throw new Error("Status request failed");
+        }
+
+        const data = await response.json();
+
+        const players = document.getElementById("livePlayersCount");
+        const tooltipPlayers = document.getElementById("tooltipPlayers");
+        const tooltipGames = document.getElementById("tooltipGames");
+
+        if (players) {
+            players.textContent = data.onlinePlayers;
+        }
+
+        if (tooltipPlayers) {
+            tooltipPlayers.textContent = data.onlinePlayers;
+        }
+
+        if (tooltipGames) {
+            tooltipGames.textContent = data.activeGames;
+        }
+
+    } catch (error) {
+        console.error("Live status error:", error);
+
+        const players = document.getElementById("livePlayersCount");
+
+        if (players) {
+            players.textContent = "—";
+        }
+    }
+}
+
+// Prvo učitavanje
+updateLiveStatus();
+
+// Osvežavanje svakih 5 sekundi
+setInterval(updateLiveStatus, 5000);
+
+
+
 let highScore = localStorage.getItem("highScore") || 0;
 let socket = null;
 let currentGameId = null;
@@ -569,13 +619,21 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 
 if (!socket) {
 
-    const backendUrl =
-        window.location.hostname === "localhost"
-            ? "http://localhost:3000"
-            : "https://satoshi-plays.onrender.com"; // <--- Ovde upisujes svoj Render URL
+   const backendUrl =
+    window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : window.location.origin;
 
-    socket = io(backendUrl);
+socket = io(backendUrl);
+console.log("SOCKET CREATED:", socket.id);
 
+socket.on("connect", () => {
+    console.log("SOCKET CONNECTED:", socket.id);
+});
+
+socket.on("connect_error", (error) => {
+    console.error("SOCKET CONNECT ERROR:", error);
+});
     socket.on(
         "game-started",
         (data) => {
@@ -641,6 +699,144 @@ this.serverObstacles = state.obstacles.map(obs => ({
                 }
             );
         }
+
+        // ==========================================
+// GLOBAL CHAT
+// ==========================================
+
+const chatInput = document.getElementById("chatInputMsg");
+const chatSendButton = document.getElementById("btnSendChat");
+const chatMessages = document.getElementById("chatMessagesBox");
+
+function shortenWallet(wallet) {
+    if (!wallet) return "Unknown";
+
+    if (wallet.length <= 12) {
+        return wallet;
+    }
+
+    return wallet.substring(0, 6) +
+        "..." +
+        wallet.substring(wallet.length - 4);
+}
+
+function addChatMessage(wallet, message) {
+
+    if (!chatMessages) {
+        console.error("CHAT BOX NOT FOUND!");
+        return;
+    }
+
+    console.log("ADDING CHAT MESSAGE TO DOM:", wallet, message);
+
+    const messageRow = document.createElement("div");
+    messageRow.className = "chat-msg";
+
+    const author = document.createElement("span");
+    author.className = "author";
+    author.textContent = "Player " + shortenWallet(wallet) + ":";
+
+    const text = document.createElement("span");
+    text.className = "text";
+    text.textContent = " " + message;
+
+    messageRow.appendChild(author);
+    messageRow.appendChild(text);
+
+    chatMessages.appendChild(messageRow);
+
+    console.log(
+        "CHAT BOX CHILDREN:",
+        chatMessages.children.length
+    );
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+
+// ==========================================
+// PRIMANJE PORUKA OD SERVERA
+// ==========================================
+
+socket.on("chat-message", (data) => {
+console.log("CHAT MESSAGE RECEIVED IN BROWSER:", data);
+    if (!data) return;
+
+    addChatMessage(
+        data.wallet,
+        data.message
+    );
+});
+
+
+// ==========================================
+// SLANJE PORUKE
+// ==========================================
+
+function sendChatMessage() {
+console.log("=== SEND CHAT START ===");
+console.log("socket:", socket);
+console.log("socket.id:", socket?.id);
+console.log("socket.connected:", socket?.connected);
+    if (!chatInput) return;
+
+    const message =
+        chatInput.value.trim();
+
+    if (!message) return;
+
+    const wallet =
+        localStorage.getItem("userWallet") ||
+        "Guest";
+    console.log("CHAT SEND:", wallet, message);
+    console.log("CHAT SOCKET STATUS:", socket?.connected);
+console.log("CHAT SOCKET ID:", socket?.id);
+
+
+
+    socket.emit(
+        "chat-message",
+        {
+            wallet: wallet,
+            message: message
+        }
+    );
+
+    chatInput.value = "";
+}
+
+
+// SEND DUGME
+if (chatSendButton) {
+
+    chatSendButton.addEventListener(
+        "click",
+        sendChatMessage
+    );
+}
+
+
+// ENTER ZA SLANJE
+if (chatInput) {
+
+    chatInput.addEventListener(
+        "keydown",
+        (event) => {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
+                sendChatMessage();
+            }
+        }
+    );
+}
+
+
+
+
+
 
         // ===============================
         // JUMP
