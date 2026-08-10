@@ -88,7 +88,7 @@ const PLAYER_X = 120;
 const MAX_GAME_MS = 180000; 
 
 const games = new Map();
-
+const onlinePlayers = new Set();
 function createGameState(wallet, gameId) {
     return {
         gameId,
@@ -248,6 +248,8 @@ function getPublicState(state) {
 // ==========================================
 
 io.on("connection", (socket) => {
+    onlinePlayers.add(socket.id);
+
     console.log("Klijent povezan:", socket.id);
 
     socket.on("start-game", (data) => {
@@ -314,7 +316,9 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => {
-        const state = games.get(socket.id);
+    onlinePlayers.delete(socket.id);
+
+    const state = games.get(socket.id);
         if (state) {
             clearInterval(state.interval);
             games.delete(socket.id);
