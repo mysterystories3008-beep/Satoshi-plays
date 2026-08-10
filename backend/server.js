@@ -436,14 +436,15 @@ app.get("/api/status", (req, res) => {
     const activePlayers = games.size;
 
     res.json({
-        onlinePlayers: activePlayers,
-        activeGames: activePlayers,
+        onlinePlayers: onlinePlayers.size,
+        activeGames: games.size,
         network: "BNB Smart Chain",
         chainId: 56,
         competition: "Weekly Arena",
         competitionStatus: "LIVE",
         serverStatus: "ONLINE"
     });
+
 });
 
 
