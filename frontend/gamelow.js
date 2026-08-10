@@ -3,6 +3,112 @@
    GAMELOW.JS - OPTIMIZOVANO SA CLIENT-SIDE PREDICTION & MOBILE TOUCH
 ========================================================== */
 
+
+async function updateLiveStatus() {
+    try {
+        const response = await fetch("/api/status");
+
+        if (!response.ok) {
+            throw new Error("Status request failed");
+        }
+
+        const data = await response.json();
+
+        // ==========================
+        // LIVE PLAYERS
+        // ==========================
+
+        const players = document.getElementById("livePlayersCount");
+        const tooltipPlayers = document.getElementById("tooltipPlayers");
+        const tooltipGames = document.getElementById("tooltipGames");
+
+        if (players) {
+            players.textContent = data.onlinePlayers;
+        }
+
+        if (tooltipPlayers) {
+            tooltipPlayers.textContent = data.onlinePlayers;
+        }
+
+        if (tooltipGames) {
+            tooltipGames.textContent = data.activeGames;
+        }
+
+
+        // ==========================
+        // BNB NETWORK
+        // ==========================
+
+        const statusNetwork = document.getElementById("statusNetwork");
+        const statusChainId = document.getElementById("statusChainId");
+        const statusConnection = document.getElementById("statusConnection");
+
+        if (statusNetwork && data.network) {
+            statusNetwork.textContent = data.network;
+        }
+
+        if (statusChainId && data.chainId) {
+            statusChainId.textContent = data.chainId;
+        }
+
+        if (statusConnection) {
+            statusConnection.textContent = "Connected";
+        }
+
+
+        // ==========================
+        // WEEKLY COMPETITION
+        // ==========================
+
+        const statusLeaderboard =
+            document.getElementById("statusLeaderboard");
+
+        const statusCompetition =
+            document.getElementById("statusCompetition");
+
+        if (statusLeaderboard) {
+            statusLeaderboard.textContent = "Top 10";
+        }
+
+        if (statusCompetition) {
+            statusCompetition.textContent = "ACTIVE";
+        }
+
+    } catch (error) {
+
+        console.error("Live status error:", error);
+
+        const players =
+            document.getElementById("livePlayersCount");
+
+        const tooltipPlayers =
+            document.getElementById("tooltipPlayers");
+
+        const tooltipGames =
+            document.getElementById("tooltipGames");
+
+        if (players) {
+            players.textContent = "—";
+        }
+
+        if (tooltipPlayers) {
+            tooltipPlayers.textContent = "—";
+        }
+
+        if (tooltipGames) {
+            tooltipGames.textContent = "—";
+        }
+    }
+}
+
+// Prvo učitavanje
+updateLiveStatus();
+
+// Osvežavanje svakih 5 sekundi
+setInterval(updateLiveStatus, 5000);
+
+
+
 let highScore = localStorage.getItem("highScore") || 0;
 let socket = null;
 let currentGameId = null;
@@ -86,11 +192,11 @@ class GameScene extends Phaser.Scene {
         if (!socket) {
 
     const backendUrl =
-        window.location.hostname === "localhost"
-            ? "http://localhost:3000"
-            : "https://satoshi-plays.onrender.com"; // <--- Ovde upisujes svoj Render URL
+    window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : window.location.origin;
 
-    socket = io(backendUrl);
+socket = io(backendUrl);
 
 
             socket.on("game-started", (data) => {
