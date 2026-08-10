@@ -756,42 +756,102 @@
 <div class="status-bar-epic">
 
     <!-- LIVE PLAYERS -->
-    <div class="status-module">
-        <div class="status-main">
-            <span class="live-indicator"></span>
+<div class="status-module">
+    <div class="status-main">
+        <span class="live-indicator"></span>
 
-            <div class="status-text">
-                <span class="status-label">LIVE</span>
-                <strong>PLAYERS</strong>
-            </div>
-
-            <span class="status-value" id="livePlayersCount">—</span>
+        <div class="status-text">
+            <span class="status-label">LIVE</span>
+            <strong>PLAYERS</strong>
         </div>
 
-        <div class="status-tooltip">
-            <div class="tooltip-title">
-                <span class="tooltip-dot"></span>
-                LIVE ACTIVITY
-            </div>
-
-            <div class="tooltip-row">
-                <span>Players Online</span>
-                <strong id="tooltipPlayers">—</strong>
-            </div>
-
-            <div class="tooltip-row">
-                <span>Game Sessions</span>
-                <strong id="tooltipGames">—</strong>
-            </div>
-
-            <div class="tooltip-status">
-                ● NETWORK ACTIVE
-            </div>
-        </div>
+        <span class="status-value" id="livePlayersCount">—</span>
     </div>
 
+    <div class="status-tooltip">
+        <div class="tooltip-title">
+            <span class="tooltip-dot"></span>
+            LIVE ACTIVITY
+        </div>
 
+        <div class="tooltip-row">
+            <span>Players Online</span>
+            <strong id="tooltipPlayers">—</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span> Active Games</span>
+            <strong id="tooltipGames">—</strong>
+        </div>
+
+        <div class="tooltip-status">
+            ● NETWORK ACTIVE
+        </div>
+    </div>
+</div>
+    
     <div class="status-separator"></div>
+    
+    
+    <!-- GAME STATISTICS -->
+<div class="status-module">
+
+    <div class="status-main">
+
+        <span class="network-icon">◈</span>
+
+        <div class="status-text">
+            <span class="status-label">GAME</span>
+            <strong>STATISTICS</strong>
+        </div>
+
+        <span class="network-online">LIVE</span>
+
+    </div>
+
+    <div class="status-tooltip">
+
+        <div class="tooltip-title">
+            <span class="tooltip-dot"></span>
+            GAME STATISTICS
+        </div>
+
+        <div class="tooltip-title" style="margin-top:10px;">
+            👤 MY ACTIVITY
+        </div>
+
+        <div class="tooltip-row">
+            <span>Games Today</span>
+            <strong id="myGamesToday">—</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Games This Week</span>
+            <strong id="myGamesWeek">—</strong>
+        </div>
+
+        <div class="tooltip-title" style="margin-top:10px;">
+            🌐 GLOBAL ACTIVITY
+        </div>
+
+        <div class="tooltip-row">
+            <span>Games Today</span>
+            <strong id="allGamesToday">—</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Games This Week</span>
+            <strong id="allGamesWeek">—</strong>
+        </div>
+
+        <div class="tooltip-status">
+            ● LIVE STATISTICS
+        </div>
+
+    </div>
+</div>
+
+<div class="status-separator"></div>
 
 
     <!-- BNB NETWORK -->
