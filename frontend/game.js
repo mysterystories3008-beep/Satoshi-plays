@@ -8,8 +8,13 @@ GAME.JS - 1200x555 RESOLUTION
 // ==========================================
 
 async function updateLiveStatus() {
-    try {
-        const response = await fetch("/api/status");
+   try {
+        // Postavi tačan URL tvog backend-a na Renderu
+        const backendUrl = window.location.hostname === "localhost"
+            ? "http://localhost:3000"
+            : "https://TVOJ-BACKEND-IME.onrender.com"; // Ovde unesi pravi URL svog backend servisa sa Render-a
+
+        const response = await fetch(`${backendUrl}/api/status`);
 
         if (!response.ok) {
             throw new Error("Status request failed");
