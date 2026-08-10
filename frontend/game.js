@@ -12,7 +12,7 @@ async function updateLiveStatus() {
         // Postavi tačan URL tvog backend-a na Renderu
         const backendUrl = window.location.hostname === "localhost"
             ? "http://localhost:3000"
-            : https://satoshi-plays.onrender.com; // Ovde unesi pravi URL svog backend servisa sa Render-a
+            : https://"satoshi-plays.onrender.com"; // Ovde unesi pravi URL svog backend servisa sa Render-a
 
         const response = await fetch(`${backendUrl}/api/status`);
 
@@ -625,7 +625,7 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 if (!socket) {
             const backendUrl = window.location.hostname === "localhost"
                 ? "http://localhost:3000"
-                : "https://TVOJ-BACKEND-IME.onrender.com"; // Isti URL tvog backend-a
+                : "https://satoshi-plays.onrender.com"; // Isti URL tvog backend-a
 
             socket = io(backendUrl, {
                 transports: ["websocket", "polling"],
