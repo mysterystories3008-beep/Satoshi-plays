@@ -249,7 +249,7 @@ function getPublicState(state) {
 
 io.on("connection", (socket) => {
     console.log("Klijent povezan:", socket.id);
-
+console.log("SOCKET CONNECTED:", socket.id, socket.handshake.headers.origin);
     socket.on("start-game", (data) => {
         const wallet = data?.wallet;
         const signature = data?.signature;
@@ -312,6 +312,48 @@ io.on("connection", (socket) => {
             p.onGround = false;
         }
     });
+
+// ==========================================
+// GLOBAL CHAT
+// ==========================================
+
+socket.on("chat-message", (data) => {
+
+    console.log("CHAT EVENT RECEIVED:", data);
+
+    const wallet = data?.wallet;
+    const message = data?.message;
+
+    if (!wallet || !message) {
+        console.log("CHAT REJECTED: missing wallet or message");
+        return;
+    }
+
+    const cleanMessage = String(message).trim();
+
+    if (!cleanMessage) {
+        console.log("CHAT REJECTED: empty message");
+        return;
+    }
+
+    if (cleanMessage.length > 120) {
+        console.log("CHAT REJECTED: message too long");
+        return;
+    }
+
+    const chatData = {
+        wallet: wallet,
+        message: cleanMessage,
+        timestamp: Date.now()
+    };
+
+    console.log("CHAT BROADCAST:", chatData);
+
+    io.emit("chat-message", chatData);
+});
+
+
+
 
     socket.on("disconnect", () => {
         const state = games.get(socket.id);
@@ -423,6 +465,27 @@ app.get("/get-scores/:type", (req, res) => {
     const file = req.params.type === "weekly" ? WEEKLY_SCORE_FILE : DAILY_SCORE_FILE;
     res.json(readFile(file));
 });
+
+// ==========================================
+// LIVE SERVER STATUS
+// ==========================================
+
+app.get("/api/status", (req, res) => {
+    const activePlayers = games.size;
+
+    res.json({
+        onlinePlayers: activePlayers,
+        activeGames: activePlayers,
+        network: "BNB Smart Chain",
+        chainId: 56,
+        competition: "Weekly Arena",
+        competitionStatus: "LIVE",
+        serverStatus: "ONLINE"
+    });
+});
+
+
+
 
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/index.html"));
