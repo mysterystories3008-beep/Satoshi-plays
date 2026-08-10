@@ -1417,11 +1417,11 @@ MODULE
 .status-main {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 7px;
 
     height: 100%;
 
-    padding: 0 20px;
+    padding: 0 11px;
 
     transition: .2s ease;
 }
