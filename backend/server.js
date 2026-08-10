@@ -69,6 +69,7 @@ function updateWeeklyAccumulatedTop10(scoreList, newEntry) {
         scoreList[i].gameId = newEntry.gameId;
         scoreList[i].timestamp = newEntry.timestamp;
         scoreList[i].signature = newEntry.signature;
+        scoreList[i].verified = newEntry.verified;
     } else {
         scoreList.push({ ...newEntry });
     }
@@ -375,14 +376,53 @@ function finishGame(socket, state, signature) {
         return;
     }
 
-    try {
-        const recoveredAddress = ethers.verifyMessage(`Login to Satoshi Plays: ${state.wallet}`, signature);
-        if (recoveredAddress.toLowerCase() !== state.wallet.toLowerCase()) {
-            throw new Error("Potpis ne odgovara adresi novčanika!");
-        }
-    } catch (err) {
-        console.log("[SECURITY WARNING] Upozorenje na potpis (dozvoljavamo upis):", err.message);
+    let verified = true;
+
+try {
+    const recoveredAddress = ethers.verifyMessage(
+        `Login to Satoshi Plays: ${state.wallet}`,
+        signature
+    );
+
+    if (
+        recoveredAddress.toLowerCase() !==
+        state.wallet.toLowerCase()
+    ) {
+        throw new Error("Potpis ne odgovara adresi novčanika!");
     }
+
+} catch (err) {
+
+    verified = false;
+
+    console.log(
+        "[SECURITY WARNING] Nevažeći potpis:",
+        err.message
+    );
+}
+
+if (!verified) {
+    session.active = false;
+    session.score = finalScore;
+    session.endTime = endTime;
+    session.timestamp = endTime;
+    session.signature = signature;
+    session.duration = duration;
+    session.verified = false;
+
+    saveFile(SESSION_FILE, sessions);
+
+    socket.emit("game-over", {
+        success: false,
+        verified: false,
+        score: finalScore,
+        message: "Skor nije verifikovan i nije dodat na leaderboard."
+    });
+
+    games.delete(socket.id);
+    return;
+}
+
 
     session.active = false;
     session.score = finalScore;
@@ -390,6 +430,7 @@ function finishGame(socket, state, signature) {
     session.timestamp = endTime;
     session.signature = signature;
     session.duration = duration;
+    session.verified = verified;
     saveFile(SESSION_FILE, sessions);
 
     const scoreEntry = {
@@ -401,7 +442,8 @@ function finishGame(socket, state, signature) {
         score: finalScore,
         timestamp: endTime,
         signature,
-        duration
+        duration,
+        verified
     };
 
     let daily = readFile(DAILY_SCORE_FILE);
@@ -412,7 +454,9 @@ function finishGame(socket, state, signature) {
     updateWeeklyAccumulatedTop10(weekly, scoreEntry);
     saveFile(WEEKLY_SCORE_FILE, weekly);
 
-    console.log(`[SCORE SAVED & VERIFIED] ${state.wallet} | Score: ${finalScore}`);
+    console.log(
+    `[SCORE SAVED] ${state.wallet} | Score: ${finalScore} | Verified: ${verified}`
+);
 
     socket.emit("game-over", {
         success: true,
