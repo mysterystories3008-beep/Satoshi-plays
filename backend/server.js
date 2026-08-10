@@ -249,7 +249,7 @@ function getPublicState(state) {
 
 io.on("connection", (socket) => {
     console.log("Klijent povezan:", socket.id);
-console.log("SOCKET CONNECTED:", socket.id, socket.handshake.headers.origin);
+
     socket.on("start-game", (data) => {
         const wallet = data?.wallet;
         const signature = data?.signature;
@@ -312,48 +312,6 @@ console.log("SOCKET CONNECTED:", socket.id, socket.handshake.headers.origin);
             p.onGround = false;
         }
     });
-
-// ==========================================
-// GLOBAL CHAT
-// ==========================================
-
-socket.on("chat-message", (data) => {
-
-    console.log("CHAT EVENT RECEIVED:", data);
-
-    const wallet = data?.wallet;
-    const message = data?.message;
-
-    if (!wallet || !message) {
-        console.log("CHAT REJECTED: missing wallet or message");
-        return;
-    }
-
-    const cleanMessage = String(message).trim();
-
-    if (!cleanMessage) {
-        console.log("CHAT REJECTED: empty message");
-        return;
-    }
-
-    if (cleanMessage.length > 120) {
-        console.log("CHAT REJECTED: message too long");
-        return;
-    }
-
-    const chatData = {
-        wallet: wallet,
-        message: cleanMessage,
-        timestamp: Date.now()
-    };
-
-    console.log("CHAT BROADCAST:", chatData);
-
-    io.emit("chat-message", chatData);
-});
-
-
-
 
     socket.on("disconnect", () => {
         const state = games.get(socket.id);
