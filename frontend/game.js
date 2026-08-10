@@ -8,11 +8,11 @@ GAME.JS - 1200x555 RESOLUTION
 // ==========================================
 
 async function updateLiveStatus() {
-   try {
-        // Postavi tačan URL tvog backend-a na Renderu
-        const backendUrl = window.location.hostname === "localhost"
-            ? "http://localhost:3000"
-            : https://"satoshi-plays.onrender.com"; // Ovde unesi pravi URL svog backend servisa sa Render-a
+    try {
+        const backendUrl =
+            window.location.hostname === "localhost"
+                ? "http://localhost:3000"
+                : "https://satoshi-plays.onrender.com";
 
         const response = await fetch(`${backendUrl}/api/status`);
 
