@@ -623,13 +623,14 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 // ===============================
 
 if (!socket) {
+            const backendUrl = window.location.hostname === "localhost"
+                ? "http://localhost:3000"
+                : "https://TVOJ-BACKEND-IME.onrender.com"; // Isti URL tvog backend-a
 
-   const backendUrl =
-    window.location.hostname === "localhost"
-        ? "http://localhost:3000"
-        : window.location.origin;
-
-socket = io(backendUrl);
+            socket = io(backendUrl, {
+                transports: ["websocket", "polling"],
+                secure: true
+            });
 
     socket.on(
         "game-started",
