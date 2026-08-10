@@ -645,11 +645,26 @@
         </div>
 
         <div class="nav-right">
-            <a href="https://bscscan.com/token/TVOJA_ADRESA" target="_blank" class="btn-social">BSCScan</a>
-            <a href="#" target="_blank" class="btn-social">Telegram</a>
-            <a href="#" target="_blank" class="btn-social">Twitter</a>
-            <a href="#" class="btn-social">YouTube</a>
-        </div>
+    <a href="https://bscscan.com/token/TVOJA_ADRESA" target="_blank" class="nav-link">
+        <span class="nav-icon">◈</span>
+        <span>BSCScan</span>
+    </a>
+
+    <a href="#" target="_blank" class="nav-link">
+        <span class="nav-icon">✈</span>
+        <span>Telegram</span>
+    </a>
+
+    <a href="#" target="_blank" class="nav-link">
+        <span class="nav-icon">𝕏</span>
+        <span>Community</span>
+    </a>
+
+    <a href="#" class="nav-link">
+        <span class="nav-icon">▶</span>
+        <span>YouTube</span>
+    </a>
+</div>
     </nav>
 </header>
 
@@ -734,12 +749,148 @@
 </div>
     </div>
 
-    <!-- STYLISH STATUS BAR -->
-    <div class="status-bar-epic">
-        <span>🔥 Live Players</span>
-        <span>⚡ BSC Network</span>
-        <span>🏆 Weekly Competition</span>
+    <!-- =========================================================
+     PREMIUM LIVE STATUS BAR
+     ========================================================= -->
+
+<div class="status-bar-epic">
+
+    <!-- LIVE PLAYERS -->
+    <div class="status-module">
+        <div class="status-main">
+            <span class="live-indicator"></span>
+
+            <div class="status-text">
+                <span class="status-label">LIVE</span>
+                <strong>PLAYERS</strong>
+            </div>
+
+            <span class="status-value" id="livePlayersCount">—</span>
+        </div>
+
+        <div class="status-tooltip">
+            <div class="tooltip-title">
+                <span class="tooltip-dot"></span>
+                LIVE ACTIVITY
+            </div>
+
+            <div class="tooltip-row">
+                <span>Players Online</span>
+                <strong id="tooltipPlayers">—</strong>
+            </div>
+
+            <div class="tooltip-row">
+                <span>Game Sessions</span>
+                <strong id="tooltipGames">—</strong>
+            </div>
+
+            <div class="tooltip-status">
+                ● NETWORK ACTIVE
+            </div>
+        </div>
     </div>
+
+
+    <div class="status-separator"></div>
+
+
+    <!-- BNB NETWORK -->
+    <div class="status-module">
+
+        <div class="status-main">
+            <span class="network-icon">◆</span>
+
+            <div class="status-text">
+                <span class="status-label">NETWORK</span>
+                <strong>BNB CHAIN</strong>
+            </div>
+
+            <span class="network-online">ONLINE</span>
+        </div>
+
+        <div class="status-tooltip">
+            <div class="tooltip-title">
+                <span class="network-dot"></span>
+                NETWORK STATUS
+            </div>
+
+            <div class="tooltip-row">
+                <span>Network</span>
+                <strong id="statusNetwork">BNB Smart Chain</strong>
+            </div>
+
+            <div class="tooltip-row">
+                <span>Chain ID</span>
+                <strong id="statusChainId">56</strong>
+            </div>
+
+            <div class="tooltip-row">
+                <span>Connection</span>
+                <strong id="statusConnection" class="green-text">Connected</strong>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="status-separator"></div>
+
+
+    <!-- WEEKLY COMPETITION -->
+<div class="status-module">
+
+    <div class="status-main">
+        <span class="trophy-icon">♛</span>
+
+        <div class="status-text">
+            <span class="status-label">CURRENT</span>
+            <strong>WEEKLY ARENA</strong>
+        </div>
+
+        <span class="competition-live" id="competitionLive">LIVE</span>
+    </div>
+
+    <div class="status-tooltip">
+
+        <div class="tooltip-title">
+            <span class="competition-dot"></span>
+            WEEKLY COMPETITION
+        </div>
+
+        <div class="tooltip-row">
+            <span>Weekly Total Score</span>
+            <strong id="statusWeeklyLeaderboard">Top 10</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Best Single Run</span>
+            <strong id="statusBestLeaderboard">Top 10</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Status</span>
+            <strong id="statusCompetition" class="orange-text">LIVE</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Rewards</span>
+            <strong>$SPLAY</strong>
+        </div>
+
+        <div class="tooltip-status orange-status">
+            ♛ COMPETE FOR THE TOP
+        </div>
+
+    </div>
+</div>
+
+
+    <!-- GLOBAL STATUS -->
+    <div class="global-status">
+        <span class="global-pulse"></span>
+        SYSTEM ONLINE
+    </div>
+
+</div>
 
     <!-- CENTRAL HUB: RULES, REWARDS & LIVE CHAT -->
     <div class="central-info-hub">
