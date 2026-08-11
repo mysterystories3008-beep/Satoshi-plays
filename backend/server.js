@@ -319,7 +319,7 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => {
     onlinePlayers.delete(socket.id);
 
-    const state = games.get(socket.id);
+        const state = games.get(socket.id);
         if (state) {
             clearInterval(state.interval);
             games.delete(socket.id);
@@ -378,7 +378,7 @@ function finishGame(socket, state, signature) {
 
     let verified = true;
 
-try {
+    try {
     const recoveredAddress = ethers.verifyMessage(
         `Login to Satoshi Plays: ${state.wallet}`,
         signature
@@ -388,10 +388,10 @@ try {
         recoveredAddress.toLowerCase() !==
         state.wallet.toLowerCase()
     ) {
-        throw new Error("Potpis ne odgovara adresi novčanika!");
-    }
+            throw new Error("Potpis ne odgovara adresi novčanika!");
+        }
 
-} catch (err) {
+    } catch (err) {
 
     verified = false;
 
