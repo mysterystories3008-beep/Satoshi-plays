@@ -96,7 +96,7 @@ function createGameState(wallet, gameId) {
         alive: true,
         started: false,
         score: 0,
-        speed: 8,           
+        speed: 8,          
         startTime: Date.now(),
         player: {
             x: PLAYER_X,
@@ -316,9 +316,9 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => {
-    onlinePlayers.delete(socket.id);
+        onlinePlayers.delete(socket.id);
 
-    const state = games.get(socket.id);
+        const state = games.get(socket.id);
         if (state) {
             clearInterval(state.interval);
             games.delete(socket.id);
@@ -375,13 +375,29 @@ function finishGame(socket, state, signature) {
         return;
     }
 
+    let verified = true;
+
     try {
-        const recoveredAddress = ethers.verifyMessage(`Login to Satoshi Plays: ${state.wallet}`, signature);
-        if (recoveredAddress.toLowerCase() !== state.wallet.toLowerCase()) {
+        const recoveredAddress = ethers.verifyMessage(
+            `Login to Satoshi Plays: ${state.wallet}`,
+            signature
+        );
+
+    if (
+        recoveredAddress.toLowerCase() !==
+        state.wallet.toLowerCase()
+    ) {
             throw new Error("Potpis ne odgovara adresi novčanika!");
         }
+
     } catch (err) {
-        console.log("[SECURITY WARNING] Upozorenje na potpis (dozvoljavamo upis):", err.message);
+
+        verified = false;
+
+    console.log(
+        "[SECURITY WARNING] Nevažeći potpis:",
+        err.message
+    );
     }
 
     session.active = false;
@@ -390,6 +406,7 @@ function finishGame(socket, state, signature) {
     session.timestamp = endTime;
     session.signature = signature;
     session.duration = duration;
+    session.verified = verified;
     saveFile(SESSION_FILE, sessions);
 
     const scoreEntry = {
@@ -401,7 +418,8 @@ function finishGame(socket, state, signature) {
         score: finalScore,
         timestamp: endTime,
         signature,
-        duration
+        duration,
+        verified
     };
 
     let daily = readFile(DAILY_SCORE_FILE);
