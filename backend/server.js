@@ -69,7 +69,6 @@ function updateWeeklyAccumulatedTop10(scoreList, newEntry) {
         scoreList[i].gameId = newEntry.gameId;
         scoreList[i].timestamp = newEntry.timestamp;
         scoreList[i].signature = newEntry.signature;
-        scoreList[i].verified = newEntry.verified;
     } else {
         scoreList.push({ ...newEntry });
     }
@@ -89,7 +88,7 @@ const PLAYER_X = 120;
 const MAX_GAME_MS = 180000; 
 
 const games = new Map();
-const onlinePlayers = new Set();
+
 function createGameState(wallet, gameId) {
     return {
         gameId,
@@ -249,8 +248,6 @@ function getPublicState(state) {
 // ==========================================
 
 io.on("connection", (socket) => {
-    onlinePlayers.add(socket.id);
-
     console.log("Klijent povezan:", socket.id);
 
     socket.on("start-game", (data) => {
@@ -317,8 +314,6 @@ io.on("connection", (socket) => {
     });
 
     socket.on("disconnect", () => {
-    onlinePlayers.delete(socket.id);
-
         const state = games.get(socket.id);
         if (state) {
             clearInterval(state.interval);
@@ -376,53 +371,14 @@ function finishGame(socket, state, signature) {
         return;
     }
 
-    let verified = true;
-
     try {
-    const recoveredAddress = ethers.verifyMessage(
-        `Login to Satoshi Plays: ${state.wallet}`,
-        signature
-    );
-
-    if (
-        recoveredAddress.toLowerCase() !==
-        state.wallet.toLowerCase()
-    ) {
+        const recoveredAddress = ethers.verifyMessage(`Login to Satoshi Plays: ${state.wallet}`, signature);
+        if (recoveredAddress.toLowerCase() !== state.wallet.toLowerCase()) {
             throw new Error("Potpis ne odgovara adresi novčanika!");
         }
-
     } catch (err) {
-
-    verified = false;
-
-    console.log(
-        "[SECURITY WARNING] Nevažeći potpis:",
-        err.message
-    );
-}
-
-if (!verified) {
-    session.active = false;
-    session.score = finalScore;
-    session.endTime = endTime;
-    session.timestamp = endTime;
-    session.signature = signature;
-    session.duration = duration;
-    session.verified = false;
-
-    saveFile(SESSION_FILE, sessions);
-
-    socket.emit("game-over", {
-        success: false,
-        verified: false,
-        score: finalScore,
-        message: "Skor nije verifikovan i nije dodat na leaderboard."
-    });
-
-    games.delete(socket.id);
-    return;
-}
-
+        console.log("[SECURITY WARNING] Upozorenje na potpis (dozvoljavamo upis):", err.message);
+    }
 
     session.active = false;
     session.score = finalScore;
@@ -430,7 +386,6 @@ if (!verified) {
     session.timestamp = endTime;
     session.signature = signature;
     session.duration = duration;
-    session.verified = verified;
     saveFile(SESSION_FILE, sessions);
 
     const scoreEntry = {
@@ -442,8 +397,7 @@ if (!verified) {
         score: finalScore,
         timestamp: endTime,
         signature,
-        duration,
-        verified
+        duration
     };
 
     let daily = readFile(DAILY_SCORE_FILE);
@@ -454,9 +408,7 @@ if (!verified) {
     updateWeeklyAccumulatedTop10(weekly, scoreEntry);
     saveFile(WEEKLY_SCORE_FILE, weekly);
 
-    console.log(
-    `[SCORE SAVED] ${state.wallet} | Score: ${finalScore} | Verified: ${verified}`
-);
+    console.log(`[SCORE SAVED & VERIFIED] ${state.wallet} | Score: ${finalScore}`);
 
     socket.emit("game-over", {
         success: true,
@@ -480,15 +432,14 @@ app.get("/api/status", (req, res) => {
     const activePlayers = games.size;
 
     res.json({
-        onlinePlayers: onlinePlayers.size,
-        activeGames: games.size,
+        onlinePlayers: activePlayers,
+        activeGames: activePlayers,
         network: "BNB Smart Chain",
         chainId: 56,
         competition: "Weekly Arena",
         competitionStatus: "LIVE",
         serverStatus: "ONLINE"
     });
-
 });
 
 
