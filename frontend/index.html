@@ -1272,7 +1272,7 @@ if (window.ethereum) {
 async function loadLeaderboards(){
     try{
         // Automatski bira localhost za razvoj ili prazno (relativnu putanju) za Render/produkciju
-        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://satoshi-plays.onrender.com';
 
         const dailyResponse = await fetch(`${baseUrl}/get-scores/daily`);
         const dailyData = await dailyResponse.json();
