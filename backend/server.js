@@ -480,7 +480,7 @@ app.get("/api/status", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-    const frontendPath = path.join(__dirname, "public", "index.html");
+    const frontendPath = path.join(__dirname, "_frontend", "index.html");
     if (fs.existsSync(frontendPath)) {
         res.sendFile(frontendPath);
     } else {
