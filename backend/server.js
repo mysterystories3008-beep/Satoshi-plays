@@ -9,7 +9,13 @@ const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const { ethers } = require("ethers");
+const mongoose = require("mongoose");
 
+if (process.env.MONGO_URI) {
+    mongoose.connect(process.env.MONGO_URI)
+        .then(() => console.log("Uspešno povezano na MongoDB!"))
+        .catch(err => console.error("Greška pri povezivanju na MongoDB:", err));
+}
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -18,7 +24,7 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../frontend")));
+app.use(express.static(path.join(__dirname, "public")));
 
 const DAILY_SCORE_FILE = path.join(__dirname, "daily-scores.json");
 const WEEKLY_SCORE_FILE = path.join(__dirname, "weekly-scores.json");
@@ -469,7 +475,12 @@ app.get("/api/status", (req, res) => {
 
 
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/index.html"));
+    const frontendPath = path.join(__dirname, "public", "index.html");
+    if (fs.existsSync(frontendPath)) {
+        res.sendFile(frontendPath);
+    } else {
+        res.send("Satoshi Play API & Game Server is Running!");
+    }
 });
 
 const PORT = process.env.PORT || 3000;
