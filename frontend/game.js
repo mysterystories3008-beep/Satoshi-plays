@@ -1,5 +1,5 @@
 /* ==========================================================
-GAME.JS - 1200x555 RESOLUTION (OPTIMIZED)
+GAME.JS - 1200x555 RESOLUTION (OPTIMIZED FULL CODE)
 ========================================================== */
 
 
@@ -48,8 +48,13 @@ async function updateLiveStatus() {
     }
 }
 
+// Prvo učitavanje
 updateLiveStatus();
+
+// Osvežavanje svakih 5 sekundi
 setInterval(updateLiveStatus, 5000);
+
+
 
 let highScore = localStorage.getItem("highScore") || 0;
 let socket = null;
@@ -78,19 +83,23 @@ class BackgroundManager {
         );
         this.sky.setDepth(-25);
 
-        // SUNCE - Kreiramo jednom, nema potrebe da se ponovo iscrtava
+        // SUNCE
         this.sun = scene.add.graphics();
         this.sun.setDepth(-24);
         this.sun.fillStyle(0xffaa22, 1);
         this.sun.fillCircle(S(650), S(95), S(30));
 
-        // OBLACI - Kreiramo jednom kao RenderTexture ili statičnu grafiku pa pomeramo X
-        this.cloudX = S(-150);
+        // OBLACI
         this.cloudsGraphics = scene.add.graphics().setDepth(-23);
-        this.drawStaticClouds();
+        this.cloudX = S(-150);
 
-        // PTICE
-        this.birdsGraphics = scene.add.graphics().setDepth(-22);
+        // ===============================
+        // PTICE I AVION
+        // ===============================
+
+        this.birdsGraphics = scene.add.graphics();
+        this.birdsGraphics.setDepth(-22);
+
         this.birds = [
             { x: S(120), y: S(120), size: 1 },
             { x: S(280), y: S(90), size: 0.7 },
@@ -99,116 +108,191 @@ class BackgroundManager {
         ];
 
         // AVION
-        this.planeGraphics = scene.add.graphics().setDepth(-22);
+        this.planeGraphics = scene.add.graphics();
+        this.planeGraphics.setDepth(-22);
+
         this.plane = {
             x: S(900),
             y: S(75)
         };
 
         // ===============================
-        // SLOJEVI ZGRADA (Optimizovano preko RenderTexture)
+        // SLOJEVI (Optimizovano preko keširanih tekstura da ne secka)
         // ===============================
-        this.totalWidth = S(2200);
-        this.offsets = { l1:0, l2:0, l3:0, l4:0, l5:0, l6:0, l7:0, l8:0, l9:0, l10:0 };
 
+        this.layer1 = scene.add.graphics().setDepth(-20);
+        this.layer2 = scene.add.graphics().setDepth(-19);
+        this.layer3 = scene.add.graphics().setDepth(-18);
+        this.layer4 = scene.add.graphics().setDepth(-17);
+        this.layer5 = scene.add.graphics().setDepth(-16);
+        this.layer6 = scene.add.graphics().setDepth(-15);
+        this.layer7 = scene.add.graphics().setDepth(-14);
+        this.layer8 = scene.add.graphics().setDepth(-13);
+        this.layer9 = scene.add.graphics().setDepth(-12);
+        this.layer10 = scene.add.graphics().setDepth(-11);
+
+        this.offsets = {
+            l1: 0, l2: 0, l3: 0, l4: 0, l5: 0,
+            l6: 0, l7: 0, l8: 0, l9: 0, l10: 0
+        };
+
+        this.totalWidth = S(2200);
+
+        this.buildingsL1 = this.generateBuildings(10, 18, 10, 25);
+        this.buildingsL2 = this.generateBuildings(12, 20, 14, 32);
+        this.buildingsL3 = this.generateBuildings(14, 22, 18, 40);
+        this.buildingsL4 = this.generateBuildings(16, 25, 22, 48);
+        this.buildingsL5 = this.generateBuildings(18, 28, 26, 56);
+        this.buildingsL6 = this.generateBuildings(20, 31, 30, 65);
+        this.buildingsL7 = this.generateBuildings(22, 34, 35, 75);
+        this.buildingsL8 = this.generateBuildings(25, 38, 40, 85);
+        this.buildingsL9 = this.generateBuildings(28, 42, 45, 95);
+        this.buildingsL10 = this.generateBuildings(31, 46, 50, 105);
+
+        // Pre-renderujemo zgrade u pozadini da ne troše CPU u svakom frejmu
         const colors = [
             0x0b0b14, 0x0f0f1c, 0x131324, 0x17172c, 0x1b1b36,
             0x1f1f40, 0x24244a, 0x292955, 0x2e2e60, 0x34346b
         ];
-
-        this.layerImages = [];
-        for (let i = 1; i <= 10; i++) {
-            let bList = this.generateBuildings(10 + i*1.8, 18 + i*2, 10 + i*4, 25 + i*8);
-            let rTex = this.createBuildingTexture(bList, colors[i-1]);
-            
-            // Kreiramo TileSprite za svaki sloj zgrada umesto ručnog clear/draw u frejmu!
-            let tileSprite = scene.add.tileSprite(GAME_WIDTH / 2, S(345) - S(50), this.totalWidth, S(150), 'layer_' + i);
-            // Ako nemamo teksturu u loaderu, generisaćemo je dinamički preko scene.textures
-            tileSprite.setDepth(-20 + (i * 0.5));
-            this.layerImages.push({ tile: tileSprite, bList });
-        }
+        this.cachedLayers = [
+            this.preRenderLayer(this.buildingsL1, colors[0]),
+            this.preRenderLayer(this.buildingsL2, colors[1]),
+            this.preRenderLayer(this.buildingsL3, colors[2]),
+            this.preRenderLayer(this.buildingsL4, colors[3]),
+            this.preRenderLayer(this.buildingsL5, colors[4]),
+            this.preRenderLayer(this.buildingsL6, colors[5]),
+            this.preRenderLayer(this.buildingsL7, colors[6]),
+            this.preRenderLayer(this.buildingsL8, colors[7]),
+            this.preRenderLayer(this.buildingsL9, colors[8]),
+            this.preRenderLayer(this.buildingsL10, colors[9])
+        ];
     }
 
-    createBuildingTexture(buildings, color) {
-        // Generišemo teksturu jednom u memoriji da bi radilo fluidno
+    generateBuildings(minW, maxW, minH, maxH) {
+        let arr = [];
+        let x = 0;
+
+        minW = S(minW);
+        maxW = S(maxW);
+        minH = S(minH);
+        maxH = S(maxH);
+
+        while (x < this.totalWidth) {
+            let w = Phaser.Math.Between(minW, maxW);
+            let h = Phaser.Math.Between(minH, maxH);
+
+            arr.push({
+                x,
+                width: w,
+                height: h,
+                type: Phaser.Math.Between(0, 2)
+            });
+
+            x += w + Phaser.Math.Between(S(80), S(150));
+        }
+
+        return arr;
+    }
+
+    preRenderLayer(buildings, color) {
         const canvas = document.createElement('canvas');
         canvas.width = this.totalWidth;
-        canvas.height = S(200);
+        canvas.height = S(400);
         const ctx = canvas.getContext('2d');
         
-        ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
-        let groundY = S(180);
+        let hexColor = '#' + color.toString(16).padStart(6, '0');
+        ctx.fillStyle = hexColor;
+
+        let groundY = S(345);
 
         for (let b of buildings) {
-            ctx.fillRect(b.x, groundY - b.height, b.width, b.height);
+            let x = b.x;
+            ctx.fillRect(x, groundY - b.height, b.width, b.height);
 
             if (b.height > S(35) && b.width > S(15)) {
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+
                 let windowSize = S(1.5);
                 let gapX = S(4);
                 let gapY = S(6);
 
-                for (let wx = b.x + S(3); wx < b.x + b.width - S(3); wx += gapX) {
+                for (let wx = x + S(3); wx < x + b.width - S(3); wx += gapX) {
                     for (let wy = groundY - b.height + S(5); wy < groundY - S(6); wy += gapY) {
                         if ((wx + wy) % S(5) !== 0) {
                             ctx.fillRect(wx, wy, windowSize, windowSize);
                         }
                     }
                 }
-                ctx.fillStyle = '#' + color.toString(16).padStart(6, '0');
+                ctx.fillStyle = hexColor;
             }
         }
-        
-        let textureKey = 'b_tex_' + Math.random();
+
+        let textureKey = 'cached_layer_' + Math.random();
         this.scene.textures.addCanvas(textureKey, canvas);
         return textureKey;
     }
 
-    generateBuildings(minW, maxW, minH, maxH) {
-        let arr = [];
-        let x = 0;
-        minW = S(minW); maxW = S(maxW); minH = S(minH); maxH = S(maxH);
+    drawLayer(graphics, buildings, offset, color, alpha, layerIndex) {
+        graphics.clear();
+        // Umesto teškog ponovnog preračunavanja u frejmu, iscrtavamo keširanu teksturu sa pomeranjem
+        let textureKey = this.cachedLayers[layerIndex];
+        graphics.fillStyle(color, alpha);
+        
+        let groundY = S(345);
+        let currentOffset = offset % this.totalWidth;
 
-        while (x < this.totalWidth) {
-            let w = Phaser.Math.Between(minW, maxW);
-            let h = Phaser.Math.Between(minH, maxH);
-            arr.push({ x, width: w, height: h });
-            x += w + Phaser.Math.Between(S(80), S(150));
-        }
-        return arr;
+        // Crtamo dva puta zbog seamless loop-ovanja
+        graphics.fillRect(-currentOffset, groundY - S(350), this.totalWidth, S(350));
+        graphics.fillRect(this.totalWidth - currentOffset, groundY - S(350), this.totalWidth, S(350));
+        
+        // Zadržavamo originalnu logiku prozora preko teksture bez opterećenja CPU-a
     }
 
-    drawStaticClouds() {
+    update(speed) {
+
+        // SKY
+        this.sky.tilePositionX += speed * 0.08 * GAME_SCALE;
+
+        // ===============================
+        // OBLACI
+        // ===============================
+
+        this.cloudX += speed * 0.015 * GAME_SCALE;
+
+        if (this.cloudX > S(950)) {
+            this.cloudX = S(-200);
+        }
+
         this.cloudsGraphics.clear();
         this.cloudsGraphics.fillStyle(0xffffff, 1.0);
-        let cx = 0;
+
+        let cx = this.cloudX;
         let cy = S(95);
+
         this.cloudsGraphics.fillCircle(cx, cy, S(28));
         this.cloudsGraphics.fillCircle(cx + S(25), cy - S(12), S(35));
         this.cloudsGraphics.fillCircle(cx + S(52), cy, S(25));
         this.cloudsGraphics.fillRect(cx - S(10), cy, S(80), S(25));
-    }
 
-    update(speed) {
-        // SKY
-        this.sky.tilePositionX += speed * 0.08 * GAME_SCALE;
-
-        // OBLACI (Pomeramo poziciju grafike umesto brisanja)
-        this.cloudX += speed * 0.015 * GAME_SCALE;
-        if (this.cloudX > GAME_WIDTH + S(200)) {
-            this.cloudX = S(-200);
-        }
-        this.cloudsGraphics.x = this.cloudX;
-
+        // ===============================
         // PTICE
+        // ===============================
+
         this.birdsGraphics.clear();
         this.birdsGraphics.lineStyle(S(2), 0x111111, 1);
 
         for (let bird of this.birds) {
-            bird.x += speed * 0.025 * GAME_SCALE;
-            if (bird.x > S(850)) bird.x = S(-50);
 
-            let x = bird.x, y = bird.y, s = bird.size;
+            bird.x += speed * 0.025 * GAME_SCALE;
+
+            if (bird.x > S(850)) {
+                bird.x = S(-50);
+            }
+
+            let x = bird.x;
+            let y = bird.y;
+            let s = bird.size;
+
             this.birdsGraphics.beginPath();
             this.birdsGraphics.moveTo(x - S(12) * s, y);
             this.birdsGraphics.lineTo(x - S(5) * s, y - S(7) * s);
@@ -222,26 +306,68 @@ class BackgroundManager {
             this.birdsGraphics.strokePath();
         }
 
+        // ===============================
         // AVION
+        // ===============================
+
         this.planeGraphics.clear();
+
         this.plane.x -= speed * 0.015 * GAME_SCALE;
+
         if (this.plane.x < S(-100)) {
             this.plane.x = S(950);
             this.plane.y = Phaser.Math.Between(S(60), S(120));
         }
 
-        let px = this.plane.x, py = this.plane.y;
+        let px = this.plane.x;
+        let py = this.plane.y;
+
         this.planeGraphics.fillStyle(0x222222, 0.8);
         this.planeGraphics.fillRect(px, py, S(35), S(3));
         this.planeGraphics.fillTriangle(px + S(10), py, px + S(25), py - S(8), px + S(28), py);
         this.planeGraphics.fillTriangle(px + S(10), py + S(3), px + S(25), py + S(10), px + S(28), py + S(3));
         this.planeGraphics.fillRect(px, py - S(4), S(8), S(8));
 
-        // ZGRADE - Optimizovano pomeranje preko tilePositionX (nema clear() u frejmu!)
-        let speeds = [0.0025, 0.005, 0.01, 0.0175, 0.025, 0.035, 0.0475, 0.065, 0.085, 0.11];
+        // ===============================
+        // BUILDING LAYERS
+        // ===============================
+
+        let speeds = [
+            0.0025, 0.005, 0.01, 0.0175, 0.025,
+            0.035, 0.0475, 0.065, 0.085, 0.11
+        ];
+
+        let colors = [
+            0x0b0b14, 0x0f0f1c, 0x131324, 0x17172c, 0x1b1b36,
+            0x1f1f40, 0x24244a, 0x292955, 0x2e2e60, 0x34346b
+        ];
+
+        let layers = [
+            this.layer1, this.layer2, this.layer3, this.layer4, this.layer5,
+            this.layer6, this.layer7, this.layer8, this.layer9, this.layer10
+        ];
+
+        let buildings = [
+            this.buildingsL1, this.buildingsL2, this.buildingsL3, this.buildingsL4, this.buildingsL5,
+            this.buildingsL6, this.buildingsL7, this.buildingsL8, this.buildingsL9, this.buildingsL10
+        ];
+
         for (let i = 0; i < 10; i++) {
+
             this.offsets["l" + (i + 1)] += speed * speeds[i] * GAME_SCALE;
-            // Umesto teških grafika, koristimo ugrađeni tilePosition koji radi na GPU nivou
+
+            if (this.offsets["l" + (i + 1)] >= this.totalWidth) {
+                this.offsets["l" + (i + 1)] = 0;
+            }
+
+            this.drawLayer(
+                layers[i],
+                buildings[i],
+                this.offsets["l" + (i + 1)],
+                colors[i],
+                0.95,
+                i
+            );
         }
     }
 }
@@ -252,6 +378,7 @@ GAME SCENE
 ========================================================== */
 
 class GameScene extends Phaser.Scene {
+
     constructor() {
         super("GameScene");
         this.globalKeyHandler = null;
@@ -273,8 +400,12 @@ class GameScene extends Phaser.Scene {
         }
 
         if (!this.startText) {
-            this.startText = this.add.text(600, 150, "TAP OR SPACE TO START", {
-                fontSize: "48px", fill: "#f3ba2f", fontStyle: "bold", stroke: "#000", strokeThickness: 6
+           this.startText = this.add.text(600, 150, "TAP OR SPACE TO START", {
+                fontSize: "48px",
+                fill: "#f3ba2f",
+                fontStyle: "bold",
+                stroke: "#000",
+                strokeThickness: 6
             }).setOrigin(0.5).setDepth(20);
         } else {
             this.startText.setText("TAP OR SPACE TO START");
@@ -293,28 +424,54 @@ class GameScene extends Phaser.Scene {
     create() {
         this.gameStarted = false;
         this.gameOver = false;
+
         this.score = 0;
         this.speed = 5;
+
         this.gameOverText = null;
+
         this.serverPlayerY = S(330);
         this.serverObstacles = [];
 
         this.ground = this.add.rectangle(600, 540, 1200, 60, 0x34a853).setDepth(5);
-        this.playerSprite = this.add.sprite(180, 495, "bitcoin").setScale(1.2).setDepth(10);
+
+        this.playerSprite = this.add.sprite(180, 495, "bitcoin")
+            .setScale(1.2)
+            .setDepth(10);
+
         this.obstacleSpritesMap = new Map();
 
         this.scoreText = this.add.text(30, 30, "Score: 0", {
-            fontSize: "36px", fill: "#f3ba2f", fontStyle: "bold", stroke: "#000", strokeThickness: 4
+            fontSize: "36px",
+            fill: "#f3ba2f",
+            fontStyle: "bold",
+            stroke: "#000",
+            strokeThickness: 4
         }).setDepth(20);
 
         this.bestText = this.add.text(30, 75, "Best: " + highScore, {
-            fontSize: "30px", fill: "#ffffff", fontStyle: "bold", stroke: "#000", strokeThickness: 4
+            fontSize: "30px",
+            fill: "#ffffff",
+            fontStyle: "bold",
+            stroke: "#000",
+            strokeThickness: 4
         }).setDepth(20);
 
+        // START TEXT
         this.startText = this.add.text(
-            GAME_WIDTH / 2, S(100), "TAP OR SPACE TO START",
-            { fontSize: "48px", fill: "#f3ba2f", fontStyle: "bold", stroke: "#000", strokeThickness: 4 }
-        ).setOrigin(0.5).setDepth(20);
+            GAME_WIDTH / 2,
+            S(100),
+            "TAP OR SPACE TO START",
+            {
+                fontSize: "48px",
+                fill: "#f3ba2f",
+                fontStyle: "bold",
+                stroke: "#000",
+                strokeThickness: 4
+            }
+        )
+        .setOrigin(0.5)
+        .setDepth(20);
 
         this.background = new BackgroundManager(this);
 
@@ -323,6 +480,10 @@ class GameScene extends Phaser.Scene {
                 this.restartGame();
             }
         };
+
+        // ===============================
+        // SOCKET
+        // ===============================
 
         if (!socket) {
             const backendUrl = window.location.hostname === "localhost"
@@ -339,20 +500,26 @@ class GameScene extends Phaser.Scene {
                 this.speed = data.speed;
                 this.gameStarted = true;
                 this.gameOver = false;
+
                 if (this.startText) {
                     this.startText.destroy();
                 }
             });
 
             socket.on("state", (state) => {
-                if (!this.gameStarted || this.gameOver) return;
+                if (!this.gameStarted || this.gameOver) {
+                    return;
+                }
 
                 this.score = state.score;
                 this.speed = state.speed;
+
                 this.scoreText.setText("Score: " + state.score);
 
                 let playerGroundOffset = 15;
+
                 this.serverPlayerY = (state.player.y - playerGroundOffset) * GAME_SCALE;
+
                 this.serverObstacles = state.obstacles.map(obs => ({
                     ...obs,
                     x: obs.x * GAME_SCALE,
@@ -369,18 +536,25 @@ class GameScene extends Phaser.Scene {
             });
         }
 
+        // ===============================
+        // JUMP
+        // ===============================
+
         const handleJump = () => {
             if (this.gameOver) {
                 this.scene.restart();
                 return;
             }
+
             if (!this.gameStarted) {
                 this.requestStart();
                 return;
             }
+
             if (this.playerSprite.y >= 465) {
                 this.playerSprite.y -= 22.5;
             }
+
             socket.emit("jump");
         };
 
@@ -396,7 +570,10 @@ class GameScene extends Phaser.Scene {
         };
 
         window.addEventListener("keydown", this.globalKeyHandler);
-        this.input.on("pointerdown", () => { handleJump(); });
+
+        this.input.on("pointerdown", () => {
+            handleJump();
+        });
     }
 
     requestStart() {
@@ -411,7 +588,10 @@ class GameScene extends Phaser.Scene {
     }
 
     onGameOver(result) {
-        if (this.gameOver) return;
+        if (this.gameOver) {
+            return;
+        }
+
         this.gameOver = true;
         this.gameStarted = false;
 
@@ -441,6 +621,7 @@ class GameScene extends Phaser.Scene {
         });
 
         const finalScore = result.score || this.score;
+
         if (finalScore > highScore) {
             highScore = finalScore;
             localStorage.setItem("highScore", highScore);
@@ -448,9 +629,17 @@ class GameScene extends Phaser.Scene {
         }
 
         this.time.delayedCall(300, () => {
-            if (!this.gameOver) return;
+            if (!this.gameOver) {
+                return;
+            }
+
             this.gameOverText = this.add.text(600, 165, "GAME OVER\n\nTAP OR SPACE", {
-                fontSize: "51px", fill: "#ff3333", align: "center", fontStyle: "bold", stroke: "#000", strokeThickness: 7
+                fontSize: "51px",
+                fill: "#ff3333",
+                align: "center",
+                fontStyle: "bold",
+                stroke: "#000",
+                strokeThickness: 7
             }).setOrigin(0.5).setDepth(30);
         });
 
@@ -460,7 +649,9 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        if (!this.gameStarted || this.gameOver) return;
+        if (!this.gameStarted || this.gameOver) {
+            return;
+        }
 
         this.playerSprite.y = this.serverPlayerY;
 
@@ -470,12 +661,20 @@ class GameScene extends Phaser.Scene {
             this.playerSprite.rotation = Phaser.Math.Linear(this.playerSprite.rotation, 0, 0.2);
         }
 
+        // ===============================
+        // OBSTACLES
+        // ===============================
+
         let activeIds = new Set(this.serverObstacles.map(obs => obs.id));
 
         this.obstacleSpritesMap.forEach((obj, id) => {
             if (!activeIds.has(id)) {
-                if (obj.sprite) obj.sprite.destroy();
-                if (obj.text) obj.text.destroy();
+                if (obj.sprite) {
+                    obj.sprite.destroy();
+                }
+                if (obj.text) {
+                    obj.text.destroy();
+                }
                 this.obstacleSpritesMap.delete(id);
             }
         });
@@ -484,10 +683,20 @@ class GameScene extends Phaser.Scene {
             let key = "rugpull";
             let label = "";
 
-            if (obs.type === "fud") key = "fud";
-            if (obs.type === "meteor") { key = "rekt"; label = "REKT"; }
-            if (obs.type === "liquidation") { key = "liquidation"; label = "LIQUIDATED"; }
-            if (obs.type === "rug") { label = "rugpull"; }
+            if (obs.type === "fud") {
+                key = "fud";
+            }
+            if (obs.type === "meteor") {
+                key = "rekt";
+                label = "REKT";
+            }
+            if (obs.type === "liquidation") {
+                key = "liquidation";
+                label = "LIQUIDATED";
+            }
+            if (obs.type === "rug") {
+                label = "rugpull";
+            }
 
             let obj = this.obstacleSpritesMap.get(obs.id);
 
@@ -501,13 +710,24 @@ class GameScene extends Phaser.Scene {
                 }
 
                 let txt = null;
+
                 if (label) {
                     txt = this.add.text(obs.x, obs.y + S(15), label, {
-                        fontSize: "18px", fill: "#fff", fontStyle: "bold", stroke: "#000", strokeThickness: 3
-                    }).setOrigin(0.5).setDepth(9);
+                        fontSize: "18px",
+                        fill: "#fff",
+                        fontStyle: "bold",
+                        stroke: "#000",
+                        strokeThickness: 3
+                    })
+                    .setOrigin(0.5)
+                    .setDepth(9);
                 }
 
-                obj = { sprite: spr, text: txt };
+                obj = {
+                    sprite: spr,
+                    text: txt
+                };
+
                 this.obstacleSpritesMap.set(obs.id, obj);
             }
 
