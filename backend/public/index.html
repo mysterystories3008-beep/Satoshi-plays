@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1200, initial-scale=0.35, maximum-scale=3.0, user-scalable=yes">
+<title>Satoshi plays | $SPLAY</title>
+
+<meta name="description" content="Book of Bitcoin - BBTC Web3 browser game.">
+<meta name="keywords" content="BBTC, Bitcoin, Crypto, Web3 Game">
+
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+
+<style>
+/* VRHUNSKI INTERAKTIVNI TOP HERO SHOWCASE */
+#top-hero-showcase {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto 30px auto;
+    background: linear-gradient(145deg, #161616 0%, #0d0d0d 100%);
+    border: 2px solid rgba(243, 186, 47, 0.4);
+    border-radius: 20px;
+    padding: 35px;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.7), inset 0 0 20px rgba(243, 186, 47, 0.05);
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 40px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+#top-hero-showcase::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 150px;
+    height: 150px;
+    background: rgba(243, 186, 47, 0.15);
+    border-radius: 50%;
+    filter: blur(40px);
+    pointer-events: none;
+}
+
+.hero-image-box {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 2px solid rgba(243, 186, 47, 0.3);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+    transition: transform 0.4s ease, border-color 0.4s ease;
+}
+
+.hero-image-box:hover {
+    transform: scale(1.02);
+    border-color: #f3ba2f;
+}
+
+.hero-image-box img {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: filter 0.3s ease;
+}
+
+.hero-data-box {
+    text-align: left;
+}
+
+.hero-badge-live {
+    display: inline-block;
+    background: rgba(46, 204, 113, 0.15);
+    color: #2ecc71;
+    border: 1px solid rgba(46, 204, 113, 0.3);
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.2);
+}
+
+.hero-data-box h2 {
+    color: #ffffff;
+    font-size: 32px;
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #ffffff 30%, #f3ba2f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-data-box p {
+    color: #b0b0b0;
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.token-specs-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(243, 186, 47, 0.2);
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+    transition: border-color 0.3s ease;
+}
+
+.token-specs-card:hover {
+    border-color: rgba(243, 186, 47, 0.5);
+}
+
+.token-specs-card ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.token-specs-card li {
+    font-size: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 8px;
+}
+
+.token-specs-card li:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.token-specs-card li span.label {
+    color: #888888;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+}
+
+.token-specs-card li span.val {
+    color: #f3ba2f;
+    font-weight: 700;
+    background: rgba(243, 186, 47, 0.1);
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(243, 186, 47, 0.2);
+}
+
+#game-wrapper-box {
+    display: none;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#game-container {
+    width: 800px !important;
+    height: 400px !important;
+    margin: 0 auto !important;
+    border: 2px solid #f3ba2f;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #121212;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-bottom: 15px !important;
+}
+
+#phaser-game canvas {
+    display: block;
+}
+
+/* PROFESSIONAL WEB3 LOGIN / ACCOUNT BAR */
+#in-game-login-bar {
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(18, 18, 18, 0.95) 100%);
+    border: 1px solid rgba(243, 186, 47, 0.4);
+    backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    color: #fff;
+    font-size: 14px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.bar-left-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#guest-prompt-text {
+    color: #b0b0b0;
+    font-weight: 500;
+}
+
+#btnBackToMenu {
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 7px 12px;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#btnBackToMenu:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #f3ba2f;
+    color: #f3ba2f;
+}
+
+#btnInGameConnect {
+    background: linear-gradient(135deg, #f3ba2f 0%, #d49f1f 100%);
+    color: #121212;
+    border: none;
+    padding: 8px 15px;
+    font-weight: 700;
+    font-size: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(243, 186, 47, 0.3);
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#btnInGameConnect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(243, 186, 47, 0.5);
+    background: linear-gradient(135deg, #ffcc33 0%, #e0ac22 100%);
+}
+
+.logged-in-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.account-info-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #2ecc71;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #2ecc71;
+}
+
+.wallet-badge-pro {
+    background: rgba(243, 186, 47, 0.08);
+    border: 1px solid rgba(243, 186, 47, 0.3);
+    color: #f3ba2f;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+#btnInGameLogout {
+    background: rgba(231, 76, 60, 0.15);
+    color: #ff6b6b;
+    border: 1px solid rgba(231, 76, 60, 0.4);
+    padding: 7px 14px;
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+#btnInGameLogout:hover {
+    background: #e74c3c;
+    color: #ffffff;
+    border-color: #e74c3c;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+    transform: translateY(-1px);
+}
+
+.play-section-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+}
+
+.btn-play-action {
+    background: linear-gradient(135deg, #f3ba2f 0%, #e09f1f 100%);
+    color: #121212;
+    font-size: 18px;
+    font-weight: 800;
+    padding: 14px 30px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(243, 186, 47, 0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-play-action:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(243, 186, 47, 0.7);
+}
+
+.btn-guest-action {
+    background: linear-gradient(135deg, #444 0%, #222 100%);
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 800;
+    padding: 14px 30px;
+    border: 1px solid #555;
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-guest-action:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+}
+
+/* STYLISH STATUS BAR */
+.status-bar-epic {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: linear-gradient(90deg, rgba(22,22,22,0.9) 0%, rgba(35,35,35,0.9) 50%, rgba(22,22,22,0.9) 100%);
+    border: 1px solid rgba(243, 186, 47, 0.3);
+    border-radius: 14px;
+    padding: 15px 20px;
+    max-width: 1000px;
+    margin: 25px auto;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+    font-family: monospace;
+    font-weight: 700;
+    color: #f3ba2f;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+}
+
+.status-bar-epic span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* CENTRAL HUB: RULES, REWARDS & LIVE CHAT */
+.central-info-hub {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto 30px auto;
+}
+
+.hub-card {
+    background: linear-gradient(145deg, #181818 0%, #111111 100%);
+    border: 1px solid rgba(243, 186, 47, 0.25);
+    border-radius: 16px;
+    padding: 22px;
+    color: #d0d0d0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+}
+
+.hub-card h3 {
+    color: #f3ba2f;
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 18px;
+    font-family: monospace;
+    border-bottom: 1px solid rgba(243, 186, 47, 0.2);
+    padding-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hub-card p {
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    color: #b5b5b5;
+}
+
+.rules-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 15px 0;
+    font-size: 13px;
+}
+
+.rules-list li {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.rules-list li span.bullet {
+    color: #f3ba2f;
+    font-weight: bold;
+}
+
+.appeal-box {
+    background: rgba(243, 186, 47, 0.05);
+    border: 1px dashed rgba(243, 186, 47, 0.3);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 12.5px;
+    margin-top: auto;
+}
+
+.appeal-box strong {
+    color: #f3ba2f;
+}
+
+.appeal-email {
+    color: #2ecc71;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+/* INTERACTIVE CHAT STYLES */
+.chat-info-banner {
+    font-size: 11.5px;
+    color: #888;
+    background: rgba(255,255,255,0.03);
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    border-left: 3px solid #f3ba2f;
+}
+
+.chat-messages-box {
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    height: 160px;
+    overflow-y: auto;
+    padding: 10px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-family: monospace;
+}
+
+.chat-msg {
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.chat-msg .author {
+    color: #f3ba2f;
+    font-weight: bold;
+}
+
+.chat-msg .text {
+    color: #fff;
+    margin-left: 5px;
+}
+
+.chat-input-row {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-input-row input {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: #fff;
+    font-size: 13px;
+    outline: none;
+}
+
+.chat-input-row input:focus {
+    border-color: #f3ba2f;
+}
+
+.chat-input-row button {
+    background: #f3ba2f;
+    color: #121212;
+    border: none;
+    border-radius: 6px;
+    padding: 0 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.chat-input-row button:hover {
+    background: #ffcc33;
+}
+
+/* LEADERBOARDS (Fixed height containers with smooth scroll for top 10) */
+#leaderboards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.table-wrap {
+    background: #161616;
+    border: 1px solid rgba(243, 186, 47, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.table-wrap h3 {
+    color: #f3ba2f;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-family: monospace;
+    text-align: center;
+}
+
+.table-scroll-container {
+    max-height: 280px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.table-scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-scroll-container::-webkit-scrollbar-track {
+    background: #111;
+    border-radius: 4px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:hover {
+    background: #f3ba2f;
+}
+
+.table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: monospace;
+    font-size: 14px;
+    color: #fff;
+}
+
+.table-wrap th, .table-wrap td {
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.table-wrap th {
+    color: #888;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+    #top-hero-showcase {
+        grid-template-columns: 1fr;
+        gap: 25px;
+        padding: 20px;
+    }
+    .play-section-wrapper {
+        flex-direction: column;
+    }
+    #in-game-login-bar {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+    .bar-left-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .logged-in-container {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .central-info-hub {
+        grid-template-columns: 1fr;
+    }
+    #leaderboards {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="logo logoSplash">🚀 $SPLAY</div>
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="#tokenomics">Tokenomics</a>
+                <a href="#how-to-buy">How to Buy</a>
+            </div>
+        </div>
+
+        <div class="nav-right">
+    <a href="https://bscscan.com/token/TVOJA_ADRESA" target="_blank" class="nav-link">
+        <span class="nav-icon">◈</span>
+        <span>BSCScan</span>
+    </a>
+
+    <a href="#" target="_blank" class="nav-link">
+        <span class="nav-icon">✈</span>
+        <span>Telegram</span>
+    </a>
+
+    <a href="#" target="_blank" class="nav-link">
+        <span class="nav-icon">𝕏</span>
+        <span>Community</span>
+    </a>
+
+    <a href="#" class="nav-link">
+        <span class="nav-icon">▶</span>
+        <span>YouTube</span>
+    </a>
+</div>
+    </nav>
+</header>
+
+<main>
+<div class="game-wrapper">
+
+    <!-- TOP HERO SHOWCASE -->
+    <div id="top-hero-showcase">
+        <div class="hero-image-box">
+            <img src="assets/uvod1.jpg" alt="Satoshi Plays Ecosystem">
+        </div>
+        
+        <div class="hero-data-box">
+            <div class="hero-badge-live">⚡ Next-Gen Web3 Gaming</div>
+            <h2>Satoshi Plays</h2>
+            <p>The ultimate Web3 gaming ecosystem where players compete in fun games, climb the leaderboard, and earn real rewards.</p>
+            
+            <div class="token-specs-card">
+                <ul>
+                    <li><span class="label">Token:</span> <span class="val">$SPLAY</span></li>
+                    <li><span class="label">Network:</span> <span class="val">Binance Smart Chain</span></li>
+                    <li><span class="label">Total Supply:</span> <span class="val">1,000,000,000</span></li>
+                    <li><span class="label">Utility:</span> <span class="val">In-Game Rewards & Governance</span></li>
+                    <li><span class="label">Security:</span> <span class="val">MetaMask & Web3 Verified</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode Selection Buttons -->
+    <div class="play-section-wrapper" id="modeSelectionWrapper">
+        <button id="btnPlayWallet" class="btn-play-action">
+            🎮 PLAY WITH WALLET (Leaderboard)
+        </button>
+        <button id="btnPlayGuest" class="btn-guest-action">
+            👤 PLAY AS GUEST (No Leaderboard)
+        </button>
+    </div>
+
+
+
+<div class="play-section-wrapper" id="gameSizeWrapper">
+
+    <button id="btnNormalGame" class="btn-play-action">
+        🎨  STANDARD GAME
+    </button>
+
+    <button id="btnLowGame" class="btn-guest-action">
+       ⚡ LITE GAME    </button>
+
+</div>
+
+
+    <!-- GAME CONTAINER -->
+    <div id="game-wrapper-box">
+        <div id="in-game-login-bar">
+            <div id="guest-controls-group" class="bar-left-group">
+                <button id="btnBackToMenu">← Back</button>
+                <span id="guest-prompt-text">⚡ Playing as a guest, scores are not saved on the leaderboard.</span>
+            </div>
+            <button id="btnInGameConnect">🦊 Connect MetaMask & Save</button>
+
+            <div id="logged-in-area" class="logged-in-container" style="display: none;">
+                <div class="account-info-wrapper">
+                    <button id="btnBackToMenuLogged" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; font-size: 11px; border-radius: 6px; cursor: pointer; margin-right: 10px;">← Back</button>
+                    <span class="status-dot"></span>
+                    <span style="color: #888; font-size: 13px;">Connected:</span>
+                    <span id="wallet-address-display" class="wallet-badge-pro">0x00...0000</span>
+                </div>
+                <button id="btnInGameLogout">🚪 Disconnect</button>
+            </div>
+        </div>
+        
+        <div id="game-container">
+
+    <button id="fullscreenBtn" type="button">
+        ⛶ FULLSCREEN
+    </button>
+
+    <div id="phaser-game"></div>
+
+</div>
+    </div>
+
+    <!-- =========================================================
+     PREMIUM LIVE STATUS BAR
+     ========================================================= -->
+
+<div class="status-bar-epic">
+
+    <!-- LIVE PLAYERS -->
+<div class="status-module">
+    <div class="status-main">
+        <span class="live-indicator"></span>
+
+        <div class="status-text">
+            <span class="status-label">LIVE</span>
+            <strong>PLAYERS</strong>
+        </div>
+
+        <span class="status-value" id="livePlayersCount">—</span>
+    </div>
+
+    <div class="status-tooltip">
+        <div class="tooltip-title">
+            <span class="tooltip-dot"></span>
+            LIVE ACTIVITY
+        </div>
+
+        <div class="tooltip-row">
+            <span>Players Online</span>
+            <strong id="tooltipPlayers">—</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span> Active Games</span>
+            <strong id="tooltipGames">—</strong>
+        </div>
+
+        <div class="tooltip-status">
+            ● NETWORK ACTIVE
+        </div>
+    </div>
+</div>
+    
+    <div class="status-separator"></div>
+    
+    
+    <!-- GAME STATISTICS -->
+<div class="status-module">
+
+    <div class="status-main">
+
+        <span class="network-icon">◈</span>
+
+        <div class="status-text">
+            <span class="status-label">GAME</span>
+            <strong>STATISTICS</strong>
+        </div>
+
+        <span class="network-online">LIVE</span>
+
+    </div>
+
+    <div class="status-tooltip">
+
+        <div class="tooltip-title">
+            <span class="tooltip-dot"></span>
+            GAME STATISTICS
+        </div>
+
+        <div class="tooltip-title" style="margin-top:10px;">
+            👤 MY ACTIVITY
+        </div>
+
+        <div class="tooltip-row">
+            <span>Games Today</span>
+            <strong id="myGamesToday">—</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Games This Week</span>
+            <strong id="myGamesWeek">—</strong>
+        </div>
+
+        <div class="tooltip-title" style="margin-top:10px;">
+            🌐 GLOBAL ACTIVITY
+        </div>
+
+        <div class="tooltip-row">
+            <span>Games Today</span>
+            <strong id="allGamesToday">—</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Games This Week</span>
+            <strong id="allGamesWeek">—</strong>
+        </div>
+
+        <div class="tooltip-status">
+            ● LIVE STATISTICS
+        </div>
+
+    </div>
+</div>
+
+<div class="status-separator"></div>
+
+
+    <!-- BNB NETWORK -->
+    <div class="status-module">
+
+        <div class="status-main">
+            <span class="network-icon">◆</span>
+
+            <div class="status-text">
+                <span class="status-label">NETWORK</span>
+                <strong>BNB CHAIN</strong>
+            </div>
+
+            <span class="network-online">ONLINE</span>
+        </div>
+
+        <div class="status-tooltip">
+            <div class="tooltip-title">
+                <span class="network-dot"></span>
+                NETWORK STATUS
+            </div>
+
+            <div class="tooltip-row">
+                <span>Network</span>
+                <strong id="statusNetwork">BNB Smart Chain</strong>
+            </div>
+
+            <div class="tooltip-row">
+                <span>Chain ID</span>
+                <strong id="statusChainId">56</strong>
+            </div>
+
+            <div class="tooltip-row">
+                <span>Connection</span>
+                <strong id="statusConnection" class="green-text">Connected</strong>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="status-separator"></div>
+
+
+    <!-- WEEKLY COMPETITION -->
+<div class="status-module">
+
+    <div class="status-main">
+        <span class="trophy-icon">♛</span>
+
+        <div class="status-text">
+            <span class="status-label">CURRENT</span>
+            <strong>WEEKLY ARENA</strong>
+        </div>
+
+        <span class="competition-live" id="competitionLive">LIVE</span>
+    </div>
+
+    <div class="status-tooltip">
+
+        <div class="tooltip-title">
+            <span class="competition-dot"></span>
+            WEEKLY COMPETITION
+        </div>
+
+        <div class="tooltip-row">
+            <span>Weekly Total Score</span>
+            <strong id="statusWeeklyLeaderboard">Top 10</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Best Single Run</span>
+            <strong id="statusBestLeaderboard">Top 10</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Status</span>
+            <strong id="statusCompetition" class="orange-text">LIVE</strong>
+        </div>
+
+        <div class="tooltip-row">
+            <span>Rewards</span>
+            <strong>$SPLAY</strong>
+        </div>
+
+        <div class="tooltip-status orange-status">
+            ♛ COMPETE FOR THE TOP
+        </div>
+
+    </div>
+</div>
+
+
+    <!-- GLOBAL STATUS -->
+    <div class="global-status">
+        <span class="global-pulse"></span>
+        SYSTEM ONLINE
+    </div>
+
+</div>
+
+    <!-- CENTRAL HUB: RULES, REWARDS & LIVE CHAT -->
+    <div class="central-info-hub">
+        
+        <!-- Left Card: Competition Rules & Rewards -->
+        <div class="hub-card">
+            <h3>📜 Competition Rules & Rewards</h3>
+            <p>Welcome to the official Satoshi Plays arena! Compete, dodge obstacles, and secure your spot on the top players leaderboard.</p>
+            
+ <div class="rules-container">
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <strong class="rule-title">Reward Payouts:</strong>
+            <span class="rule-text">The reward pool is automatically distributed every <strong>7 days</strong> to the top-performing players.</span>
+        </div>
+    </div>
+
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <strong class="rule-title">Verification Period:</strong>
+            <span class="rule-text">After each cycle ends, there is a <strong>3-day appeal period</strong> for result review.</span>
+        </div>
+    </div>
+
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <strong class="rule-title">Fair Play:</strong>
+            <span class="rule-text">The use of bots or unauthorized scripts will automatically disqualify the connected MetaMask wallet.</span>
+        </div>
+    </div>
+</div>
+
+
+            <div class="appeal-box">
+    <strong>Have a complaint or notice irregularities?</strong><br>
+    Send evidence (screenshot/video) to our official appeals email:<br>
+    <a href="mailto:mysterystories3008@gmail.com?subject=Appeal%20/%20Inquiry%20-%20Satoshi%20Plays" class="appeal-email">support@satoshiplays.io</a>
+</div>
+        </div>
+
+        <!-- Right Card: Community Live Chat -->
+        <div class="hub-card">
+            <h3>💬 Community Live Chat</h3>
+            <div class="chat-info-banner">
+                ℹ️ <strong>About Chat:</strong> A space for players to share strategies, celebrate high scores, and chat in real time.
+            </div>
+
+            <div id="chatMessagesBox" class="chat-messages-box">
+                <div class="chat-msg"><span class="author">SatoshiBot:</span><span class="text">Welcome to the chat! Please be respectful and play fair. 🚀</span></div>
+            </div>
+
+            <div class="chat-input-row">
+                <input type="text" id="chatInputMsg" placeholder="Type a message..." maxlength="120">
+                <button id="btnSendChat">Send</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="web3-ui" class="glass-card" style="display:none;">
+        <div class="wallet-buttons">
+            <button id="connectBtn">
+                <span class="btn-main">Connect Wallet</span>
+                <span class="btn-sub">Play & Earn BBTC Rewards</span>
+            </button>
+            <button id="disconnectBtn" style="display:none;">
+                <span class="btn-main">Disconnect Wallet</span>
+                <span class="btn-sub">Play as Guest</span>
+            </button>
+        </div>
+        <p id="walletStatus">Status: Playing as Guest</p>
+    </div>
+
+    <!-- LEADERBOARDS (Top 10 limit with scrolling) -->
+    <section id="leaderboards">
+        <div class="table-wrap">
+            <h3>Weekly Total Score</h3>
+            <div class="table-scroll-container">
+                <table id="weeklyTable">
+                    <tr>
+                        <th>Rank</th>    
+                        <th>Wallet</th>
+                        <th>Score</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <h3>Best Single Run</h3>
+            <div class="table-scroll-container">
+                <table id="bestTable">
+                    <tr>
+                        <th>Rank</th>    
+                        <th>Wallet</th>
+                        <th>Score</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </section>
+
+</div>
+</main>
+
+<footer>
+    <p>© 2026 Satoshi Plays $SPLAY</p>
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script id="gameScript"></script>
+
+<script>
+function updateUI(wallet){
+    document.getElementById('walletStatus').innerText = "Status: Player (" + wallet.slice(0,6) + "...)";
+}
+
+function formatAddress(address) {
+    if (!address) return "";
+    return address.substring(0, 6) + "..." + address.substring(address.length - 4);
+}
+
+function refreshAuthBarState() {
+    const savedWallet = localStorage.getItem("userWallet");
+    const guestControlsGroup = document.getElementById('guest-controls-group');
+    const connectBtn = document.getElementById('btnInGameConnect');
+    const loggedInArea = document.getElementById('logged-in-area');
+    const addressDisplay = document.getElementById('wallet-address-display');
+
+    if (savedWallet) {
+        if (guestControlsGroup) guestControlsGroup.style.display = 'none';
+        if (connectBtn) connectBtn.style.display = 'none';
+        if (loggedInArea) loggedInArea.style.display = 'flex';
+        if (addressDisplay) addressDisplay.textContent = formatAddress(savedWallet);
+    } else {
+        if (guestControlsGroup) guestControlsGroup.style.display = 'flex';
+        if (connectBtn) connectBtn.style.display = 'inline-block';
+        if (loggedInArea) loggedInArea.style.display = 'none';
+    }
+}
+
+let gameInitialized = false;
+
+function launchGameContainer(isGuest) {
+    document.getElementById('top-hero-showcase').style.display = 'none';
+    document.getElementById('modeSelectionWrapper').style.display = 'none';
+
+
+
+
+    document.getElementById('game-wrapper-box').style.display = 'block';
+
+    document.getElementById('in-game-login-bar').style.display = 'flex';
+    refreshAuthBarState();
+
+    if (!gameInitialized && typeof startGame === "function") {
+        startGame();
+        gameInitialized = true;
+    }
+}
+
+function returnToMainScreen() {
+    document.getElementById('game-wrapper-box').style.display = 'none';
+    document.getElementById('top-hero-showcase').style.display = 'grid';
+    document.getElementById('modeSelectionWrapper').style.display = 'flex';
+}
+
+document.getElementById('btnBackToMenu').addEventListener('click', returnToMainScreen);
+document.getElementById('btnBackToMenuLogged').addEventListener('click', returnToMainScreen);
+
+async function connectMetaMaskAndSign() {
+    if (!window.ethereum) {
+        alert("MetaMask is not installed in your browser!");
+        return false;
+    }
+
+    try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const wallet = accounts[0];
+
+        const message = `Login to Satoshi Plays: ${wallet}-${Date.now()}`;
+        const signature = await window.ethereum.request({
+            method: 'personal_sign',
+            params: [message, wallet]
+        });
+
+        localStorage.setItem("userWallet", wallet);
+        localStorage.setItem("userSignature", signature);
+        window.userWallet = wallet;
+        window.userSignature = signature;
+
+        updateUI(wallet);
+        refreshAuthBarState();
+        return true;
+    } catch (err) {
+        console.error("Error connecting with MetaMask:", err);
+        return false;
+    }
+}
+
+document.getElementById('btnPlayWallet').addEventListener('click', async () => {
+    let activeWallet = localStorage.getItem("userWallet");
+    let activeSignature = localStorage.getItem("userSignature");
+
+    if (!activeWallet || !activeSignature) {
+        const success = await connectMetaMaskAndSign();
+        if (!success) return;
+    }
+
+    window.isGuestMode = false;
+    launchGameContainer(false);
+});
+
+document.getElementById('btnPlayGuest').addEventListener('click', () => {
+    window.isGuestMode = true;
+    launchGameContainer(true);
+});
+
+document.getElementById('btnInGameConnect').addEventListener('click', async () => {
+    const success = await connectMetaMaskAndSign();
+    if (success) {
+        window.isGuestMode = false;
+        refreshAuthBarState();
+        
+        if (typeof socket !== 'undefined' && socket.connected) {
+            const wallet = localStorage.getItem("userWallet");
+            const signature = localStorage.getItem("userSignature");
+            socket.emit("start-game", { wallet, signature });
+        }
+        if (typeof window.resetGameOverScreen === "function") {
+            window.resetGameOverScreen();
+        }
+    }
+});
+
+document.getElementById('btnInGameLogout').addEventListener('click', () => {
+    localStorage.removeItem("userWallet");
+    localStorage.removeItem("userSignature");
+    window.userWallet = null;
+    window.userSignature = null;
+    window.isGuestMode = true;
+
+    document.getElementById('walletStatus').innerText = "Status: Playing as Guest";
+    refreshAuthBarState();
+
+    if (typeof socket !== 'undefined' && socket.connected) {
+        socket.emit("start-game", { wallet: "0xGuest", signature: "guest_mode" });
+    }
+    if (typeof window.resetGameOverScreen === "function") {
+        window.resetGameOverScreen();
+    }
+});
+
+// INTERACTIVE CHAT LOGIC
+document.getElementById('btnSendChat').addEventListener('click', sendChatMessage);
+document.getElementById('chatInputMsg').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendChatMessage();
+});
+
+function sendChatMessage() {
+    const input = document.getElementById('chatInputMsg');
+    const msgText = input.value.trim();
+    if (!msgText) return;
+
+    const savedWallet = localStorage.getItem("userWallet");
+    const authorName = savedWallet ? savedWallet.slice(0, 6) + "..." : "Guest";
+
+    const chatBox = document.getElementById('chatMessagesBox');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'chat-msg';
+    msgDiv.innerHTML = `<span class="author">${authorName}:</span><span class="text">${escapeHtml(msgText)}</span>`;
+    
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    input.value = '';
+}
+
+function escapeHtml(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+window.addEventListener('load', () => {
+    const savedWallet = localStorage.getItem("userWallet");
+    if (savedWallet) {
+        window.userWallet = savedWallet;
+        updateUI(savedWallet);
+    }
+    loadLeaderboards();
+
+    window.addEventListener("scoreSubmitted", () => {
+        loadLeaderboards();
+    });
+
+    setInterval(() => {
+        loadLeaderboards();
+    }, 15000);
+});
+
+if (window.ethereum) {
+    window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+            localStorage.removeItem("userWallet");
+            localStorage.removeItem("userSignature");
+            window.userWallet = null;
+            document.getElementById('walletStatus').innerText = "Status: Playing as Guest";
+            refreshAuthBarState();
+        } else {
+            window.userWallet = accounts[0];
+            updateUI(accounts[0]);
+            refreshAuthBarState();
+        }
+    });
+}
+
+async function loadLeaderboards(){
+    try{
+        // Automatski bira localhost za razvoj ili prazno (relativnu putanju) za Render/produkciju
+        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://satoshi-plays.onrender.com';
+
+        const dailyResponse = await fetch(`${baseUrl}/get-scores/daily`);
+        const dailyData = await dailyResponse.json();
+
+        const weeklyResponse = await fetch(`${baseUrl}/get-scores/weekly`);
+        const weeklyData = await weeklyResponse.json();
+
+        const weeklyTable = document.getElementById('weeklyTable');
+        const bestTable = document.getElementById('bestTable');
+
+        weeklyTable.innerHTML = "<tr><th>Rank</th><th>Wallet</th><th>Score</th></tr>";
+        bestTable.innerHTML = "<tr><th>Rank</th><th>Wallet</th><th>Score</th></tr>";
+
+        const topDaily = dailyData.slice(0, 10);
+        const topWeekly = weeklyData.slice(0, 10);
+
+        topDaily.forEach((e, index) => {
+            let rank = index + 1;
+            let medal = 
+                rank === 1 ? '<span class="rank-gold">🥇</span>' :
+                rank === 2 ? '<span class="rank-silver">🥈</span>' :
+                rank === 3 ? '<span class="rank-bronze">🥉</span>' : rank;
+
+            let rowClass = 
+                rank === 1 ? "gold-row" :
+                rank === 2 ? "silver-row" :
+                rank === 3 ? "bronze-row" : "normal-row";
+
+            bestTable.innerHTML += `
+                <tr class="${rowClass}">
+                    <td>${medal}</td>
+                    <td>${e.wallet ? e.wallet.slice(0,6)+"..." : "Guest"}</td>
+                    <td>${e.score}</td>
+                </tr>`;
+        });
+
+        topWeekly.forEach((e, index) => {
+            let rank = index + 1;
+            let medal = 
+                rank === 1 ? '<span class="rank-gold">🥇</span>' :
+                rank === 2 ? '<span class="rank-silver">🥈</span>' :
+                rank === 3 ? '<span class="rank-bronze">🥉</span>' : rank;
+
+            let rowClass = 
+                rank === 1 ? "gold-row" :
+                rank === 2 ? "silver-row" :
+                rank === 3 ? "bronze-row" : "normal-row";
+
+            weeklyTable.innerHTML += `
+                <tr class="${rowClass}">
+                    <td>${medal}</td>
+                    <td>${e.wallet ? e.wallet.slice(0,6)+"..." : "Guest"}</td>
+                    <td>${e.score}</td>
+                </tr>`;
+        });
+
+    }catch(e){
+        console.log("Error loading leaderboards:", e);
+    }
+}
+
+
+let gameStarted = false;
+
+
+window.addEventListener("load", () => {
+
+    const mode = localStorage.getItem("gameMode");
+
+    if(mode){
+
+        document.getElementById("top-hero-showcase").style.display = "none";
+        document.getElementById("modeSelectionWrapper").style.display = "none";
+
+        launchGameContainer(false);
+
+        if(mode === "low"){
+            loadSelectedGame("gamelow.js");
+        } 
+        else {
+            loadSelectedGame("game.js");
+        }
+
+    }
+
+});
+
+
+function loadSelectedGame(file){
+
+    if(gameStarted) return;
+
+    let script = document.createElement("script");
+
+    script.src = file;
+
+    script.onload = function(){
+
+        gameStarted = true;
+
+        startGame();
+
+    };
+
+    document.body.appendChild(script);
+
+}
+
+
+document.getElementById("btnNormalGame").onclick = function(){
+
+    localStorage.setItem("gameMode", "normal");
+    location.reload();
+
+};
+
+
+document.getElementById("btnLowGame").onclick = function(){
+
+    localStorage.setItem("gameMode", "low");
+    location.reload();
+
+};
+
+
+
+</script>
+
+</body>
+</html>
