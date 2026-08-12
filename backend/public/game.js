@@ -9,10 +9,7 @@ GAME.JS - 1200x555 RESOLUTION
 
 async function updateLiveStatus() {
     try {
-        const backendUrl =
-            window.location.hostname === "localhost"
-                ? "http://localhost:3000"
-                : "https://satoshi-plays.onrender.com";
+        const backendUrl = window.location.origin;
 
         const response = await fetch(`${backendUrl}/api/status`);
 
@@ -623,9 +620,7 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 // ===============================
 
 if (!socket) {
-            const backendUrl = window.location.hostname === "localhost"
-                ? "http://localhost:3000"
-                : "https://satoshi-plays.onrender.com"; // Isti URL tvog backend-a
+            const backendUrl = window.location.origin;
 
             socket = io(backendUrl, {
                 transports: ["websocket", "polling"],
@@ -703,21 +698,21 @@ this.serverObstacles = state.obstacles.map(obs => ({
         // ===============================
 
         const handleJump = () => {
-    if (this.gameOver) {
-        this.scene.restart();
-        return;
-    }
-    if (!this.gameStarted) {
-        this.requestStart();
-        return;
-    }
-    // Odmah pomerite igrača na ekranu
-    if (this.playerSprite.y >= 465) {
-        this.playerSprite.y -= 22.5;
-        this.serverPlayerY = this.playerSprite.y; 
-    }
-    socket.emit("jump");
-};
+            if (this.gameOver) {
+                this.scene.restart();
+                return;
+            }
+            if (!this.gameStarted) {
+                this.requestStart();
+                return;
+            }
+            // Odmah pomerite igrača na ekranu
+            if (this.playerSprite.y >= 465) {
+                this.playerSprite.y -= 22.5;
+                this.serverPlayerY = this.playerSprite.y; 
+            }
+            socket.emit("jump");
+        };
 
         if (this.globalKeyHandler) {
 
@@ -901,7 +896,7 @@ this.serverObstacles = state.obstacles.map(obs => ({
             return;
         }
 
-        // PLAYER - Trenutno postavljanje pozicije bez ikakvog laga
+        // DIREKTNO POSTAVLJANJE POZICIJE BEZ LAGA
         this.playerSprite.y = this.serverPlayerY;
 
         if (this.playerSprite.y < S(330)) {
@@ -910,12 +905,7 @@ this.serverObstacles = state.obstacles.map(obs => ({
 
         } else {
 
-            this.playerSprite.rotation =
-                Phaser.Math.Linear(
-                    this.playerSprite.rotation,
-                    0,
-                    0.2
-                );
+            this.playerSprite.rotation = 0;
         }
 
         // ===============================
@@ -1032,19 +1022,9 @@ this.serverObstacles = state.obstacles.map(obs => ({
                     );
                 }
 
-                obj.sprite.x =
-                    Phaser.Math.Linear(
-                        obj.sprite.x,
-                        obs.x,
-                        0.8
-                    );
-
-                obj.sprite.y =
-                    Phaser.Math.Linear(
-                        obj.sprite.y,
-                        obs.y,
-                        0.8
-                    );
+                // DIREKTNO AŽURIRANJE BEZ INTERPOLACIJE
+                obj.sprite.x = obs.x;
+                obj.sprite.y = obs.y;
 
                 if (obj.text) {
 
