@@ -623,13 +623,13 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 
 if (!socket) {
             const backendUrl = window.location.hostname === "localhost"
-                ? "http://localhost:3000"
-                : "https://satoshi-plays.onrender.com";
+    ? "http://localhost:3000"
+    : "http://wh6a5kmtanjwrqpet2dcd1.204.168.235.25.sslip.io";
 
-            socket = io(backendUrl, {
-                transports: ["websocket", "polling"],
-                secure: true
-            });
+socket = io(backendUrl, {
+    transports: ["websocket", "polling"],
+    secure: false // pošto sslip.io koristi HTTP, stavi false ili ukloni secure liniju
+});
 
     socket.on(
         "game-started",
