@@ -892,7 +892,7 @@ this.serverObstacles = state.obstacles.map(obs => ({
         }
     }
 
-    update(time, delta) {
+   update(time, delta) {
 
         if (
             !this.gameStarted ||
@@ -901,13 +901,8 @@ this.serverObstacles = state.obstacles.map(obs => ({
             return;
         }
 
-        // PLAYER
-        this.playerSprite.y =
-            Phaser.Math.Linear(
-                this.playerSprite.y,
-                this.serverPlayerY,
-                0.8
-            );
+        // PLAYER - Trenutno postavljanje pozicije bez ikakvog laga
+        this.playerSprite.y = this.serverPlayerY;
 
         if (this.playerSprite.y < S(330)) {
 
