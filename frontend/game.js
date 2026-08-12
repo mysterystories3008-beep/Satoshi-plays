@@ -9,10 +9,9 @@ GAME.JS - 1200x555 RESOLUTION
 
 async function updateLiveStatus() {
     try {
-        const backendUrl =
-            window.location.hostname === "localhost"
-                ? "http://localhost:3000"
-                : "https://satoshi-plays.onrender.com";
+const backendUrl = window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "http://wh6a5kmtanjwrqpet2dcd1.204.168.235.25.sslip.io";
 
         const response = await fetch(`${backendUrl}/api/status`);
 
