@@ -628,7 +628,7 @@ if (!socket) {
 
 socket = io(backendUrl, {
     transports: ["websocket", "polling"],
-    secure: false // pošto sslip.io koristi HTTP, stavi false ili ukloni secure liniju
+    secure: true // pošto sslip.io koristi HTTP, stavi false ili ukloni secure liniju
 });
 
     socket.on(
