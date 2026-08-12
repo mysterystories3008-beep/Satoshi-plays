@@ -1,5 +1,5 @@
 /* ==========================================================
-GAME.JS - 1200x555 RESOLUTION (OPTIMIZED FULL CODE)
+GAME.JS - 1200x555 RESOLUTION
 ========================================================== */
 
 
@@ -9,9 +9,9 @@ GAME.JS - 1200x555 RESOLUTION (OPTIMIZED FULL CODE)
 
 async function updateLiveStatus() {
     try {
-        const backendUrl = window.location.hostname === "localhost"
-            ? "http://localhost:3000"
-            : "https://api.satoshiplays.com";
+const backendUrl = window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "https://api.satoshiplays.com";
 
         const response = await fetch(`${backendUrl}/api/status`);
 
@@ -67,7 +67,7 @@ const S = (value) => value * GAME_SCALE;
 
 
 /* ==========================================================:
-BACKGROUND MANAGER (OPTIMIZED)
+BACKGROUND MANAGER
 ========================================================== */
 
 class BackgroundManager {
@@ -117,7 +117,7 @@ class BackgroundManager {
         };
 
         // ===============================
-        // SLOJEVI (Optimizovano preko keširanih tekstura da ne secka)
+        // SLOJEVI
         // ===============================
 
         this.layer1 = scene.add.graphics().setDepth(-20);
@@ -132,8 +132,16 @@ class BackgroundManager {
         this.layer10 = scene.add.graphics().setDepth(-11);
 
         this.offsets = {
-            l1: 0, l2: 0, l3: 0, l4: 0, l5: 0,
-            l6: 0, l7: 0, l8: 0, l9: 0, l10: 0
+            l1: 0,
+            l2: 0,
+            l3: 0,
+            l4: 0,
+            l5: 0,
+            l6: 0,
+            l7: 0,
+            l8: 0,
+            l9: 0,
+            l10: 0
         };
 
         this.totalWidth = S(2200);
@@ -148,24 +156,6 @@ class BackgroundManager {
         this.buildingsL8 = this.generateBuildings(25, 38, 40, 85);
         this.buildingsL9 = this.generateBuildings(28, 42, 45, 95);
         this.buildingsL10 = this.generateBuildings(31, 46, 50, 105);
-
-        // Pre-renderujemo zgrade u pozadini da ne troše CPU u svakom frejmu
-        const colors = [
-            0x0b0b14, 0x0f0f1c, 0x131324, 0x17172c, 0x1b1b36,
-            0x1f1f40, 0x24244a, 0x292955, 0x2e2e60, 0x34346b
-        ];
-        this.cachedLayers = [
-            this.preRenderLayer(this.buildingsL1, colors[0]),
-            this.preRenderLayer(this.buildingsL2, colors[1]),
-            this.preRenderLayer(this.buildingsL3, colors[2]),
-            this.preRenderLayer(this.buildingsL4, colors[3]),
-            this.preRenderLayer(this.buildingsL5, colors[4]),
-            this.preRenderLayer(this.buildingsL6, colors[5]),
-            this.preRenderLayer(this.buildingsL7, colors[6]),
-            this.preRenderLayer(this.buildingsL8, colors[7]),
-            this.preRenderLayer(this.buildingsL9, colors[8]),
-            this.preRenderLayer(this.buildingsL10, colors[9])
-        ];
     }
 
     generateBuildings(minW, maxW, minH, maxH) {
@@ -194,58 +184,57 @@ class BackgroundManager {
         return arr;
     }
 
-    preRenderLayer(buildings, color) {
-        const canvas = document.createElement('canvas');
-        canvas.width = this.totalWidth;
-        canvas.height = S(400);
-        const ctx = canvas.getContext('2d');
-        
-        let hexColor = '#' + color.toString(16).padStart(6, '0');
-        ctx.fillStyle = hexColor;
+    drawLayer(graphics, buildings, offset, color, alpha) {
+        graphics.clear();
+        graphics.fillStyle(color, alpha);
 
         let groundY = S(345);
 
         for (let b of buildings) {
-            let x = b.x;
-            ctx.fillRect(x, groundY - b.height, b.width, b.height);
+            let x = b.x - offset;
+
+            while (x < -b.width) {
+                x += this.totalWidth;
+            }
+
+            graphics.fillRect(
+                x,
+                groundY - b.height,
+                b.width,
+                b.height
+            );
 
             if (b.height > S(35) && b.width > S(15)) {
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                graphics.fillStyle(0xffffff, 0.7);
 
                 let windowSize = S(1.5);
                 let gapX = S(4);
                 let gapY = S(6);
 
-                for (let wx = x + S(3); wx < x + b.width - S(3); wx += gapX) {
-                    for (let wy = groundY - b.height + S(5); wy < groundY - S(6); wy += gapY) {
+                for (
+                    let wx = x + S(3);
+                    wx < x + b.width - S(3);
+                    wx += gapX
+                ) {
+                    for (
+                        let wy = groundY - b.height + S(5);
+                        wy < groundY - S(6);
+                        wy += gapY
+                    ) {
                         if ((wx + wy) % S(5) !== 0) {
-                            ctx.fillRect(wx, wy, windowSize, windowSize);
+                            graphics.fillRect(
+                                wx,
+                                wy,
+                                windowSize,
+                                windowSize
+                            );
                         }
                     }
                 }
-                ctx.fillStyle = hexColor;
+
+                graphics.fillStyle(color, alpha);
             }
         }
-
-        let textureKey = 'cached_layer_' + Math.random();
-        this.scene.textures.addCanvas(textureKey, canvas);
-        return textureKey;
-    }
-
-    drawLayer(graphics, buildings, offset, color, alpha, layerIndex) {
-        graphics.clear();
-        // Umesto teškog ponovnog preračunavanja u frejmu, iscrtavamo keširanu teksturu sa pomeranjem
-        let textureKey = this.cachedLayers[layerIndex];
-        graphics.fillStyle(color, alpha);
-        
-        let groundY = S(345);
-        let currentOffset = offset % this.totalWidth;
-
-        // Crtamo dva puta zbog seamless loop-ovanja
-        graphics.fillRect(-currentOffset, groundY - S(350), this.totalWidth, S(350));
-        graphics.fillRect(this.totalWidth - currentOffset, groundY - S(350), this.totalWidth, S(350));
-        
-        // Zadržavamo originalnu logiku prozora preko teksture bez opterećenja CPU-a
     }
 
     update(speed) {
@@ -270,16 +259,33 @@ class BackgroundManager {
         let cy = S(95);
 
         this.cloudsGraphics.fillCircle(cx, cy, S(28));
-        this.cloudsGraphics.fillCircle(cx + S(25), cy - S(12), S(35));
-        this.cloudsGraphics.fillCircle(cx + S(52), cy, S(25));
-        this.cloudsGraphics.fillRect(cx - S(10), cy, S(80), S(25));
+        this.cloudsGraphics.fillCircle(
+            cx + S(25),
+            cy - S(12),
+            S(35)
+        );
+        this.cloudsGraphics.fillCircle(
+            cx + S(52),
+            cy,
+            S(25)
+        );
+        this.cloudsGraphics.fillRect(
+            cx - S(10),
+            cy,
+            S(80),
+            S(25)
+        );
 
         // ===============================
         // PTICE
         // ===============================
 
         this.birdsGraphics.clear();
-        this.birdsGraphics.lineStyle(S(2), 0x111111, 1);
+        this.birdsGraphics.lineStyle(
+            S(2),
+            0x111111,
+            1
+        );
 
         for (let bird of this.birds) {
 
@@ -294,15 +300,41 @@ class BackgroundManager {
             let s = bird.size;
 
             this.birdsGraphics.beginPath();
-            this.birdsGraphics.moveTo(x - S(12) * s, y);
-            this.birdsGraphics.lineTo(x - S(5) * s, y - S(7) * s);
-            this.birdsGraphics.lineTo(x, y);
+
+            this.birdsGraphics.moveTo(
+                x - S(12) * s,
+                y
+            );
+
+            this.birdsGraphics.lineTo(
+                x - S(5) * s,
+                y - S(7) * s
+            );
+
+            this.birdsGraphics.lineTo(
+                x,
+                y
+            );
+
             this.birdsGraphics.strokePath();
 
             this.birdsGraphics.beginPath();
-            this.birdsGraphics.moveTo(x, y);
-            this.birdsGraphics.lineTo(x + S(5) * s, y - S(7) * s);
-            this.birdsGraphics.lineTo(x + S(12) * s, y);
+
+            this.birdsGraphics.moveTo(
+                x,
+                y
+            );
+
+            this.birdsGraphics.lineTo(
+                x + S(5) * s,
+                y - S(7) * s
+            );
+
+            this.birdsGraphics.lineTo(
+                x + S(12) * s,
+                y
+            );
+
             this.birdsGraphics.strokePath();
         }
 
@@ -316,47 +348,117 @@ class BackgroundManager {
 
         if (this.plane.x < S(-100)) {
             this.plane.x = S(950);
-            this.plane.y = Phaser.Math.Between(S(60), S(120));
+            this.plane.y = Phaser.Math.Between(
+                S(60),
+                S(120)
+            );
         }
 
         let px = this.plane.x;
         let py = this.plane.y;
 
-        this.planeGraphics.fillStyle(0x222222, 0.8);
-        this.planeGraphics.fillRect(px, py, S(35), S(3));
-        this.planeGraphics.fillTriangle(px + S(10), py, px + S(25), py - S(8), px + S(28), py);
-        this.planeGraphics.fillTriangle(px + S(10), py + S(3), px + S(25), py + S(10), px + S(28), py + S(3));
-        this.planeGraphics.fillRect(px, py - S(4), S(8), S(8));
+        this.planeGraphics.fillStyle(
+            0x222222,
+            0.8
+        );
+
+        this.planeGraphics.fillRect(
+            px,
+            py,
+            S(35),
+            S(3)
+        );
+
+        this.planeGraphics.fillTriangle(
+            px + S(10),
+            py,
+            px + S(25),
+            py - S(8),
+            px + S(28),
+            py
+        );
+
+        this.planeGraphics.fillTriangle(
+            px + S(10),
+            py + S(3),
+            px + S(25),
+            py + S(10),
+            px + S(28),
+            py + S(3)
+        );
+
+        this.planeGraphics.fillRect(
+            px,
+            py - S(4),
+            S(8),
+            S(8)
+        );
 
         // ===============================
         // BUILDING LAYERS
         // ===============================
 
         let speeds = [
-            0.0025, 0.005, 0.01, 0.0175, 0.025,
-            0.035, 0.0475, 0.065, 0.085, 0.11
+            0.0025,
+            0.005,
+            0.01,
+            0.0175,
+            0.025,
+            0.035,
+            0.0475,
+            0.065,
+            0.085,
+            0.11
         ];
 
         let colors = [
-            0x0b0b14, 0x0f0f1c, 0x131324, 0x17172c, 0x1b1b36,
-            0x1f1f40, 0x24244a, 0x292955, 0x2e2e60, 0x34346b
+            0x0b0b14,
+            0x0f0f1c,
+            0x131324,
+            0x17172c,
+            0x1b1b36,
+            0x1f1f40,
+            0x24244a,
+            0x292955,
+            0x2e2e60,
+            0x34346b
         ];
 
         let layers = [
-            this.layer1, this.layer2, this.layer3, this.layer4, this.layer5,
-            this.layer6, this.layer7, this.layer8, this.layer9, this.layer10
+            this.layer1,
+            this.layer2,
+            this.layer3,
+            this.layer4,
+            this.layer5,
+            this.layer6,
+            this.layer7,
+            this.layer8,
+            this.layer9,
+            this.layer10
         ];
 
         let buildings = [
-            this.buildingsL1, this.buildingsL2, this.buildingsL3, this.buildingsL4, this.buildingsL5,
-            this.buildingsL6, this.buildingsL7, this.buildingsL8, this.buildingsL9, this.buildingsL10
+            this.buildingsL1,
+            this.buildingsL2,
+            this.buildingsL3,
+            this.buildingsL4,
+            this.buildingsL5,
+            this.buildingsL6,
+            this.buildingsL7,
+            this.buildingsL8,
+            this.buildingsL9,
+            this.buildingsL10
         ];
 
         for (let i = 0; i < 10; i++) {
 
-            this.offsets["l" + (i + 1)] += speed * speeds[i] * GAME_SCALE;
+            this.offsets["l" + (i + 1)] +=
+                speed * speeds[i] * GAME_SCALE;
 
-            if (this.offsets["l" + (i + 1)] >= this.totalWidth) {
+            if (
+                this.offsets["l" + (i + 1)] >=
+                this.totalWidth
+            ) {
                 this.offsets["l" + (i + 1)] = 0;
             }
 
@@ -365,8 +467,7 @@ class BackgroundManager {
                 buildings[i],
                 this.offsets["l" + (i + 1)],
                 colors[i],
-                0.95,
-                i
+                0.95
             );
         }
     }
@@ -385,6 +486,7 @@ class GameScene extends Phaser.Scene {
     }
 
     restartGame() {
+
         this.gameOver = false;
         this.gameStarted = false;
 
@@ -400,28 +502,58 @@ class GameScene extends Phaser.Scene {
         }
 
         if (!this.startText) {
+
            this.startText = this.add.text(600, 150, "TAP OR SPACE TO START", {
-                fontSize: "48px",
-                fill: "#f3ba2f",
-                fontStyle: "bold",
-                stroke: "#000",
-                strokeThickness: 6
-            }).setOrigin(0.5).setDepth(20);
+    fontSize: "48px",
+    fill: "#f3ba2f",
+    fontStyle: "bold",
+    stroke: "#000",
+    strokeThickness: 6
+}).setOrigin(0.5).setDepth(20);
+
         } else {
-            this.startText.setText("TAP OR SPACE TO START");
+
+            this.startText.setText(
+                "TAP OR SPACE TO START"
+            );
         }
     }
 
     preload() {
-        this.load.image("bitcoin", "assets/bitcoin.png");
-        this.load.image("fud", "assets/fud.png");
-        this.load.image("rugpull", "assets/rugpull.png");
-        this.load.image("sky", "assets/sky.png");
-        this.load.image("rekt", "assets/rekt.png");
-        this.load.image("liquidation", "assets/liquidation.png");
+
+        this.load.image(
+            "bitcoin",
+            "assets/bitcoin.png"
+        );
+
+        this.load.image(
+            "fud",
+            "assets/fud.png"
+        );
+
+        this.load.image(
+            "rugpull",
+            "assets/rugpull.png"
+        );
+
+        this.load.image(
+            "sky",
+            "assets/sky.png"
+        );
+
+        this.load.image(
+            "rekt",
+            "assets/rekt.png"
+        );
+
+        this.load.image(
+            "liquidation",
+            "assets/liquidation.png"
+        );
     }
 
     create() {
+
         this.gameStarted = false;
         this.gameOver = false;
 
@@ -433,29 +565,29 @@ class GameScene extends Phaser.Scene {
         this.serverPlayerY = S(330);
         this.serverObstacles = [];
 
-        this.ground = this.add.rectangle(600, 540, 1200, 60, 0x34a853).setDepth(5);
+      this.ground = this.add.rectangle(600, 540, 1200, 60, 0x34a853).setDepth(5);
 
-        this.playerSprite = this.add.sprite(180, 495, "bitcoin")
-            .setScale(1.2)
-            .setDepth(10);
+this.playerSprite = this.add.sprite(180, 495, "bitcoin")
+    .setScale(1.2)
+    .setDepth(10);
 
         this.obstacleSpritesMap = new Map();
 
         this.scoreText = this.add.text(30, 30, "Score: 0", {
-            fontSize: "36px",
-            fill: "#f3ba2f",
-            fontStyle: "bold",
-            stroke: "#000",
-            strokeThickness: 4
-        }).setDepth(20);
+    fontSize: "36px",
+    fill: "#f3ba2f",
+    fontStyle: "bold",
+    stroke: "#000",
+    strokeThickness: 4
+}).setDepth(20);
 
-        this.bestText = this.add.text(30, 75, "Best: " + highScore, {
-            fontSize: "30px",
-            fill: "#ffffff",
-            fontStyle: "bold",
-            stroke: "#000",
-            strokeThickness: 4
-        }).setDepth(20);
+this.bestText = this.add.text(30, 75, "Best: " + highScore, {
+    fontSize: "30px",
+    fill: "#ffffff",
+    fontStyle: "bold",
+    stroke: "#000",
+    strokeThickness: 4
+}).setDepth(20);
 
         // START TEXT
         this.startText = this.add.text(
@@ -476,64 +608,93 @@ class GameScene extends Phaser.Scene {
         this.background = new BackgroundManager(this);
 
         window.resetGameOverScreen = () => {
-            if (this && typeof this.restartGame === "function") {
+
+            if (
+                this &&
+                typeof this.restartGame === "function"
+            ) {
                 this.restartGame();
             }
         };
 
-        // ===============================
-        // SOCKET
-        // ===============================
+       // ===============================
+// SOCKET
+// ===============================
 
-        if (!socket) {
+if (!socket) {
             const backendUrl = window.location.hostname === "localhost"
-                ? "http://localhost:3000"
-                : "https://api.satoshiplays.com";
+    ? "http://localhost:3000"
+    : "https://api.satoshiplays.com";
 
-            socket = io(backendUrl, {
-                transports: ["websocket", "polling"],
-                secure: false
-            });
+socket = io(backendUrl, {
+    transports: ["websocket", "polling"],
+    secure: false // pošto sslip.io koristi HTTP, stavi false ili ukloni secure liniju
+});
 
-            socket.on("game-started", (data) => {
-                currentGameId = data.gameId;
-                this.speed = data.speed;
-                this.gameStarted = true;
-                this.gameOver = false;
+    socket.on(
+        "game-started",
+        (data) => {
 
-                if (this.startText) {
-                    this.startText.destroy();
+            currentGameId = data.gameId;
+
+            this.speed = data.speed;
+
+            this.gameStarted = true;
+            this.gameOver = false;
+
+            if (this.startText) {
+                this.startText.destroy();
+            }
+        }
+    );
+
+            socket.on(
+                "state",
+                (state) => {
+
+                    if (
+                        !this.gameStarted ||
+                        this.gameOver
+                    ) {
+                        return;
+                    }
+
+                    this.score = state.score;
+                    this.speed = state.speed;
+
+                    this.scoreText.setText(
+                        "Score: " + state.score
+                    );
+
+                    let playerGroundOffset = 15;
+
+this.serverPlayerY =
+    (state.player.y - playerGroundOffset) * GAME_SCALE;
+
+this.serverObstacles = state.obstacles.map(obs => ({
+    ...obs,
+    x: obs.x * GAME_SCALE,
+    y: obs.y * GAME_SCALE
+}));
                 }
-            });
+            );
 
-            socket.on("state", (state) => {
-                if (!this.gameStarted || this.gameOver) {
-                    return;
+            socket.on(
+                "game-over",
+                (result) => {
+                    this.onGameOver(result);
                 }
+            );
 
-                this.score = state.score;
-                this.speed = state.speed;
-
-                this.scoreText.setText("Score: " + state.score);
-
-                let playerGroundOffset = 15;
-
-                this.serverPlayerY = (state.player.y - playerGroundOffset) * GAME_SCALE;
-
-                this.serverObstacles = state.obstacles.map(obs => ({
-                    ...obs,
-                    x: obs.x * GAME_SCALE,
-                    y: obs.y * GAME_SCALE
-                }));
-            });
-
-            socket.on("game-over", (result) => {
-                this.onGameOver(result);
-            });
-
-            socket.on("error", (err) => {
-                console.error("Server error:", err);
-            });
+            socket.on(
+                "error",
+                (err) => {
+                    console.error(
+                        "Server error:",
+                        err
+                    );
+                }
+            );
         }
 
         // ===============================
@@ -541,6 +702,7 @@ class GameScene extends Phaser.Scene {
         // ===============================
 
         const handleJump = () => {
+
             if (this.gameOver) {
                 this.scene.restart();
                 return;
@@ -552,42 +714,70 @@ class GameScene extends Phaser.Scene {
             }
 
             if (this.playerSprite.y >= 465) {
-                this.playerSprite.y -= 22.5;
-            }
+    this.playerSprite.y -= 22.5;
+}
 
             socket.emit("jump");
         };
 
         if (this.globalKeyHandler) {
-            window.removeEventListener("keydown", this.globalKeyHandler);
+
+            window.removeEventListener(
+                "keydown",
+                this.globalKeyHandler
+            );
         }
 
         this.globalKeyHandler = (event) => {
+
             if (event.code === "Space") {
+
                 event.preventDefault();
+
                 handleJump();
             }
         };
 
-        window.addEventListener("keydown", this.globalKeyHandler);
+        window.addEventListener(
+            "keydown",
+            this.globalKeyHandler
+        );
 
-        this.input.on("pointerdown", () => {
-            handleJump();
-        });
+        this.input.on(
+            "pointerdown",
+            () => {
+                handleJump();
+            }
+        );
     }
 
     requestStart() {
-        const wallet = localStorage.getItem("userWallet") || "0xTestWallet1234567890abcdef";
-        const signature = localStorage.getItem("userSignature") || "no_signature";
+
+        const wallet =
+            localStorage.getItem("userWallet") ||
+            "0xTestWallet1234567890abcdef";
+
+        const signature =
+            localStorage.getItem("userSignature") ||
+            "no_signature";
 
         if (this.startText) {
-            this.startText.setText("Connecting...");
+            this.startText.setText(
+                "Connecting..."
+            );
         }
 
-        socket.emit("start-game", { wallet, signature });
+        socket.emit(
+            "start-game",
+            {
+                wallet,
+                signature
+            }
+        );
     }
 
     onGameOver(result) {
+
         if (this.gameOver) {
             return;
         }
@@ -595,152 +785,269 @@ class GameScene extends Phaser.Scene {
         this.gameOver = true;
         this.gameStarted = false;
 
-        if (this.serverObstacles && this.serverObstacles.length > 0) {
-            let hitObstacle = this.serverObstacles.reduce((prev, curr) => {
-                return (Math.abs(curr.x - this.playerSprite.x) < Math.abs(prev.x - this.playerSprite.x)) ? curr : prev;
-            });
+        if (
+            this.serverObstacles &&
+            this.serverObstacles.length > 0
+        ) {
+
+            let hitObstacle =
+                this.serverObstacles.reduce(
+                    (prev, curr) => {
+
+                        return (
+                            Math.abs(
+                                curr.x -
+                                this.playerSprite.x
+                            ) <
+                            Math.abs(
+                                prev.x -
+                                this.playerSprite.x
+                            )
+                        )
+                            ? curr
+                            : prev;
+                    }
+                );
 
             if (hitObstacle) {
-                this.playerSprite.x = (this.playerSprite.x + hitObstacle.x) / 2;
-                this.playerSprite.y = hitObstacle.y - S(15);
+
+                this.playerSprite.x =
+                    (
+                        this.playerSprite.x +
+                        hitObstacle.x
+                    ) / 2;
+
+                this.playerSprite.y =
+                    hitObstacle.y -
+                    S(15);
             }
         }
 
-        this.cameras.main.shake(400, 0.025);
+        this.cameras.main.shake(
+            400,
+            0.025
+        );
 
         this.tweens.add({
+
             targets: this.playerSprite,
+
             angle: 360,
+
             scaleX: 1.2,
             scaleY: 0.6,
+
             duration: 150,
+
             yoyo: true,
+
             onComplete: () => {
-                this.playerSprite.setTint(0xff0000);
+
+                this.playerSprite.setTint(
+                    0xff0000
+                );
             }
         });
 
-        const finalScore = result.score || this.score;
+        const finalScore =
+            result.score || this.score;
 
         if (finalScore > highScore) {
+
             highScore = finalScore;
-            localStorage.setItem("highScore", highScore);
-            this.bestText.setText("Best: " + highScore);
+
+            localStorage.setItem(
+                "highScore",
+                highScore
+            );
+
+            this.bestText.setText(
+                "Best: " + highScore
+            );
         }
 
-        this.time.delayedCall(300, () => {
-            if (!this.gameOver) {
-                return;
-            }
+        this.time.delayedCall(
+            300,
+            () => {
 
-            this.gameOverText = this.add.text(600, 165, "GAME OVER\n\nTAP OR SPACE", {
-                fontSize: "51px",
-                fill: "#ff3333",
-                align: "center",
-                fontStyle: "bold",
-                stroke: "#000",
-                strokeThickness: 7
-            }).setOrigin(0.5).setDepth(30);
-        });
+                if (!this.gameOver) {
+                    return;
+                }
+
+                this.gameOverText = this.add.text(600, 165, "GAME OVER\n\nTAP OR SPACE", {
+    fontSize: "51px",
+    fill: "#ff3333",
+    align: "center",
+    fontStyle: "bold",
+    stroke: "#000",
+    strokeThickness: 7
+}).setOrigin(0.5).setDepth(30);
+            }
+        );
 
         if (result.success) {
-            window.dispatchEvent(new Event("scoreSubmitted"));
+
+            window.dispatchEvent(
+                new Event("scoreSubmitted")
+            );
         }
     }
 
     update(time, delta) {
-        if (!this.gameStarted || this.gameOver) {
+
+        if (
+            !this.gameStarted ||
+            this.gameOver
+        ) {
             return;
         }
 
+        // PLAYER - Direktno postavljanje bez kašnjenja
         this.playerSprite.y = this.serverPlayerY;
 
         if (this.playerSprite.y < S(330)) {
             this.playerSprite.rotation += 0.12;
         } else {
-            this.playerSprite.rotation = Phaser.Math.Linear(this.playerSprite.rotation, 0, 0.2);
+            this.playerSprite.rotation = Phaser.Math.Linear(
+                this.playerSprite.rotation,
+                0,
+                0.2
+            );
         }
 
         // ===============================
         // OBSTACLES
         // ===============================
 
-        let activeIds = new Set(this.serverObstacles.map(obs => obs.id));
+        let activeIds = new Set(
+            this.serverObstacles.map(
+                obs => obs.id
+            )
+        );
 
-        this.obstacleSpritesMap.forEach((obj, id) => {
-            if (!activeIds.has(id)) {
-                if (obj.sprite) {
-                    obj.sprite.destroy();
+        this.obstacleSpritesMap.forEach(
+            (obj, id) => {
+
+                if (!activeIds.has(id)) {
+
+                    if (obj.sprite) {
+                        obj.sprite.destroy();
+                    }
+
+                    if (obj.text) {
+                        obj.text.destroy();
+                    }
+
+                    this.obstacleSpritesMap.delete(id);
                 }
-                if (obj.text) {
-                    obj.text.destroy();
+            }
+        );
+
+        this.serverObstacles.forEach(
+            obs => {
+
+                let key = "rugpull";
+                let label = "";
+
+                if (obs.type === "fud") {
+                    key = "fud";
                 }
-                this.obstacleSpritesMap.delete(id);
-            }
-        });
-
-        this.serverObstacles.forEach(obs => {
-            let key = "rugpull";
-            let label = "";
-
-            if (obs.type === "fud") {
-                key = "fud";
-            }
-            if (obs.type === "meteor") {
-                key = "rekt";
-                label = "REKT";
-            }
-            if (obs.type === "liquidation") {
-                key = "liquidation";
-                label = "LIQUIDATED";
-            }
-            if (obs.type === "rug") {
-                label = "rugpull";
-            }
-
-            let obj = this.obstacleSpritesMap.get(obs.id);
-
-            if (!obj) {
-                const spr = this.add.sprite(obs.x, obs.y, key)
-                    .setScale(obs.type === "fud" ? 1.05 : 1.2)
-                    .setDepth(8);
 
                 if (obs.type === "meteor") {
-                    spr.setTint(0xff0000);
+                    key = "rekt";
+                    label = "REKT";
                 }
 
-                let txt = null;
-
-                if (label) {
-                    txt = this.add.text(obs.x, obs.y + S(15), label, {
-                        fontSize: "18px",
-                        fill: "#fff",
-                        fontStyle: "bold",
-                        stroke: "#000",
-                        strokeThickness: 3
-                    })
-                    .setOrigin(0.5)
-                    .setDepth(9);
+                if (
+                    obs.type === "liquidation"
+                ) {
+                    key = "liquidation";
+                    label = "LIQUIDATED";
                 }
 
-                obj = {
-                    sprite: spr,
-                    text: txt
-                };
+                if (obs.type === "rug") {
+                    label = "rugpull";
+                }
 
-                this.obstacleSpritesMap.set(obs.id, obj);
+                let obj =
+                    this.obstacleSpritesMap.get(
+                        obs.id
+                    );
+
+                if (!obj) {
+
+                    const spr =
+                        this.add.sprite(
+                            obs.x,
+                            obs.y,
+                            key
+                        )
+                        .setScale(
+                            obs.type === "fud"
+                                ? 1.05
+                                : 1.2
+                        )
+                        .setDepth(8);
+
+                    if (
+                        obs.type === "meteor"
+                    ) {
+                        spr.setTint(
+                            0xff0000
+                        );
+                    }
+
+                    let txt = null;
+
+                    if (label) {
+
+                        txt =
+                            this.add.text(
+                                obs.x,
+                                obs.y + S(15),
+                                label,
+                                {
+                                    fontSize: "18px",
+                                    fill: "#fff",
+                                    fontStyle: "bold",
+                                    stroke: "#000",
+                                    strokeThickness: 3
+                                }
+                            )
+                            .setOrigin(0.5)
+                            .setDepth(9);
+                    }
+
+                    obj = {
+                        sprite: spr,
+                        text: txt
+                    };
+
+                    this.obstacleSpritesMap.set(
+                        obs.id,
+                        obj
+                    );
+                }
+
+                // Trenutno pozicioniranje bez laga
+                obj.sprite.x = obs.x;
+                obj.sprite.y = obs.y;
+
+                if (obj.text) {
+
+                    obj.text.x =
+                        obj.sprite.x;
+
+                    obj.text.y =
+                        obj.sprite.y +
+                        S(15);
+                }
             }
+        );
 
-            obj.sprite.x = obs.x;
-            obj.sprite.y = obs.y;
-
-            if (obj.text) {
-                obj.text.x = obj.sprite.x;
-                obj.text.y = obj.sprite.y + S(15);
-            }
-        });
-
-        this.background.update(this.speed);
+        this.background.update(
+            this.speed
+        );
     }
 }
 
@@ -750,28 +1057,41 @@ PHASER START
 ========================================================== */
 
 function startGame() {
+
     const config = {
+
         type: Phaser.AUTO,
+
         render: {
             antialias: true,
             pixelArt: false,
-            resolution: Math.min(window.devicePixelRatio || 1, 2)
+            resolution: Math.min(
+                window.devicePixelRatio || 1,
+                2
+            )
         },
+
         scale: {
             mode: Phaser.Scale.FIT,
             parent: "phaser-game",
             autoCenter: Phaser.Scale.CENTER_BOTH,
+
             width: 1200,
             height: 555
         },
+
         roundPixels: true,
+
         physics: {
             default: "arcade",
             arcade: {
-                gravity: { y: 0 },
+                gravity: {
+                    y: 0
+                },
                 debug: false
             }
         },
+
         scene: [GameScene]
     };
 
@@ -783,27 +1103,58 @@ function startGame() {
 // FULLSCREEN BUTTON
 // ==========================
 
-const fullscreenBtn = document.getElementById("fullscreenBtn");
+const fullscreenBtn =
+    document.getElementById(
+        "fullscreenBtn"
+    );
 
 if (fullscreenBtn) {
-    fullscreenBtn.addEventListener("click", async () => {
-        const gameContainer = document.getElementById("game-container");
-        try {
-            if (!document.fullscreenElement) {
-                await gameContainer.requestFullscreen();
-            } else {
-                await document.exitFullscreen();
-            }
-        } catch (error) {
-            console.error("Fullscreen error:", error);
-        }
-    });
 
-    document.addEventListener("fullscreenchange", () => {
-        if (document.fullscreenElement) {
-            fullscreenBtn.textContent = "✕ EXIT";
-        } else {
-            fullscreenBtn.textContent = "⛶ FULLSCREEN";
+    fullscreenBtn.addEventListener(
+        "click",
+        async () => {
+
+            const gameContainer =
+                document.getElementById(
+                    "game-container"
+                );
+
+            try {
+
+                if (!document.fullscreenElement) {
+
+                    await gameContainer.requestFullscreen();
+
+                } else {
+
+                    await document.exitFullscreen();
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Fullscreen error:",
+                    error
+                );
+            }
         }
-    });
+    );
+
+    document.addEventListener(
+        "fullscreenchange",
+        () => {
+
+            if (document.fullscreenElement) {
+
+                fullscreenBtn.textContent =
+                    "✕ EXIT";
+
+            } else {
+
+                fullscreenBtn.textContent =
+                    "⛶ FULLSCREEN";
+            }
+        }
+    );
 }
