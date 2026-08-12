@@ -43,7 +43,7 @@ const io = new Server(server, {
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "_frontend")));
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 // Zadržavamo sessions.json privremeno za aktivne sesije tokom igranja
 const SESSION_FILE = path.join(__dirname, "sessions.json");
