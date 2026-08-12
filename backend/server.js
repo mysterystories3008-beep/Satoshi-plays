@@ -37,13 +37,29 @@ const Score = mongoose.model("Score", scoreSchema);
 
 const app = express();
 const server = http.createServer(app);
+
+// Dozvoljeni domeni za CORS (lokalno testiranje + tvoj live domen)
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "https://satoshiplays.com",
+    "https://www.satoshiplays.com"
+];
+
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
+
 const io = new Server(server, {
-    cors: { origin: "*" }
+    cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST"]
+    }
 });
 
-app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../frontend")));
+// ❌ Izbačen express.static za frontend jer je frontend sada potpuno odvojen servis
 
 // Zadržavamo sessions.json privremeno za aktivne sesije tokom igranja
 const SESSION_FILE = path.join(__dirname, "sessions.json");
@@ -401,8 +417,6 @@ async function finishGame(socket, state, signature) {
     saveFile(SESSION_FILE, sessions);
 
     try {
-        // Upis u MongoDB umesto JSON fajlova
-        // Za dnevnu rang listu (čuvamo jedinstven najbolji skor po igraču ili sve, ovde čuvamo sve pa filtriramo po top 10)
         await Score.create({
             gameId: session.gameId,
             wallet: session.wallet,
@@ -451,7 +465,6 @@ app.get("/get-scores/:type", async (req, res) => {
     try {
         const type = req.params.type; // 'daily' ili 'weekly'
         
-        // Vučemo top 10 skorova sortirano opadajuće
         const scores = await Score.find({ type: type })
             .sort({ score: -1 })
             .limit(10);
@@ -480,13 +493,7 @@ app.get("/api/status", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-    // Ovde koristimo ../frontend/index.html
-    const frontendPath = path.join(__dirname, "../frontend", "index.html");
-    if (fs.existsSync(frontendPath)) {
-        res.sendFile(frontendPath);
-    } else {
-        res.send("Satoshi Play API & Game Server is Running! (Frontend folder nije nađen na putanji)");
-    }
+    res.json({ status: "Satoshi Plays API & Game Server is Running!" });
 });
 
 const PORT = process.env.PORT || 3000;
