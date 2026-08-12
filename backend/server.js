@@ -86,7 +86,7 @@ function updateWeeklyAccumulatedTop10(scoreList, newEntry) {
 // GAME ENGINE NA SERVERU
 // ==========================================
 
-const TICK_MS = 15;         
+const TICK_MS = 30;         
 const GRAVITY = 0.9;        
 const JUMP_V = -14;         
 const GROUND_Y = 350;
