@@ -626,10 +626,12 @@ if (!socket) {
     ? "http://localhost:3000"
     : "https://api.satoshiplays.com";
 
-socket = io(backendUrl, {
-    transports: ["websocket", "polling"],
-    secure: true // pošto sslip.io koristi HTTP, stavi false ili ukloni secure liniju
-});
+if (!socket) {
+    const backendUrl = window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : "https://api.satoshiplays.com";
+
+   socket = io(backendUrl);
 
     socket.on(
         "game-started",
