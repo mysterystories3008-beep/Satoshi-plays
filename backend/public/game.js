@@ -703,23 +703,21 @@ this.serverObstacles = state.obstacles.map(obs => ({
         // ===============================
 
         const handleJump = () => {
-
-            if (this.gameOver) {
-                this.scene.restart();
-                return;
-            }
-
-            if (!this.gameStarted) {
-                this.requestStart();
-                return;
-            }
-
-            if (this.playerSprite.y >= 465) {
-    this.playerSprite.y -= 22.5;
-}
-
-            socket.emit("jump");
-        };
+    if (this.gameOver) {
+        this.scene.restart();
+        return;
+    }
+    if (!this.gameStarted) {
+        this.requestStart();
+        return;
+    }
+    // Odmah pomerite igrača na ekranu
+    if (this.playerSprite.y >= 465) {
+        this.playerSprite.y -= 22.5;
+        this.serverPlayerY = this.playerSprite.y; 
+    }
+    socket.emit("jump");
+};
 
         if (this.globalKeyHandler) {
 
