@@ -625,7 +625,7 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 if (!socket) {
             const backendUrl = window.location.hostname === "localhost"
                 ? "http://localhost:3000"
-                : "https://satoshi-plays.onrender.com"; // Isti URL tvog backend-a
+                : "https://satoshi-plays.onrender.com";
 
             socket = io(backendUrl, {
                 transports: ["websocket", "polling"],
@@ -903,26 +903,17 @@ this.serverObstacles = state.obstacles.map(obs => ({
             return;
         }
 
-        // PLAYER
-        this.playerSprite.y =
-            Phaser.Math.Linear(
-                this.playerSprite.y,
-                this.serverPlayerY,
-                0.8
-            );
+        // PLAYER - Direktno postavljanje bez kašnjenja
+        this.playerSprite.y = this.serverPlayerY;
 
         if (this.playerSprite.y < S(330)) {
-
             this.playerSprite.rotation += 0.12;
-
         } else {
-
-            this.playerSprite.rotation =
-                Phaser.Math.Linear(
-                    this.playerSprite.rotation,
-                    0,
-                    0.2
-                );
+            this.playerSprite.rotation = Phaser.Math.Linear(
+                this.playerSprite.rotation,
+                0,
+                0.2
+            );
         }
 
         // ===============================
@@ -1039,19 +1030,9 @@ this.serverObstacles = state.obstacles.map(obs => ({
                     );
                 }
 
-                obj.sprite.x =
-                    Phaser.Math.Linear(
-                        obj.sprite.x,
-                        obs.x,
-                        0.8
-                    );
-
-                obj.sprite.y =
-                    Phaser.Math.Linear(
-                        obj.sprite.y,
-                        obs.y,
-                        0.8
-                    );
+                // Trenutno pozicioniranje bez laga
+                obj.sprite.x = obs.x;
+                obj.sprite.y = obs.y;
 
                 if (obj.text) {
 
