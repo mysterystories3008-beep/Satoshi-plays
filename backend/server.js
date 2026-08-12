@@ -480,11 +480,12 @@ app.get("/api/status", (req, res) => {
 });
 
 app.get("/", (req, res) => {
-    const frontendPath = path.join(__dirname, "_frontend", "index.html");
+    // Ovde koristimo ../frontend/index.html
+    const frontendPath = path.join(__dirname, "../frontend", "index.html");
     if (fs.existsSync(frontendPath)) {
         res.sendFile(frontendPath);
     } else {
-        res.send("Satoshi Play API & Game Server is Running!");
+        res.send("Satoshi Play API & Game Server is Running! (Frontend folder nije nađen na putanji)");
     }
 });
 
