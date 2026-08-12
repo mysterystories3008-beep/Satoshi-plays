@@ -16,6 +16,25 @@ if (process.env.MONGO_URI) {
         .then(() => console.log("Uspešno povezano na MongoDB!"))
         .catch(err => console.error("Greška pri povezivanju na MongoDB:", err));
 }
+
+// ==========================================
+// MONGOOSE ŠEMA I MODEL ZA SKOROVE
+// ==========================================
+const scoreSchema = new mongoose.Schema({
+    gameId: String,
+    wallet: String,
+    startTime: Number,
+    endTime: Number,
+    score: Number,
+    timestamp: Number,
+    signature: String,
+    duration: Number,
+    verified: Boolean,
+    type: String // 'daily' ili 'weekly'
+});
+
+const Score = mongoose.model("Score", scoreSchema);
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -26,12 +45,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-const DAILY_SCORE_FILE = path.join(__dirname, "daily-scores.json");
-const WEEKLY_SCORE_FILE = path.join(__dirname, "weekly-scores.json");
+// Zadržavamo sessions.json privremeno za aktivne sesije tokom igranja
 const SESSION_FILE = path.join(__dirname, "sessions.json");
 
 // ==========================================
-// POMOĆNE FUNKCIJE
+// POMOĆNE FUNKCIJE ZA SESIJE
 // ==========================================
 
 function readFile(filePath) {
@@ -57,36 +75,11 @@ function generateGameId() {
     return Date.now().toString(36) + "-" + Math.random().toString(36).substring(2, 10);
 }
 
-function updateDailyTop10(scoreList, newEntry) {
-    const i = scoreList.findIndex(s => s.wallet.toLowerCase() === newEntry.wallet.toLowerCase());
-    if (i !== -1) {
-        if (newEntry.score > scoreList[i].score) scoreList[i] = newEntry;
-    } else {
-        scoreList.push(newEntry);
-    }
-    scoreList.sort((a, b) => b.score - a.score);
-    if (scoreList.length > 10) scoreList.length = 10;
-}
-
-function updateWeeklyAccumulatedTop10(scoreList, newEntry) {
-    const i = scoreList.findIndex(s => s.wallet.toLowerCase() === newEntry.wallet.toLowerCase());
-    if (i !== -1) {
-        scoreList[i].score += newEntry.score;
-        scoreList[i].gameId = newEntry.gameId;
-        scoreList[i].timestamp = newEntry.timestamp;
-        scoreList[i].signature = newEntry.signature;
-    } else {
-        scoreList.push({ ...newEntry });
-    }
-    scoreList.sort((a, b) => b.score - a.score);
-    if (scoreList.length > 10) scoreList.length = 10;
-}
-
 // ==========================================
 // GAME ENGINE NA SERVERU
 // ==========================================
 
-const TICK_MS = 30;         
+const TICK_MS = 30;          
 const GRAVITY = 0.9;        
 const JUMP_V = -14;         
 const GROUND_Y = 350;
@@ -95,6 +88,7 @@ const MAX_GAME_MS = 180000;
 
 const games = new Map();
 const onlinePlayers = new Set();
+
 function createGameState(wallet, gameId) {
     return {
         gameId,
@@ -113,7 +107,7 @@ function createGameState(wallet, gameId) {
         },
         obstacles: [],
         spawnTimer: 0,
-        nextSpawn: 42,      // Smanjeno sa 55 na 42 da prepreke idu češće i gušće
+        nextSpawn: 42,      
         tick: 0
     };
 }
@@ -130,7 +124,6 @@ function spawnObstacle(state) {
         state.obstacles.push({ type: t, x, y, w, h, dead: false });
     };
 
-    // RASPODELA: Pojačan FUD, smanjen rugpull
     const rand = Math.random();
     let chosenType = "fud";
 
@@ -333,7 +326,7 @@ io.on("connection", (socket) => {
     });
 });
 
-function finishGame(socket, state, signature) {
+async function finishGame(socket, state, signature) {
     const endTime = Date.now();
     const duration = endTime - state.startTime;
     const finalScore = Math.floor(state.score / 10);
@@ -389,21 +382,13 @@ function finishGame(socket, state, signature) {
             signature
         );
 
-    if (
-        recoveredAddress.toLowerCase() !==
-        state.wallet.toLowerCase()
-    ) {
+        if (recoveredAddress.toLowerCase() !== state.wallet.toLowerCase()) {
             throw new Error("Potpis ne odgovara adresi novčanika!");
         }
 
     } catch (err) {
-
         verified = false;
-
-    console.log(
-        "[SECURITY WARNING] Nevažeći potpis:",
-        err.message
-    );
+        console.log("[SECURITY WARNING] Nevažeći potpis:", err.message);
     }
 
     session.active = false;
@@ -415,41 +400,67 @@ function finishGame(socket, state, signature) {
     session.verified = verified;
     saveFile(SESSION_FILE, sessions);
 
-    const scoreEntry = {
-        gameId: session.gameId,
-        wallet: session.wallet,
-        startTime: session.startTime,
-        endTime,
-        active: false,
-        score: finalScore,
-        timestamp: endTime,
-        signature,
-        duration,
-        verified
-    };
+    try {
+        // Upis u MongoDB umesto JSON fajlova
+        // Za dnevnu rang listu (čuvamo jedinstven najbolji skor po igraču ili sve, ovde čuvamo sve pa filtriramo po top 10)
+        await Score.create({
+            gameId: session.gameId,
+            wallet: session.wallet,
+            startTime: session.startTime,
+            endTime,
+            score: finalScore,
+            timestamp: endTime,
+            signature,
+            duration,
+            verified,
+            type: "daily"
+        });
 
-    let daily = readFile(DAILY_SCORE_FILE);
-    updateDailyTop10(daily, scoreEntry);
-    saveFile(DAILY_SCORE_FILE, daily);
+        await Score.create({
+            gameId: session.gameId,
+            wallet: session.wallet,
+            startTime: session.startTime,
+            endTime,
+            score: finalScore,
+            timestamp: endTime,
+            signature,
+            duration,
+            verified,
+            type: "weekly"
+        });
 
-    let weekly = readFile(WEEKLY_SCORE_FILE);
-    updateWeeklyAccumulatedTop10(weekly, scoreEntry);
-    saveFile(WEEKLY_SCORE_FILE, weekly);
-
-    console.log(`[SCORE SAVED & VERIFIED] ${state.wallet} | Score: ${finalScore}`);
+        console.log(`[SCORE SAVED & VERIFIED IN DB] ${state.wallet} | Score: ${finalScore}`);
+    } catch (dbErr) {
+        console.error("Greška pri upisu skora u MongoDB:", dbErr);
+    }
 
     socket.emit("game-over", {
         success: true,
         score: finalScore,
-        message: "Skor uspešno verifikovan i sačuvan!"
+        message: "Skor uspešno verifikovan i sačuvan u bazu!"
     });
 
     games.delete(socket.id);
 }
 
-app.get("/get-scores/:type", (req, res) => {
-    const file = req.params.type === "weekly" ? WEEKLY_SCORE_FILE : DAILY_SCORE_FILE;
-    res.json(readFile(file));
+// ==========================================
+// API RUTE ZA SKOROVE (ČITANJE IZ MONGODB)
+// ==========================================
+
+app.get("/get-scores/:type", async (req, res) => {
+    try {
+        const type = req.params.type; // 'daily' ili 'weekly'
+        
+        // Vučemo top 10 skorova sortirano opadajuće
+        const scores = await Score.find({ type: type })
+            .sort({ score: -1 })
+            .limit(10);
+
+        res.json(scores);
+    } catch (err) {
+        console.error("Greška pri čitanju skorova:", err);
+        res.status(500).json([]);
+    }
 });
 
 // ==========================================
@@ -457,8 +468,6 @@ app.get("/get-scores/:type", (req, res) => {
 // ==========================================
 
 app.get("/api/status", (req, res) => {
-    const activePlayers = games.size;
-
     res.json({
         onlinePlayers: onlinePlayers.size,
         activeGames: games.size,
@@ -468,11 +477,7 @@ app.get("/api/status", (req, res) => {
         competitionStatus: "LIVE",
         serverStatus: "ONLINE"
     });
-
 });
-
-
-
 
 app.get("/", (req, res) => {
     const frontendPath = path.join(__dirname, "public", "index.html");
