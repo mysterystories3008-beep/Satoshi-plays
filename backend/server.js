@@ -59,6 +59,7 @@ const io = new Server(server, {
 });
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "../frontend")));
 // ❌ Izbačen express.static za frontend jer je frontend sada potpuno odvojen servis
 
 // Zadržavamo sessions.json privremeno za aktivne sesije tokom igranja
