@@ -1783,6 +1783,10 @@ TOOLTIP CONTENT
 }
 
 
+
+
+
+
 /* =========================================================
 MOBILE
 ========================================================= */
@@ -1791,9 +1795,7 @@ MOBILE
 
     .status-bar-epic {
         min-height: 64px;
-
         justify-content: space-between;
-
         padding: 0 8px;
     }
 
@@ -1819,7 +1821,6 @@ MOBILE
     .trophy-icon {
         width: 27px;
         height: 27px;
-
         font-size: 15px;
     }
 
@@ -1838,8 +1839,6 @@ MOBILE
     }
 }
 
-
-
 /* --- POZADINA I GLASS MORPHISM STIL --- */
 
 html {
@@ -1849,8 +1848,8 @@ html {
 }
 
 body {
-    /* Podrazumevana desktop slika */
-    background-image: url('assets/pozadinadesktop2.jpg'); 
+    /* Jedinstvena pozadinska slika za sve uređaje */
+    background-image: url('assets/pozadinamobile.png'); 
     
     background-size: cover; 
     background-position: center;
@@ -1860,22 +1859,6 @@ body {
     min-height: 100%;
     margin: 0;
     padding: 0;
-}
-
-/* 1. Za mobilne uređaje (do 1080px) uvek se koristi pozadinamobile.png */
-@media (max-width: 1080px) {
-    body {
-        background-image: url('assets/pozadinamobile.png') !important;
-        background-attachment: fixed !important; 
-    }
-}
-
-/* 2. Za veće desktop ekrane (preko 1080px) koristi se pozadinadesktop2.jpg */
-@media (min-width: 1081px) {
-    body {
-        background-image: url('assets/pozadinadesctop.png') !important;
-        background-attachment: fixed !important;
-    }
 }
 
 /* 3. Pravimo "Glass" (stakleni) efekat za glavne delove */
