@@ -1849,25 +1849,28 @@ html {
 }
 
 body {
-    /* Tvoja slika (ako ti je CSS u podfolderu, proveri samo da li je putanja assets/ ili ../assets/) */
-    background-image: url('assets/pozadina.jpg'); 
+    /* Slika za desktop/laptop */
+    background-image: url('assets/pozadinadesctop.png'); 
     
     background-size: cover; 
     background-position: center;
     background-repeat: no-repeat;
     
-    /* Osnovno za laptop/desktop: pozadina se skroluje zajedno sa sadržajem */
-    background-attachment: scroll !important; 
+    /* Desktop: slika je fiksirana i ne skroluje se sa sadržajem */
+    background-attachment: fixed !important; 
     
     min-height: 100%;
     margin: 0;
     padding: 0;
 }
 
-/* Na mobilnom (ekrani manji od 768px): pozadina ostaje fiksirana */
-@media (max-width: 767px) {
+/* Na mobilnom (ekrani manji ili jednaki 1080px): menjamo sliku */
+@media (max-width: 1080px) {
     body {
-        background-attachment: fixed !important;
+        background-image: url('assets/pozadinamobile.png') !important;
+        /* Ako želiš da i na mobilnom bude fiksirana, ostaje fixed. 
+           Ako želiš da se na mobilnom skroluje, promeni u scroll !important */
+        background-attachment: fixed !important; 
     }
 }
 
@@ -1900,10 +1903,7 @@ footer,
 }
 
 #top-hero-showcase {
-    margin-top: 15vh !important; /* Zauzima 35% visine ekrana kao prazan prostor pre nego što počnu kartice */
-}
-
-#top-hero-showcase {
+    margin-top: 15vh !important;
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.4s ease;
