@@ -1852,7 +1852,7 @@ html {
 
 body {
     /* Podrazumevana desktop slika */
-    background-image: url('assets/pozadinadesctop.png'); 
+    background-image: url('assets/pozadinadesktop2.png'); 
     
     background-size: cover; 
     background-position: center;
@@ -1872,7 +1872,7 @@ body {
     }
 }
 
-/* 2. Za veće desktop ekrane (preko 1080px) koristi se pozadinadesctop.png */
+/* 2. Za veće desktop ekrane (preko 1080px) koristi se pozadinadesktop2.jpg */
 @media (min-width: 1081px) {
     body {
         background-image: url('assets/pozadinadesctop.png') !important;
