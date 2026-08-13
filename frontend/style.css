@@ -1849,7 +1849,7 @@ html {
 
 body {
     /* Podrazumevana slika (za manje ekrane / mobilne) */
-    background-image: url('assets/pozadinamobile.png'); 
+    background-image: url('assets/pozadinadesktop2.jpg'); 
     
     background-size: cover; 
     background-position: center;
