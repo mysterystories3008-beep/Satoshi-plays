@@ -11,7 +11,7 @@ async function updateLiveStatus() {
     try {
 const backendUrl = window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : "https://api.satoshiplays.com";
+    : "https://satoshiplays.com";
 
         const response = await fetch(`${backendUrl}/api/status`);
 
