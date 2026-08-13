@@ -1862,7 +1862,7 @@ body {
 }
 
 /* Uslov za kompjuter / veće ekrane (npr. sve preko 1080px širine) */
-@media (min-width: 1081px) {
+@media (min-width: 853px) {
     body {
         background-image: url('assets/pozadinadesktop2.jpg') !important;
         background-attachment: fixed !important;
