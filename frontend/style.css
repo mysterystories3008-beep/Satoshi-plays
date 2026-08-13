@@ -1853,7 +1853,7 @@ html, body {
 
 body {
     /* Tvoja slika */
-    background-image: url('assets/pozadina.jpg'); 
+    background-image: url('assets/pozadina.png'); 
     
     /* 'cover' je bolje jer garantuje da NEMA crnih traka i da je slika uvek preko svega, cak i ako se malo isece na nekim ekranima */
     background-size: cover; 
