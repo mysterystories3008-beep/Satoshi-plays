@@ -113,7 +113,7 @@ function createGameState(wallet, gameId) {
         alive: true,
         started: false,
         score: 0,
-        speed: 8,          
+        speed: 11,          
         startTime: Date.now(),
         player: {
             x: PLAYER_X,
@@ -131,7 +131,7 @@ function createGameState(wallet, gameId) {
 
 function calculateSpeed(startTime) {
     const elapsed = (Date.now() - startTime) / 1000;
-    return Math.min(8 + (elapsed * 0.03), 16);
+    return Math.min(11 + (elapsed * 0.06), 22);
 }
 
 function spawnObstacle(state) {
