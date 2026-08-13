@@ -1842,6 +1842,8 @@ MOBILE
 
 /* --- POZADINA I GLASS MORPHISM STIL --- */
 
+/* --- POZADINA I GLASS MORPHISM STIL --- */
+
 html {
     height: 100%;
     margin: 0;
@@ -1849,14 +1851,12 @@ html {
 }
 
 body {
-    /* Slika za desktop/laptop */
-    background-image: url('assets/pozadinadesktop.png'); 
+    /* Podrazumevana desktop slika */
+    background-image: url('assets/pozadinadesctop.png'); 
     
     background-size: cover; 
     background-position: center;
     background-repeat: no-repeat;
-    
-    /* Desktop: slika je fiksirana i ne skroluje se sa sadržajem */
     background-attachment: fixed !important; 
     
     min-height: 100%;
@@ -1864,13 +1864,19 @@ body {
     padding: 0;
 }
 
-/* Na mobilnom (ekrani manji ili jednaki 1080px): menjamo sliku */
+/* 1. Za mobilne uređaje (do 1080px) uvek se koristi pozadinamobile.png */
 @media (max-width: 1080px) {
     body {
         background-image: url('assets/pozadinamobile.png') !important;
-        /* Ako želiš da i na mobilnom bude fiksirana, ostaje fixed. 
-           Ako želiš da se na mobilnom skroluje, promeni u scroll !important */
         background-attachment: fixed !important; 
+    }
+}
+
+/* 2. Za veće desktop ekrane (preko 1080px) koristi se pozadinadesctop.png */
+@media (min-width: 1081px) {
+    body {
+        background-image: url('assets/pozadinadesctop.png') !important;
+        background-attachment: fixed !important;
     }
 }
 
