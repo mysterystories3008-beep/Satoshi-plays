@@ -9,7 +9,9 @@ GAME.JS - 1200x555 RESOLUTION
 
 async function updateLiveStatus() {
     try {
-        const backendUrl = window.location.origin;
+const backendUrl = window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+   : "https://api.satoshiplays.com";
 
         const response = await fetch(`${backendUrl}/api/status`);
 
@@ -620,12 +622,14 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 // ===============================
 
 if (!socket) {
-            const backendUrl = window.location.origin;
+            const backendUrl = window.location.hostname === "localhost"
+    ? "http://localhost:3000"
+    : "https://api.satoshiplays.com";
 
-            socket = io(backendUrl, {
-                transports: ["websocket", "polling"],
-                secure: true
-            });
+socket = io(backendUrl, {
+    transports: ["websocket", "polling"],
+    secure: false // pošto sslip.io koristi HTTP, stavi false ili ukloni secure liniju
+});
 
     socket.on(
         "game-started",
@@ -698,19 +702,21 @@ this.serverObstacles = state.obstacles.map(obs => ({
         // ===============================
 
         const handleJump = () => {
+
             if (this.gameOver) {
                 this.scene.restart();
                 return;
             }
+
             if (!this.gameStarted) {
                 this.requestStart();
                 return;
             }
-            // Odmah pomerite igrača na ekranu
+
             if (this.playerSprite.y >= 465) {
-                this.playerSprite.y -= 22.5;
-                this.serverPlayerY = this.playerSprite.y; 
-            }
+    this.playerSprite.y -= 22.5;
+}
+
             socket.emit("jump");
         };
 
@@ -887,7 +893,7 @@ this.serverObstacles = state.obstacles.map(obs => ({
         }
     }
 
-   update(time, delta) {
+    update(time, delta) {
 
         if (
             !this.gameStarted ||
@@ -896,16 +902,17 @@ this.serverObstacles = state.obstacles.map(obs => ({
             return;
         }
 
-        // DIREKTNO POSTAVLJANJE POZICIJE BEZ LAGA
+        // PLAYER - Direktno postavljanje bez kašnjenja
         this.playerSprite.y = this.serverPlayerY;
 
         if (this.playerSprite.y < S(330)) {
-
             this.playerSprite.rotation += 0.12;
-
         } else {
-
-            this.playerSprite.rotation = 0;
+            this.playerSprite.rotation = Phaser.Math.Linear(
+                this.playerSprite.rotation,
+                0,
+                0.2
+            );
         }
 
         // ===============================
@@ -1022,7 +1029,7 @@ this.serverObstacles = state.obstacles.map(obs => ({
                     );
                 }
 
-                // DIREKTNO AŽURIRANJE BEZ INTERPOLACIJE
+                // Trenutno pozicioniranje bez laga
                 obj.sprite.x = obs.x;
                 obj.sprite.y = obs.y;
 
