@@ -701,23 +701,31 @@ this.serverObstacles = state.obstacles.map(obs => ({
         // JUMP
         // ===============================
 
+    // UNIFIKOVANA LOGIKA ZA START I SKOK SA TRENUTNIM LOKALNIM ODZIVOM
         const handleJump = () => {
-
             if (this.gameOver) {
                 this.scene.restart();
                 return;
             }
-
             if (!this.gameStarted) {
                 this.requestStart();
                 return;
             }
 
-            if (this.playerSprite.y >= 465) {
-    this.playerSprite.y -= 22.5;
-}
+            // Trenutni lokalni skok (odmah pomera lik naviše bez čekanja servera)
+            if (this.playerSprite && this.playerSprite.y >= 320) {
+                this.playerSprite.y -= 45; // Odmah diže sličicu nagore
+                this.isLocallyJumping =klasa; // Obeležavamo da je lokalno skočio
+                
+                // Vraćamo zastavicu posle 250ms da server ponovo preuzme kontrolu
+                this.time.delayedCall(250, () => {
+                    this.isLocallyJumping = false;
+                });
+            }
 
-            socket.emit("jump");
+            if (socket) {
+                socket.emit("jump");
+            }
         };
 
         if (this.globalKeyHandler) {
@@ -905,7 +913,7 @@ this.serverObstacles = state.obstacles.map(obs => ({
         // PLAYER - Direktno postavljanje bez kašnjenja
         this.playerSprite.y = this.serverPlayerY;
 
-        if (this.playerSprite.y < S(330)) {
+        if (this.playerSprite.y < (330)) {
             this.playerSprite.rotation += 0.12;
         } else {
             this.playerSprite.rotation = Phaser.Math.Linear(
