@@ -622,11 +622,6 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 // ===============================
 
 if (!socket) {
-            const backendUrl = window.location.hostname === "localhost"
-    ? "http://localhost:3000"
-    : "https://api.satoshiplays.com";
-
-if (!socket) {
     const backendUrl = window.location.hostname === "localhost"
         ? "http://localhost:3000"
         : "https://api.satoshiplays.com";
