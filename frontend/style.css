@@ -1848,7 +1848,7 @@ html {
 }
 
 body {
-    /* Jedinstvena pozadinska slika za sve uređaje */
+    /* Podrazumevana slika (za manje ekrane / mobilne) */
     background-image: url('assets/pozadinamobile.png'); 
     
     background-size: cover; 
@@ -1859,6 +1859,14 @@ body {
     min-height: 100%;
     margin: 0;
     padding: 0;
+}
+
+/* Uslov za kompjuter / veće ekrane (npr. sve preko 1080px širine) */
+@media (min-width: 1081px) {
+    body {
+        background-image: url('assets/pozadinadesktop2.jpg') !important;
+        background-attachment: fixed !important;
+    }
 }
 
 /* 3. Pravimo "Glass" (stakleni) efekat za glavne delove */
