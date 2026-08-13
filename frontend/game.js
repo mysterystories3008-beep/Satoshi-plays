@@ -11,7 +11,7 @@ async function updateLiveStatus() {
     try {
 const backendUrl = window.location.hostname === "localhost"
     ? "http://localhost:3000"
-   : "https://satoshi-plays.onrender.com";
+   : "https://api.satoshiplays.com";
 
         const response = await fetch(`${backendUrl}/api/status`);
 
@@ -624,7 +624,7 @@ this.bestText = this.add.text(30, 75, "Best: " + highScore, {
 if (!socket) {
             const backendUrl = window.location.hostname === "localhost"
     ? "http://localhost:3000"
-    : "https://satoshi-plays.onrender.com";
+    : "https://api.satoshiplays.com";
 
 socket = io(backendUrl, {
     transports: ["websocket", "polling"],
