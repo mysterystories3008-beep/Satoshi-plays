@@ -715,7 +715,7 @@ this.serverObstacles = state.obstacles.map(obs => ({
             // Trenutni lokalni skok (odmah pomera lik naviše bez čekanja servera)
             if (this.playerSprite && this.playerSprite.y >= 320) {
                 this.playerSprite.y -= 45; // Odmah diže sličicu nagore
-                this.isLocallyJumping =klasa; // Obeležavamo da je lokalno skočio
+                this.isLocallyJumping =true; // Obeležavamo da je lokalno skočio
                 
                 // Vraćamo zastavicu posle 250ms da server ponovo preuzme kontrolu
                 this.time.delayedCall(250, () => {
