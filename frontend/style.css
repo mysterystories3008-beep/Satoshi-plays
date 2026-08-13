@@ -1842,8 +1842,6 @@ MOBILE
 
 /* --- POZADINA I GLASS MORPHISM STIL --- */
 
-/* --- POZADINA I GLASS MORPHISM STIL --- */
-
 html {
     height: 100%;
     margin: 0;
@@ -1852,7 +1850,7 @@ html {
 
 body {
     /* Podrazumevana desktop slika */
-    background-image: url('assets/pozadinadesktop2.png'); 
+    background-image: url('assets/pozadinadesktop2.jpg'); 
     
     background-size: cover; 
     background-position: center;
