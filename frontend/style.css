@@ -1850,7 +1850,7 @@ html {
 
 body {
     /* Slika za desktop/laptop */
-    background-image: url('assets/pozadinadesctop.png'); 
+    background-image: url('assets/pozadinadesktop.png'); 
     
     background-size: cover; 
     background-position: center;
