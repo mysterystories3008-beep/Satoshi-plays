@@ -1840,29 +1840,35 @@ MOBILE
 
 
 
-
 /* --- POZADINA I GLASS MORPHISM STIL --- */
 
-html, body {
-    /* Osiguravamo da cela stranica zauzima punu visinu */
+html {
     height: 100%;
-    min-height: 100vh;
     margin: 0;
     padding: 0;
 }
 
 body {
-    /* Tvoja slika */
-    background-image: url('assets/pozadina.png'); 
+    /* Tvoja slika (ako ti je CSS u podfolderu, proveri samo da li je putanja assets/ ili ../assets/) */
+    background-image: url('assets/pozadina.jpg'); 
     
-    /* 'cover' je bolje jer garantuje da NEMA crnih traka i da je slika uvek preko svega, cak i ako se malo isece na nekim ekranima */
     background-size: cover; 
-    
     background-position: center;
     background-repeat: no-repeat;
     
-    /* Ovo je ključno da se slika ne pomera kad skroluješ */
-    background-attachment: fixed; 
+    /* Osnovno za laptop/desktop: pozadina se skroluje zajedno sa sadržajem */
+    background-attachment: scroll !important; 
+    
+    min-height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Na mobilnom (ekrani manji od 768px): pozadina ostaje fiksirana */
+@media (max-width: 767px) {
+    body {
+        background-attachment: fixed !important;
+    }
 }
 
 /* 3. Pravimo "Glass" (stakleni) efekat za glavne delove */
@@ -1872,15 +1878,14 @@ body {
 #game-container, 
 #in-game-login-bar, 
 .status-bar-epic {
-    background: rgba(255, 255, 255, 0.05) !important; /* Providna bela */
-    backdrop-filter: blur(10px) !important; /* Zamućivanje onoga što je iza */
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important; /* Tanki svetli border */
+    border: 2px solid rgba(46, 204, 113, 0.9) !important;
     border-radius: 20px !important;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
 }
 
-/* Ovo čini footer providnim */
 footer, 
 .footer, 
 #footer, 
@@ -1892,4 +1897,18 @@ footer,
     padding: 20px;
     text-align: center;
     color: white;
+}
+
+#top-hero-showcase {
+    margin-top: 15vh !important; /* Zauzima 35% visine ekrana kao prazan prostor pre nego što počnu kartice */
+}
+
+#top-hero-showcase {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+footer p {
+    margin-top: 30px;
 }
