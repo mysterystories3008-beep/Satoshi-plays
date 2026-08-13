@@ -1837,3 +1837,45 @@ MOBILE
         height: 24px;
     }
 }
+
+
+
+
+/* --- POZADINA I GLASS MORPHISM STIL --- */
+
+html, body {
+    /* Osiguravamo da cela stranica zauzima punu visinu */
+    height: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    /* Tvoja slika */
+    background-image: url('assets/pozadina.jpg'); 
+    
+    /* 'cover' je bolje jer garantuje da NEMA crnih traka i da je slika uvek preko svega, cak i ako se malo isece na nekim ekranima */
+    background-size: cover; 
+    
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* Ovo je ključno da se slika ne pomera kad skroluješ */
+    background-attachment: fixed; 
+}
+
+/* 3. Pravimo "Glass" (stakleni) efekat za glavne delove */
+#top-hero-showcase, 
+.hub-card, 
+.table-wrap, 
+#game-container, 
+#in-game-login-bar, 
+.status-bar-epic {
+    background: rgba(255, 255, 255, 0.05) !important; /* Providna bela */
+    backdrop-filter: blur(10px) !important; /* Zamućivanje onoga što je iza */
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important; /* Tanki svetli border */
+    border-radius: 20px !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
+}
