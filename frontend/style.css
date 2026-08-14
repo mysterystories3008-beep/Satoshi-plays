@@ -1849,7 +1849,7 @@ html {
 
 body {
     /* Podrazumevana slika (za manje ekrane / mobilne) */
-    background-image: url('assets/pozadinadesktop2.jpg'); 
+    background-image: url('assets/pozadinadesktop.jpg'); 
     
     background-size: cover; 
     background-position: center;
@@ -1864,7 +1864,7 @@ body {
 /* Uslov za kompjuter / veće ekrane (npr. sve preko 1080px širine) */
 @media (min-width: 853px) {
     body {
-        background-image: url('assets/pozadinadesktop2.jpg') !important;
+        background-image: url('assets/pozadinadesktop.jpg') !important;
         background-attachment: fixed !important;
     }
 }
