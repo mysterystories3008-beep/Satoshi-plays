@@ -142,7 +142,15 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image("bitcoin", "assets/bitcoin.png");
+        this.load.spritesheet("player-run", "assets/run_sheet.png", {
+    frameWidth: 50,
+    frameHeight: 50
+});
+
+this.load.spritesheet("player-jump", "assets/jump_sheet.png", {
+    frameWidth: 50,
+    frameHeight: 50
+});
         this.load.image("fud", "assets/fud.png");
         this.load.image("rugpull", "assets/rugpull.png");
         this.load.image("sky", "assets/sky.png");
@@ -162,7 +170,32 @@ class GameScene extends Phaser.Scene {
 
         this.ground = this.add.rectangle(400, 390, 800, 60, 0x2f7f20);
 
-        this.playerSprite = this.add.sprite(120, 330, "bitcoin").setScale(0.8);
+        this.anims.create({
+    key: "player-run",
+    frames: this.anims.generateFrameNumbers("player-run", {
+        start: 0,
+        end: 2
+    }),
+    frameRate: 10,
+    repeat: -1
+});
+
+this.anims.create({
+    key: "player-jump",
+    frames: this.anims.generateFrameNumbers("player-jump", {
+        start: 0,
+        end: 3
+    }),
+    frameRate: 12,
+    repeat: 0
+});
+
+
+
+
+
+        this.playerSprite = this.add.sprite(120, 330, "player-run").setScale(0.8);
+this.playerSprite.setFrame(0);
         this.obstacleSprites = [];
 
         this.scoreText = this.add.text(20, 20, "Score: 0", {
@@ -195,7 +228,16 @@ class GameScene extends Phaser.Scene {
         ? "http://localhost:3000"
         : "https://api.satoshiplays.com";
 
-socket = io(backendUrl);
+socket = io(
+    backendUrl,
+    {
+        transports: [
+            "websocket",
+            "polling"
+        ],
+        secure: false
+    }
+);
 
 
             socket.on("game-started", (data) => {
@@ -203,6 +245,7 @@ socket = io(backendUrl);
                 this.speed = data.speed;
                 this.gameStarted = true;
                 this.gameOver = false;
+                this.playerSprite.play("player-run");
                 if (this.startText) this.startText.destroy();
             });
 
@@ -333,11 +376,22 @@ socket = io(backendUrl);
         // 1. Glatko pomeranje igrača (povećano sa 0.35 na 0.6 da brže hvata korak)
         this.playerSprite.y = Phaser.Math.Linear(this.playerSprite.y, this.serverPlayerY, 0.6);
 
-        if (this.playerSprite.y < 330) {
-            this.playerSprite.rotation += 0.12;
-        } else {
-            this.playerSprite.rotation = Phaser.Math.Linear(this.playerSprite.rotation, 0, 0.2);
-        }
+       if (this.playerSprite.y < 330) {
+
+    if (this.playerSprite.anims.currentAnim?.key !== "player-jump") {
+        this.playerSprite.play("player-jump");
+    }
+
+    this.playerSprite.rotation = 0;
+
+} else {
+
+    if (this.playerSprite.anims.currentAnim?.key !== "player-run") {
+        this.playerSprite.play("player-run");
+    }
+
+    this.playerSprite.rotation = 0;
+}
 
         // Ako mapa prepreka ne postoji, napravi je
         if (!this.obstacleSpritesMap) {
