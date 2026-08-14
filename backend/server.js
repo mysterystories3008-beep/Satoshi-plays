@@ -96,9 +96,9 @@ function generateGameId() {
 // GAME ENGINE NA SERVERU
 // ==========================================
 
-const TICK_MS = 30;          
-const GRAVITY = 0.9;        
-const JUMP_V = -14;         
+const TICK_MS = 25;          
+const GRAVITY = 1.7;        
+const JUMP_V = -18;         
 const GROUND_Y = 350;
 const PLAYER_X = 120;
 const MAX_GAME_MS = 180000; 
@@ -113,7 +113,7 @@ function createGameState(wallet, gameId) {
         alive: true,
         started: false,
         score: 0,
-        speed: 11,          
+        speed: 10,          
         startTime: Date.now(),
         player: {
             x: PLAYER_X,
@@ -131,15 +131,23 @@ function createGameState(wallet, gameId) {
 
 function calculateSpeed(startTime) {
     const elapsed = (Date.now() - startTime) / 1000;
-    return Math.min(11 + (elapsed * 0.06), 22);
+    return Math.min(10 + (elapsed * 0.3), 50);
 }
 
 function spawnObstacle(state) {
     const startX = 850;
 
     const add = (t, x, y, w, h) => {
-        state.obstacles.push({ type: t, x, y, w, h, dead: false });
-    };
+    state.obstacles.push({
+        id: generateGameId(),
+        type: t,
+        x,
+        y,
+        w,
+        h,
+        dead: false
+    });
+};
 
     const rand = Math.random();
     let chosenType = "fud";
@@ -165,7 +173,7 @@ function spawnObstacle(state) {
             add("rug", startX + 200, 350, 50, 40);
             break;
         case "fud": 
-            add("fud", startX, 150 + Math.random() * 140, 50, 50); 
+            add("fud", startX, 230 + Math.random() * 140, 50, 50); 
             break;
         case "meteor": 
             add("meteor", startX, -50, 40, 40); 
@@ -212,7 +220,7 @@ function tickGame(state) {
         const elapsed = (Date.now() - state.startTime) / 1000;
         const difficultyFactor = Math.max(0.70, 1 - (elapsed * 0.002)); 
         
-        state.nextSpawn = Math.floor((42 + Math.floor(Math.random() * 22)) * difficultyFactor); 
+        state.nextSpawn = Math.floor((10 + Math.floor(Math.random() * 22)) * difficultyFactor); 
         spawnObstacle(state);
     }
 
@@ -220,16 +228,16 @@ function tickGame(state) {
 
     state.obstacles = state.obstacles.filter(obs => {
         if (obs.type === "meteor") {
-            obs.x -= state.speed * 0.8; 
+            obs.x -= state.speed * 1; 
             obs.y += 3.8; 
         } else if (obs.type === "liquidation") {
-            obs.x -= state.speed * 0.8;    
+            obs.x -= state.speed * 1;    
             if (obs.x < 250) obs.y = 350;
         } else if (obs.type === "fud") {
-            obs.x -= state.speed * 0.8;    
+            obs.x -= state.speed * 1;    
             obs.y += Math.sin(state.tick * 0.05) * 4.5;
         } else {
-            obs.x -= state.speed * 0.8;    
+            obs.x -= state.speed * 1;    
         }
 
         if (obs.x < -100 || obs.y > 500) return false;
@@ -251,7 +259,7 @@ function getPublicState(state) {
         speed: state.speed,
         player: { x: state.player.x, y: state.player.y, onGround: state.player.onGround },
         obstacles: state.obstacles.map(o => ({
-            id: o.x + "_" + o.y,
+            id: o.id,
             type: o.type,
             x: o.x,
             y: o.y
