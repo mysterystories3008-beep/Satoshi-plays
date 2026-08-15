@@ -166,7 +166,7 @@
 }
 
 #game-container {
-    width: 800px !important;
+    width: 860px !important;
     height: 400px !important;
     margin: 0 auto !important;
     border: 2px solid #f3ba2f;
@@ -640,7 +640,7 @@
             <div class="nav-links">
                 <a href="#about">About</a>
                 <a href="#tokenomics">Tokenomics</a>
-                <a href="#how-to-buy">How to Buy</a>
+                <a href="https://pancakeswap.finance/swap?chain=bsc">How to Buy</a>
             </div>
         </div>
 
@@ -650,20 +650,21 @@
         <span>BSCScan</span>
     </a>
 
-    <a href="#" target="_blank" class="nav-link">
+    <a href="https://t.me/+5CW0JwhEyyk3MDVk" target="_blank" class="nav-link">
         <span class="nav-icon">✈</span>
         <span>Telegram</span>
     </a>
 
-    <a href="https://t.me/+5CW0JwhEyyk3MDVk" target="_blank" onclick="window.open(this.href, '_blank'); return false;" class="nav-link">
-    <span class="nav-icon">✈</span>
-    <span>Telegram</span>
-</a>
-
-    <a href="#" class="nav-link">
+    <a href="https://www.youtube.com/@Satoshi-d2h" class="nav-link">
         <span class="nav-icon">▶</span>
         <span>YouTube</span>
     </a>
+
+    <a href="javascript:void(0)" id="gamesNavBtn" class="nav-link">
+    <span class="nav-icon">🎮</span>
+    <span>☰ Games & Menu</span>
+   
+</a>
 </div>
     </nav>
 </header>
@@ -706,16 +707,6 @@
 
 
 
-<div class="play-section-wrapper" id="gameSizeWrapper">
-
-    <button id="btnNormalGame" class="btn-play-action">
-        🎨  STANDARD GAME
-    </button>
-
-    <button id="btnLowGame" class="btn-guest-action">
-       ⚡ LITE GAME    </button>
-
-</div>
 
 
     <!-- GAME CONTAINER -->
@@ -1400,6 +1391,16 @@ document.getElementById("btnLowGame").onclick = function(){
 
 
 </script>
-
+<div id="sidebarMenu" class="sidebar">
+    <a href="javascript:void(0)" id="closeMenuBtn" class="close-btn">&times;</a>
+    <h3>Choose a game</h3>
+    <div class="sidebar-links">
+        <button>🏃 Satoshi Runner</button>
+        <button>🔒 Splay Collector </button>
+        <button>🔒 Knowledge Quiz </button>
+        <button>🔒 Coin Catcher </button>
+        <button>🔒 Perfect Circle </button>
+    </div>
+</div>
 </body>
 </html>
