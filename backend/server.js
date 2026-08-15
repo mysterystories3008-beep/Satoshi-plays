@@ -5,7 +5,7 @@
 /* =======================================
     SERVER.JS - SERVER AUTHORITATIVE GAME (PostgreSQL)
 ========================================== */
-
+require('dotenv').config();
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -18,7 +18,7 @@ const { Pool } = require("pg");
 // Povezivanje na PostgreSQL bazu preko DATABASE_URL
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: false
 });
 
 pool.connect()
