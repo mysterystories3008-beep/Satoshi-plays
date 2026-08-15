@@ -1,12 +1,7 @@
-{
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
+"dependencies": {
     "cors": "^2.8.5",
-    "ethers": "^6.17.8",
+    "ethers": "^6.13.2",
     "express": "^4.19.2",
     "pg": "^8.12.0",
     "socket.io": "^4.7.3"
   }
-}
