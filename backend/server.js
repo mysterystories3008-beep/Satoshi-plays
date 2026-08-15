@@ -2,6 +2,10 @@
     SERVER.JS - SERVER AUTHORITATIVE GAME
 ========================================== */
 
+/* =======================================
+    SERVER.JS - SERVER AUTHORITATIVE GAME (PostgreSQL)
+========================================== */
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -9,31 +13,34 @@ const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
 const { ethers } = require("ethers");
-const mongoose = require("mongoose");
+const { Pool } = require("pg");
 
-if (process.env.MONGO_URI) {
-    mongoose.connect(process.env.MONGO_URI)
-        .then(() => console.log("Uspešno povezano na MongoDB!"))
-        .catch(err => console.error("Greška pri povezivanju na MongoDB:", err));
-}
-
-// ==========================================
-// MONGOOSE ŠEMA I MODEL ZA SKOROVE
-// ==========================================
-const scoreSchema = new mongoose.Schema({
-    gameId: String,
-    wallet: String,
-    startTime: Number,
-    endTime: Number,
-    score: Number,
-    timestamp: Number,
-    signature: String,
-    duration: Number,
-    verified: Boolean,
-    type: String // 'daily' ili 'weekly'
+// Povezivanje na PostgreSQL bazu preko DATABASE_URL
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
 });
 
-const Score = mongoose.model("Score", scoreSchema);
+pool.connect()
+    .then(() => console.log("Uspešno povezano na PostgreSQL bazu!"))
+    .catch(err => console.error("Greška pri povezivanju na PostgreSQL:", err));
+
+// Automatsko kreiranje tabele scores ako ne postoji
+pool.query(`
+    CREATE TABLE IF NOT EXISTS scores (
+        id SERIAL PRIMARY KEY,
+        game_id VARCHAR(255),
+        wallet VARCHAR(255),
+        start_time BIGINT,
+        end_time BIGINT,
+        score INT,
+        timestamp BIGINT,
+        signature TEXT,
+        duration BIGINT,
+        verified BOOLEAN,
+        type VARCHAR(50)
+    )
+`).catch(err => console.error("Greška pri kreiranju tabele:", err));
 
 const app = express();
 const server = http.createServer(app);
@@ -60,9 +67,7 @@ const io = new Server(server, {
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../frontend")));
-// ❌ Izbačen express.static za frontend jer je frontend sada potpuno odvojen servis
 
-// Zadržavamo sessions.json privremeno za aktivne sesije tokom igranja
 const SESSION_FILE = path.join(__dirname, "sessions.json");
 
 // ==========================================
@@ -426,35 +431,21 @@ async function finishGame(socket, state, signature) {
     saveFile(SESSION_FILE, sessions);
 
     try {
-        await Score.create({
-            gameId: session.gameId,
-            wallet: session.wallet,
-            startTime: session.startTime,
-            endTime,
-            score: finalScore,
-            timestamp: endTime,
-            signature,
-            duration,
-            verified,
-            type: "daily"
-        });
+        const queryText = `
+            INSERT INTO scores (game_id, wallet, start_time, end_time, score, timestamp, signature, duration, verified, type)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `;
 
-        await Score.create({
-            gameId: session.gameId,
-            wallet: session.wallet,
-            startTime: session.startTime,
-            endTime,
-            score: finalScore,
-            timestamp: endTime,
-            signature,
-            duration,
-            verified,
-            type: "weekly"
-        });
+        await pool.query(queryText, [
+            session.gameId, session.wallet, session.startTime, endTime, finalScore, endTime, signature, duration, verified, "daily"
+        ]);
+        await pool.query(queryText, [
+            session.gameId, session.wallet, session.startTime, endTime, finalScore, endTime, signature, duration, verified, "weekly"
+        ]);
 
         console.log(`[SCORE SAVED & VERIFIED IN DB] ${state.wallet} | Score: ${finalScore}`);
     } catch (dbErr) {
-        console.error("Greška pri upisu skora u MongoDB:", dbErr);
+        console.error("Greška pri upisu skora u PostgreSQL:", dbErr);
     }
 
     socket.emit("game-over", {
@@ -465,20 +456,20 @@ async function finishGame(socket, state, signature) {
 
     games.delete(socket.id);
 }
-
 // ==========================================
-// API RUTE ZA SKOROVE (ČITANJE IZ MONGODB)
+// API RUTE ZA SKOROVE (POSTGRESQL)
 // ==========================================
 
 app.get("/get-scores/:type", async (req, res) => {
     try {
         const type = req.params.type; // 'daily' ili 'weekly'
         
-        const scores = await Score.find({ type: type })
-            .sort({ score: -1 })
-            .limit(10);
+        const result = await pool.query(
+            "SELECT * FROM scores WHERE type = $1 ORDER BY score DESC LIMIT 10",
+            [type]
+        );
 
-        res.json(scores);
+        res.json(result.rows);
     } catch (err) {
         console.error("Greška pri čitanju skorova:", err);
         res.status(500).json([]);
@@ -506,6 +497,6 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
