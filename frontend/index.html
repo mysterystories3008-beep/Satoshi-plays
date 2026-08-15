@@ -1262,8 +1262,8 @@ if (window.ethereum) {
 
 async function loadLeaderboards(){
     try{
-        // Automatski bira localhost za razvoj ili prazno (relativnu putanju) za Render/produkciju
-        const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : 'https://satoshi-plays.onrender.com';
+       // Ako je na lokaciji localhost, koristi port 3000, inače koristi prazan string (relativnu putanju) za live sajt
+const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
 
         const dailyResponse = await fetch(`${baseUrl}/get-scores/daily`);
         const dailyData = await dailyResponse.json();
