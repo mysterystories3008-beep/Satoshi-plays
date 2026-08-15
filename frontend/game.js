@@ -1677,3 +1677,21 @@ if (fullscreenBtn) {
         }
     );
 }
+
+
+
+const gamesNavBtn = document.getElementById("gamesNavBtn");
+const sidebarMenu = document.getElementById("sidebarMenu");
+const closeMenuBtn = document.getElementById("closeMenuBtn");
+
+gamesNavBtn.addEventListener("click", function () {
+    if (sidebarMenu.style.width === "280px") {
+        sidebarMenu.style.width = "0";
+    } else {
+        sidebarMenu.style.width = "280px";
+    }
+});
+
+closeMenuBtn.addEventListener("click", function () {
+    sidebarMenu.style.width = "0";
+});
