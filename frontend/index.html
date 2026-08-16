@@ -650,15 +650,16 @@
         <span>BSCScan</span>
     </a>
 
+    <a href="https://x.com/zzzf1_" target="_blank" class="nav-link">
+    <span class="nav-icon">𝕏</span>
+   
+</a>
+
     <a href="https://t.me/+5CW0JwhEyyk3MDVk" target="_blank" class="nav-link">
         <span class="nav-icon">✈</span>
         <span>Telegram</span>
     </a>
-    
-     <a href="https://x.com/zzzf1_" target="_blank" class="nav-link">
-    <span class="nav-icon">𝕏</span>
-</a>
-            
+
     <a href="https://www.youtube.com/@Satoshi-d2h" class="nav-link">
         <span class="nav-icon">▶</span>
         <span>YouTube</span>
@@ -672,9 +673,11 @@
 </div>
     </nav>
 </header>
-    
+
 <div class="page-content"></div>
-    
+
+
+
 <main>
 <div class="game-wrapper">
 
@@ -1230,19 +1233,29 @@ function escapeHtml(text) {
 }
 
 window.addEventListener('load', () => {
+
     const savedWallet = localStorage.getItem("userWallet");
+
     if (savedWallet) {
         window.userWallet = savedWallet;
         updateUI(savedWallet);
     }
+
+    // Učitaj leaderboard
     loadLeaderboards();
+
+    // Učitaj game statistics
+    loadGameStatistics();
 
     window.addEventListener("scoreSubmitted", () => {
         loadLeaderboards();
+        loadGameStatistics();
     });
 
+    // Osvežavanje svakih 15 sekundi
     setInterval(() => {
         loadLeaderboards();
+        loadGameStatistics();
     }, 15000);
 });
 
@@ -1326,7 +1339,54 @@ const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:300
         console.log("Error loading leaderboards:", e);
     }
 }
+// ==========================================
+// GAME STATISTICS
+// ==========================================
 
+async function loadGameStatistics() {
+    try {
+
+        const baseUrl =
+            window.location.hostname === "localhost"
+                ? "http://localhost:3000"
+                : "https://api.satoshiplays.com";
+
+        const wallet = localStorage.getItem("userWallet");
+
+        let url = `${baseUrl}/api/game-stats`;
+
+        if (wallet) {
+            url += `?wallet=${encodeURIComponent(wallet)}`;
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error("Failed to load game statistics");
+        }
+
+        const data = await response.json();
+
+        document.getElementById("myGamesToday").textContent =
+            data.myGamesToday ?? 0;
+
+        document.getElementById("myGamesWeek").textContent =
+            data.myGamesWeek ?? 0;
+
+        document.getElementById("allGamesToday").textContent =
+            data.globalGamesToday ?? 0;
+
+        document.getElementById("allGamesWeek").textContent =
+            data.globalGamesWeek ?? 0;
+
+    } catch (error) {
+
+        console.error(
+            "Error loading game statistics:",
+            error
+        );
+    }
+}
 
 let gameStarted = false;
 
