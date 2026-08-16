@@ -36,7 +36,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 50px;
+    padding: 20px 47px;
     background: rgba(10,10,10,0.85);
     backdrop-filter: blur(7px);
     border-bottom: 1px solid var(--border-color);
@@ -2000,4 +2000,262 @@ footer p {
 
 .page-content {
     padding-top: 50px;
+}
+
+
+/* =========================================================
+   EPIC GAMES & MENU BUTTON
+========================================================= */
+
+#gamesNavBtn {
+    position: relative;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 10px 17px !important;
+
+    color: #121212 !important;
+    font-weight: 800 !important;
+    font-size: 13px !important;
+    letter-spacing: 0.3px;
+
+    background: linear-gradient(
+        135deg,
+        #ffd95a 0%,
+        #f3ba2f 45%,
+        #d99616 100%
+    ) !important;
+
+    border: 1px solid rgba(255, 220, 100, 0.9) !important;
+    border-radius: 10px !important;
+
+    box-shadow:
+        0 0 0 1px rgba(243,186,47,0.15),
+        0 5px 18px rgba(243,186,47,0.35),
+        0 0 30px rgba(243,186,47,0.15);
+
+    text-decoration: none;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.25s ease,
+        filter 0.25s ease;
+}
+
+/* subtle animated glow */
+#gamesNavBtn::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 12px;
+
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.45),
+        transparent
+    );
+
+    opacity: 0;
+    transform: translateX(-100%);
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+/* GAME ICON */
+#gamesNavBtn .nav-icon {
+    font-size: 17px;
+    line-height: 1;
+
+    filter:
+        drop-shadow(0 0 4px rgba(255,255,255,0.5));
+
+    transition:
+        transform 0.25s ease;
+}
+
+/* MENU TEXT */
+#gamesNavBtn span:last-child {
+    text-shadow:
+        0 1px 0 rgba(255,255,255,0.25);
+}
+
+/* HOVER */
+#gamesNavBtn:hover {
+    transform: translateY(-2px) scale(1.04);
+
+    filter: brightness(1.08);
+
+    box-shadow:
+        0 7px 25px rgba(243,186,47,0.55),
+        0 0 40px rgba(243,186,47,0.25);
+}
+
+#gamesNavBtn:hover::before {
+    opacity: 1;
+    animation: gamesButtonShine 0.7s ease;
+}
+
+#gamesNavBtn:hover .nav-icon {
+    transform: rotate(-8deg) scale(1.15);
+}
+
+/* ACTIVE / CLICK */
+#gamesNavBtn:active {
+    transform: translateY(0) scale(0.98);
+
+    box-shadow:
+        0 3px 12px rgba(243,186,47,0.4);
+}
+
+/* SHINE ANIMATION */
+@keyframes gamesButtonShine {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(100%);
+    }
+}
+
+/* =========================================================
+   SIDEBAR - PREMIUM GAME HUB
+========================================================= */
+
+#sidebarMenu {
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(243,186,47,0.12),
+            transparent 35%
+        ),
+        linear-gradient(
+            160deg,
+            #191919 0%,
+            #0b0b0b 100%
+        );
+
+    border-left: 1px solid rgba(243,186,47,0.45);
+
+    box-shadow:
+        -15px 0 45px rgba(0,0,0,0.75),
+        inset 1px 0 0 rgba(255,255,255,0.03);
+
+    backdrop-filter: blur(15px);
+}
+
+/* SIDEBAR TITLE */
+
+#sidebarMenu h3 {
+    color: #f3ba2f;
+
+    font-size: 21px;
+    font-weight: 800;
+
+    letter-spacing: 0.5px;
+
+    text-shadow:
+        0 0 12px rgba(243,186,47,0.25);
+
+    margin-bottom: 22px;
+}
+
+/* CLOSE BUTTON */
+
+#sidebarMenu .close-btn {
+    color: #aaa;
+
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+#sidebarMenu .close-btn:hover {
+    color: #f3ba2f;
+
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* GAME BUTTONS */
+
+#sidebarMenu .sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#sidebarMenu .sidebar-links button {
+    position: relative;
+
+    width: 100%;
+
+    padding: 14px 16px;
+
+    text-align: left;
+
+    color: #e8e8e8;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,255,255,0.055),
+            rgba(255,255,255,0.02)
+        );
+
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+#sidebarMenu .sidebar-links button:first-child {
+    color: #121212;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffd95a,
+            #f3ba2f,
+            #d99616
+        );
+
+    border-color: #f3ba2f;
+
+    box-shadow:
+        0 5px 20px rgba(243,186,47,0.25);
+}
+
+#sidebarMenu .sidebar-links button:hover {
+    transform: translateX(-4px);
+
+    border-color: rgba(243,186,47,0.6);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(243,186,47,0.15),
+            rgba(243,186,47,0.05)
+        );
+
+    box-shadow:
+        0 5px 20px rgba(243,186,47,0.15);
+}
+
+#sidebarMenu .sidebar-links button:first-child:hover {
+    transform: translateX(-5px) scale(1.02);
+
+    box-shadow:
+        0 7px 25px rgba(243,186,47,0.45);
 }
