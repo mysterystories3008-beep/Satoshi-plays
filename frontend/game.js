@@ -1174,7 +1174,7 @@ class GameScene extends Phaser.Scene {
 
         this.gameOver = true;
         this.gameStarted = false;
-
+        this.playerSprite.anims.stop();
 
         if (
             this.serverObstacles &&
