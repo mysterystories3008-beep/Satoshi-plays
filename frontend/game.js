@@ -1700,16 +1700,20 @@ closeMenuBtn.addEventListener("click", function () {
 // MOBILE STATUS TOOLTIP - TAP TO OPEN
 // ==========================================
 
-document.addEventListener("DOMContentLoaded", () => {
+function initMobileStatusTooltip() {
 
     const statusModules = document.querySelectorAll(".status-module");
+
+    if (!statusModules.length) {
+        return;
+    }
 
     statusModules.forEach(module => {
 
         module.addEventListener("click", (e) => {
 
-            // Samo touch uređaji
-            if (!window.matchMedia("(hover: none)").matches) {
+            // Na desktopu ništa ne menjamo
+            if (window.matchMedia("(hover: hover)").matches) {
                 return;
             }
 
@@ -1717,12 +1721,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const wasActive = module.classList.contains("active");
 
-            // Zatvori sve
+            // Zatvori sve ostale
             statusModules.forEach(other => {
                 other.classList.remove("active");
             });
 
-            // Ako nije bio otvoren, otvori ga
+            // Otvori kliknuti
             if (!wasActive) {
                 module.classList.add("active");
             }
@@ -1730,15 +1734,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     });
 
-    // Tap bilo gde van status modula = zatvori
+    // Klik/tap van statusa zatvara tooltip
     document.addEventListener("click", (e) => {
 
         if (!e.target.closest(".status-module")) {
+
             statusModules.forEach(module => {
                 module.classList.remove("active");
             });
+
         }
 
     });
+}
 
-});
+// Ako je DOM već učitan, pokreni odmah
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMobileStatusTooltip);
+} else {
+    initMobileStatusTooltip();
+}
