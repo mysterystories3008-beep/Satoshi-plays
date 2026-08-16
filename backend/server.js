@@ -232,16 +232,16 @@ function tickGame(state) {
 
     state.obstacles = state.obstacles.filter(obs => {
         if (obs.type === "meteor") {
-            obs.x -= state.speed * 1; 
+            obs.x -= state.speed * 0.8; 
             obs.y += 3.8; 
         } else if (obs.type === "liquidation") {
-            obs.x -= state.speed * 1;    
+            obs.x -= state.speed * 0.8;    
             if (obs.x < 250) obs.y = 350;
         } else if (obs.type === "fud") {
-            obs.x -= state.speed * 1;    
+            obs.x -= state.speed * 0.8;    
             obs.y += Math.sin(state.tick * 0.05) * 4.5;
         } else {
-            obs.x -= state.speed * 1;    
+            obs.x -= state.speed * 0.8;    
         }
 
         if (obs.x < -100 || obs.y > 500) return false;
