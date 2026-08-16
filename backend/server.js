@@ -1,6 +1,4 @@
-/* =======================================
-    SERVER.JS - SERVER AUTHORITATIVE GAME
-========================================== */
+
 
 /* =======================================
     SERVER.JS - SERVER AUTHORITATIVE GAME (PostgreSQL)
@@ -474,6 +472,145 @@ app.get("/get-scores/:type", async (req, res) => {
         res.status(500).json([]);
     }
 });
+
+// ==========================================
+// API RUTA ZA STATISTIKU IGRE (MY & GLOBAL)
+// ==========================================
+
+app.get("/api/game-stats", async (req, res) => {
+    try {
+        const wallet = req.query.wallet;
+
+        const now = Date.now();
+
+        // Poslednja 24 sata
+        const startOfToday = now - (24 * 60 * 60 * 1000);
+
+        // Poslednjih 7 dana
+        const startOfWeek = now - (7 * 24 * 60 * 60 * 1000);
+
+        // ==========================================
+        // GLOBALNA STATISTIKA
+        // ==========================================
+        // Koristimo samo type = 'daily'
+        // da se jedna igra ne broji dva puta.
+        //
+        // finishGame() upisuje svaki rezultat jednom
+        // kao "daily" i jednom kao "weekly".
+        // ==========================================
+
+        const globalTodayQuery = `
+            SELECT COUNT(*)
+            FROM scores
+            WHERE type = 'daily'
+            AND timestamp >= $1
+        `;
+
+        const globalWeekQuery = `
+            SELECT COUNT(*)
+            FROM scores
+            WHERE type = 'daily'
+            AND timestamp >= $1
+        `;
+
+        const globalTodayRes = await pool.query(
+            globalTodayQuery,
+            [startOfToday]
+        );
+
+        const globalWeekRes = await pool.query(
+            globalWeekQuery,
+            [startOfWeek]
+        );
+
+        // ==========================================
+        // MOJA STATISTIKA
+        // ==========================================
+
+        let myTodayCount = 0;
+        let myWeekCount = 0;
+
+        if (
+            wallet &&
+            wallet !== "undefined" &&
+            wallet !== "null"
+        ) {
+
+            const myTodayQuery = `
+                SELECT COUNT(*)
+                FROM scores
+                WHERE type = 'daily'
+                AND LOWER(wallet) = LOWER($1)
+                AND timestamp >= $2
+            `;
+
+            const myWeekQuery = `
+                SELECT COUNT(*)
+                FROM scores
+                WHERE type = 'daily'
+                AND LOWER(wallet) = LOWER($1)
+                AND timestamp >= $2
+            `;
+
+            const myTodayRes = await pool.query(
+                myTodayQuery,
+                [wallet, startOfToday]
+            );
+
+            const myWeekRes = await pool.query(
+                myWeekQuery,
+                [wallet, startOfWeek]
+            );
+
+            myTodayCount = parseInt(
+                myTodayRes.rows[0].count,
+                10
+            );
+
+            myWeekCount = parseInt(
+                myWeekRes.rows[0].count,
+                10
+            );
+        }
+
+        // ==========================================
+        // RESPONSE
+        // ==========================================
+
+        res.json({
+            myGamesToday: myTodayCount,
+            myGamesWeek: myWeekCount,
+            globalGamesToday: parseInt(
+                globalTodayRes.rows[0].count,
+                10
+            ),
+            globalGamesWeek: parseInt(
+                globalWeekRes.rows[0].count,
+                10
+            )
+        });
+
+    } catch (err) {
+
+        console.error(
+            "Greška pri dohvatanju statistike igre:",
+            err
+        );
+
+        res.status(500).json({
+            myGamesToday: 0,
+            myGamesWeek: 0,
+            globalGamesToday: 0,
+            globalGamesWeek: 0
+        });
+    }
+});
+
+
+
+
+
+
 
 // ==========================================
 // LIVE SERVER STATUS
