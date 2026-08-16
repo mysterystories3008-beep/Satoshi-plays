@@ -2557,23 +2557,7 @@ footer p {
         transform: none;
     }
 
-    .status-module:hover .status-tooltip {
-        opacity: 0;
-        visibility: hidden;
-    }
-}
-
-/* ==========================================================
-   MOBILE STATUS TOOLTIP - TAP
-========================================================== */
-
-@media (max-width: 700px) {
-
-    .status-module {
-        cursor: pointer;
-    }
-
-    /* Hover ne otvara tooltip na mobilnom */
+    /* Na touch uređajima hover NE otvara tooltip */
     .status-module:hover .status-tooltip {
         opacity: 0;
         visibility: hidden;
@@ -2585,21 +2569,14 @@ footer p {
         opacity: 1 !important;
         visibility: visible !important;
         pointer-events: auto !important;
-
-        transform:
-            translate(-50%, 0)
-            scale(1);
+        transform: translate(-50%, 0) scale(1);
     }
 
     .status-module.active .status-main {
         background: rgba(255,255,255,.07);
     }
+
+    .status-module {
+        cursor: pointer;
+    }
 }
-
-
-
-
-
-
-
-
