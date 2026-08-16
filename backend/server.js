@@ -100,7 +100,7 @@ function generateGameId() {
 // GAME ENGINE NA SERVERU
 // ==========================================
 
-const TICK_MS = 50;          
+const TICK_MS = 40;          
 const GRAVITY = 1.7;        
 const JUMP_V = -18;         
 const GROUND_Y = 350;
