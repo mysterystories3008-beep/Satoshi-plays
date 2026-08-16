@@ -224,7 +224,7 @@ function tickGame(state) {
         const elapsed = (Date.now() - state.startTime) / 1000;
         const difficultyFactor = Math.max(0.70, 1 - (elapsed * 0.002)); 
         
-        state.nextSpawn = Math.floor((15 + Math.floor(Math.random() * 22)) * difficultyFactor); 
+        state.nextSpawn = Math.floor((30 + Math.floor(Math.random() * 22)) * difficultyFactor); 
         spawnObstacle(state);
     }
 
