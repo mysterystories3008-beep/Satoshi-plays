@@ -1,6 +1,6 @@
 
 /* ==========================================================
-GAME.JS - 1200x555 - OPTIMIZED
+GAME.JS - 1200x555 - OPTIMIZED - NO ANIMATIONS
 ========================================================== */
 
 
@@ -12,6 +12,7 @@ const BACKEND_URL =
     window.location.hostname === "localhost"
         ? "http://localhost:3000"
         : "https://api.satoshiplays.com";
+
 
 async function updateLiveStatus() {
 
@@ -69,7 +70,9 @@ async function updateLiveStatus() {
     }
 }
 
+
 updateLiveStatus();
+
 setInterval(
     updateLiveStatus,
     5000
@@ -86,11 +89,16 @@ let highScore =
     ) || 0;
 
 let socket = null;
+
 let currentGameId = null;
 
+
 const GAME_SCALE = 1.5;
+
 const GAME_WIDTH = 1200;
+
 const GAME_HEIGHT = 555;
+
 
 const S =
     value =>
@@ -102,6 +110,7 @@ BACKGROUND CONSTANTS
 ========================================================== */
 
 const BG_SPEEDS = [
+
     0.0025,
     0.005,
     0.01,
@@ -112,9 +121,12 @@ const BG_SPEEDS = [
     0.065,
     0.085,
     0.11
+
 ];
 
+
 const BG_COLORS = [
+
     0x0b0b14,
     0x0f0f1c,
     0x131324,
@@ -125,6 +137,7 @@ const BG_COLORS = [
     0x292955,
     0x2e2e60,
     0x34346b
+
 ];
 
 
@@ -188,8 +201,6 @@ class BackgroundManager {
 
         this.layers = [];
 
-        this.layerSprites = [];
-
         this.offsets =
             new Float32Array(10);
 
@@ -221,13 +232,10 @@ class BackgroundManager {
                     ...buildingSettings[i]
                 );
 
+
             const textureKey =
                 "bg_layer_" + i;
 
-            /*
-             * Texture is generated only once.
-             * On restart Phaser already has it.
-             */
 
             if (
                 !scene.textures.exists(
@@ -254,17 +262,13 @@ class BackgroundManager {
             }
 
 
-            /*
-             * Two sprites are enough to create
-             * an endless scrolling layer.
-             */
-
             const sprite1 =
                 scene.add.image(
                     this.totalWidth / 2,
                     S(555) / 2,
                     textureKey
                 );
+
 
             const sprite2 =
                 scene.add.image(
@@ -279,14 +283,17 @@ class BackgroundManager {
                 .setOrigin(0.5)
                 .setDepth(-20 + i);
 
+
             sprite2
                 .setOrigin(0.5)
                 .setDepth(-20 + i);
 
 
             this.layers.push({
+
                 sprite1,
                 sprite2
+
             });
         }
 
@@ -297,6 +304,7 @@ class BackgroundManager {
 
         const cloudKey =
             "bg_cloud";
+
 
         if (
             !scene.textures.exists(
@@ -312,10 +320,6 @@ class BackgroundManager {
                 1
             );
 
-            /*
-             * Same cloud proportions
-             * as original.
-             */
 
             g.fillCircle(
                 S(38),
@@ -323,17 +327,20 @@ class BackgroundManager {
                 S(28)
             );
 
+
             g.fillCircle(
                 S(63),
                 S(35),
                 S(35)
             );
 
+
             g.fillCircle(
                 S(90),
                 S(47),
                 S(25)
             );
+
 
             g.fillRect(
                 S(28),
@@ -342,11 +349,13 @@ class BackgroundManager {
                 S(25)
             );
 
+
             g.generateTexture(
                 cloudKey,
                 S(118),
                 S(85)
             );
+
 
             g.destroy();
         }
@@ -373,6 +382,7 @@ class BackgroundManager {
         const birdKey =
             "bg_bird";
 
+
         if (
             !scene.textures.exists(
                 birdKey
@@ -382,11 +392,13 @@ class BackgroundManager {
             const g =
                 scene.add.graphics();
 
+
             g.lineStyle(
                 S(2),
                 0x111111,
                 1
             );
+
 
             g.beginPath();
 
@@ -434,31 +446,37 @@ class BackgroundManager {
                 S(10)
             );
 
+
             g.destroy();
         }
 
 
         const birdData = [
+
             {
                 x: S(120),
                 y: S(120),
                 size: 1
             },
+
             {
                 x: S(280),
                 y: S(90),
                 size: 0.7
             },
+
             {
                 x: S(520),
                 y: S(135),
                 size: 0.9
             },
+
             {
                 x: S(720),
                 y: S(105),
                 size: 0.6
             }
+
         ];
 
 
@@ -474,6 +492,7 @@ class BackgroundManager {
             const b =
                 birdData[i];
 
+
             const bird =
                 scene.add.image(
                     b.x,
@@ -484,7 +503,10 @@ class BackgroundManager {
                 .setScale(b.size)
                 .setDepth(-22);
 
-            this.birds.push(bird);
+
+            this.birds.push(
+                bird
+            );
         }
 
 
@@ -495,6 +517,7 @@ class BackgroundManager {
         const planeKey =
             "bg_plane";
 
+
         if (
             !scene.textures.exists(
                 planeKey
@@ -504,10 +527,12 @@ class BackgroundManager {
             const g =
                 scene.add.graphics();
 
+
             g.fillStyle(
                 0x222222,
                 0.8
             );
+
 
             g.fillRect(
                 0,
@@ -515,6 +540,7 @@ class BackgroundManager {
                 S(35),
                 S(3)
             );
+
 
             g.fillTriangle(
                 S(10),
@@ -525,6 +551,7 @@ class BackgroundManager {
                 S(4)
             );
 
+
             g.fillTriangle(
                 S(10),
                 S(7),
@@ -534,6 +561,7 @@ class BackgroundManager {
                 S(7)
             );
 
+
             g.fillRect(
                 0,
                 0,
@@ -541,11 +569,13 @@ class BackgroundManager {
                 S(8)
             );
 
+
             g.generateTexture(
                 planeKey,
                 S(40),
                 S(18)
             );
+
 
             g.destroy();
         }
@@ -563,6 +593,7 @@ class BackgroundManager {
 
         this.planeX =
             S(900);
+
 
         this.planeY =
             S(75);
@@ -584,10 +615,15 @@ class BackgroundManager {
 
         let x = 0;
 
+
         minW = S(minW);
+
         maxW = S(maxW);
+
         minH = S(minH);
+
         maxH = S(maxH);
+
 
         while (
             x <
@@ -600,22 +636,28 @@ class BackgroundManager {
                     maxW
                 );
 
+
             const h =
                 Phaser.Math.Between(
                     minH,
                     maxH
                 );
 
+
             arr.push({
+
                 x,
                 width: w,
                 height: h,
+
                 type:
                     Phaser.Math.Between(
                         0,
                         2
                     )
+
             });
+
 
             x +=
                 w +
@@ -624,6 +666,7 @@ class BackgroundManager {
                     S(150)
                 );
         }
+
 
         return arr;
     }
@@ -643,10 +686,6 @@ class BackgroundManager {
             this.groundY;
 
 
-        /* --------------------------
-        BUILDINGS
-        -------------------------- */
-
         graphics.fillStyle(
             color,
             0.95
@@ -662,6 +701,7 @@ class BackgroundManager {
             const b =
                 buildings[i];
 
+
             graphics.fillRect(
                 b.x,
                 groundY - b.height,
@@ -670,10 +710,6 @@ class BackgroundManager {
             );
         }
 
-
-        /* --------------------------
-        WINDOWS
-        -------------------------- */
 
         graphics.fillStyle(
             0xffffff,
@@ -812,8 +848,10 @@ class BackgroundManager {
             const bird =
                 this.birds[i];
 
+
             bird.x +=
                 birdSpeed;
+
 
             if (
                 bird.x >
@@ -844,6 +882,7 @@ class BackgroundManager {
             this.planeX =
                 S(950);
 
+
             this.planeY =
                 Phaser.Math.Between(
                     S(60),
@@ -854,6 +893,7 @@ class BackgroundManager {
 
         this.plane.x =
             this.planeX;
+
 
         this.plane.y =
             this.planeY;
@@ -897,15 +937,10 @@ class BackgroundManager {
                 this.layers[i];
 
 
-            /*
-             * Instead of clearing and redrawing
-             * thousands of rectangles, simply move
-             * two pre-rendered images.
-             */
-
             layer.sprite1.x =
                 this.totalWidth / 2 -
                 offset;
+
 
             layer.sprite2.x =
                 this.totalWidth +
@@ -926,9 +961,11 @@ class GameScene extends Phaser.Scene {
 
         super("GameScene");
 
-        this.globalKeyHandler = null;
+        this.globalKeyHandler =
+            null;
 
-        this.lastScore = -1;
+        this.lastScore =
+            -1;
     }
 
 
@@ -938,16 +975,23 @@ class GameScene extends Phaser.Scene {
 
     restartGame() {
 
-        this.gameOver = false;
-        this.gameStarted = false;
+        this.gameOver =
+            false;
+
+        this.gameStarted =
+            false;
+
 
         this.playerSprite.clearTint();
 
-        this.playerSprite.rotation = 0;
+        this.playerSprite.rotation =
+            0;
+
 
         this.playerSprite.setScale(
             1.2
         );
+
 
         this.playerSprite.x =
             S(120);
@@ -955,16 +999,18 @@ class GameScene extends Phaser.Scene {
         this.playerSprite.y =
             S(330);
 
-        this.playerSprite.play(
-            "player-run"
-        );
+
+        /* NO PLAYER ANIMATION */
 
 
-        if (this.gameOverText) {
+        if (
+            this.gameOverText
+        ) {
 
             this.gameOverText.destroy();
 
-            this.gameOverText = null;
+            this.gameOverText =
+                null;
         }
 
 
@@ -1001,8 +1047,13 @@ class GameScene extends Phaser.Scene {
 
     preload() {
 
+        /*
+         * We still load the spritesheet,
+         * but ONLY FRAME 0 is used.
+         */
+
         this.load.spritesheet(
-            "player-run",
+            "player",
             "assets/run_sheet.png",
             {
                 frameWidth: 75,
@@ -1010,34 +1061,30 @@ class GameScene extends Phaser.Scene {
             }
         );
 
-        this.load.spritesheet(
-            "player-jump",
-            "assets/jump_sheet.png",
-            {
-                frameWidth: 75,
-                frameHeight: 75
-            }
-        );
 
         this.load.image(
             "fud",
             "assets/fud.png"
         );
 
+
         this.load.image(
             "rugpull",
             "assets/rugpull.png"
         );
+
 
         this.load.image(
             "sky",
             "assets/sky.png"
         );
 
+
         this.load.image(
             "rekt",
             "assets/rekt.png"
         );
+
 
         this.load.image(
             "liquidation",
@@ -1052,18 +1099,30 @@ class GameScene extends Phaser.Scene {
 
     create() {
 
-        this.gameStarted = false;
-        this.gameOver = false;
+        this.gameStarted =
+            false;
 
-        this.score = 0;
-        this.speed = 5;
+        this.gameOver =
+            false;
 
-        this.gameOverText = null;
+
+        this.score =
+            0;
+
+        this.speed =
+            5;
+
+
+        this.gameOverText =
+            null;
+
 
         this.serverPlayerY =
             S(330);
 
-        this.serverObstacles = [];
+
+        this.serverObstacles =
+            [];
 
 
         /* ==================================================
@@ -1082,59 +1141,25 @@ class GameScene extends Phaser.Scene {
 
 
         /* ==================================================
-        ANIMATIONS
-        ================================================== */
-
-        this.anims.create({
-
-            key: "player-run",
-
-            frames:
-                this.anims.generateFrameNumbers(
-                    "player-run",
-                    {
-                        start: 0,
-                        end: 2
-                    }
-                ),
-
-            frameRate: 10,
-
-            repeat: -1
-        });
-
-
-        this.anims.create({
-
-            key: "player-jump",
-
-            frames:
-                this.anims.generateFrameNumbers(
-                    "player-jump",
-                    {
-                        start: 0,
-                        end: 3
-                    }
-                ),
-
-            frameRate: 12,
-
-            repeat: 0
-        });
-
-
-        /* ==================================================
         PLAYER
         ================================================== */
 
         this.playerSprite =
             this.add.sprite(
-                180,
-                495,
-                "player-run"
+                S(120),
+                S(330),
+                "player",
+                0
             )
             .setScale(1.2)
             .setDepth(10);
+
+
+        /*
+         * IMPORTANT:
+         * Frame 0 only.
+         * No animation.
+         */
 
         this.playerSprite.setFrame(0);
 
@@ -1217,6 +1242,7 @@ class GameScene extends Phaser.Scene {
             () => {
 
                 this.restartGame();
+
             };
 
 
@@ -1262,7 +1288,14 @@ class GameScene extends Phaser.Scene {
                     this.gameOver =
                         false;
 
-                    this.playerSprite.setFrame(0);
+
+                    /*
+                     * Player stays on frame 0.
+                     */
+
+                    this.playerSprite.setFrame(
+                        0
+                    );
 
 
                     if (
@@ -1290,6 +1323,7 @@ class GameScene extends Phaser.Scene {
                         !this.gameStarted ||
                         this.gameOver
                     ) {
+
                         return;
                     }
 
@@ -1301,11 +1335,6 @@ class GameScene extends Phaser.Scene {
                         state.speed;
 
 
-                    /*
-                     * Do not call setText if score
-                     * has not actually changed.
-                     */
-
                     if (
                         this.lastScore !==
                         state.score
@@ -1313,6 +1342,7 @@ class GameScene extends Phaser.Scene {
 
                         this.lastScore =
                             state.score;
+
 
                         this.scoreText.setText(
                             "Score: " +
@@ -1328,12 +1358,6 @@ class GameScene extends Phaser.Scene {
                         ) *
                         GAME_SCALE;
 
-
-                    /*
-                     * Reuse obstacle objects.
-                     * No map(), no spread operator,
-                     * no new object for every tick.
-                     */
 
                     const incoming =
                         state.obstacles;
@@ -1354,6 +1378,7 @@ class GameScene extends Phaser.Scene {
 
                         const source =
                             incoming[i];
+
 
                         let target =
                             current[i];
@@ -1441,6 +1466,11 @@ class GameScene extends Phaser.Scene {
                 }
 
 
+                /*
+                 * Local prediction only.
+                 * No animation.
+                 */
+
                 if (
                     this.playerSprite &&
                     this.playerSprite.y >= 320
@@ -1452,12 +1482,14 @@ class GameScene extends Phaser.Scene {
                     this.isLocallyJumping =
                         true;
 
+
                     this.time.delayedCall(
                         250,
                         () => {
 
                             this.isLocallyJumping =
                                 false;
+
                         }
                     );
                 }
@@ -1568,6 +1600,7 @@ class GameScene extends Phaser.Scene {
         if (
             this.gameOver
         ) {
+
             return;
         }
 
@@ -1578,7 +1611,10 @@ class GameScene extends Phaser.Scene {
         this.gameStarted =
             false;
 
-        this.playerSprite.anims.stop();
+
+        /*
+         * NO PLAYER ANIMATION
+         */
 
 
         /* ==================================================
@@ -1591,6 +1627,7 @@ class GameScene extends Phaser.Scene {
 
             let hitObstacle =
                 this.serverObstacles[0];
+
 
             let bestDistance =
                 Math.abs(
@@ -1608,6 +1645,7 @@ class GameScene extends Phaser.Scene {
 
                 const obstacle =
                     this.serverObstacles[i];
+
 
                 const distance =
                     Math.abs(
@@ -1638,7 +1676,9 @@ class GameScene extends Phaser.Scene {
                     (
                         this.playerSprite.x +
                         hitObstacle.x
-                    ) / 2;
+                    ) /
+                    2;
+
 
                 this.playerSprite.y =
                     hitObstacle.y -
@@ -1648,43 +1688,15 @@ class GameScene extends Phaser.Scene {
 
 
         /* ==================================================
-        HIT EFFECT
+        NO HIT ANIMATION
         ================================================== */
 
-        this.cameras.main.shake(
-            250,
-            0.015
-        );
-
-
-        this.playerSprite.setTint(
-            0xff3333
-        );
-
-
-        this.tweens.add({
-
-            targets:
-                this.playerSprite,
-
-            scaleX: 1.35,
-            scaleY: 0.65,
-
-            duration: 80,
-
-            yoyo: true,
-
-            ease: "Quad.easeOut",
-
-            onComplete: () => {
-
-                this.playerSprite.setScale(
-                    1.2
-                );
-
-                this.playerSprite.clearTint();
-            }
-        });
+        /*
+         * No shake
+         * No tint
+         * No tween
+         * No squash
+         */
 
 
         /* ==================================================
@@ -1704,10 +1716,12 @@ class GameScene extends Phaser.Scene {
             highScore =
                 finalScore;
 
+
             localStorage.setItem(
                 "highScore",
                 highScore
             );
+
 
             this.bestText.setText(
                 "Best: " +
@@ -1727,6 +1741,7 @@ class GameScene extends Phaser.Scene {
                 if (
                     !this.gameOver
                 ) {
+
                     return;
                 }
 
@@ -1774,6 +1789,7 @@ class GameScene extends Phaser.Scene {
             !this.gameStarted ||
             this.gameOver
         ) {
+
             return;
         }
 
@@ -1786,44 +1802,15 @@ class GameScene extends Phaser.Scene {
             this.serverPlayerY;
 
 
-        /* ==================================================
-        PLAYER ANIMATION
-        ================================================== */
+        /*
+         * NO PLAYER ANIMATION
+         *
+         * Frame 0 stays permanently.
+         */
 
-        const jumping =
-            this.playerSprite.y <
-            S(330);
-
-
-        if (
-            jumping
-        ) {
-
-            if (
-                this.playerSprite.anims
-                    .currentAnim?.key !==
-                "player-jump"
-            ) {
-
-                this.playerSprite.play(
-                    "player-jump"
-                );
-            }
-
-        } else {
-
-            if (
-                this.playerSprite.anims
-                    .currentAnim?.key !==
-                "player-run"
-            ) {
-
-                this.playerSprite.play(
-                    "player-run"
-                );
-            }
-        }
-
+        this.playerSprite.setFrame(
+            0
+        );
 
         this.playerSprite.rotation =
             0;
@@ -1836,10 +1823,6 @@ class GameScene extends Phaser.Scene {
         const obstacles =
             this.serverObstacles;
 
-
-        /*
-         * Mark currently visible IDs.
-         */
 
         const activeIds =
             new Set();
@@ -1854,6 +1837,7 @@ class GameScene extends Phaser.Scene {
             const obs =
                 obstacles[i];
 
+
             activeIds.add(
                 obs.id
             );
@@ -1861,6 +1845,7 @@ class GameScene extends Phaser.Scene {
 
             let key =
                 "rugpull";
+
 
             let label =
                 "";
@@ -1972,8 +1957,10 @@ class GameScene extends Phaser.Scene {
 
 
                 obj = {
+
                     sprite,
                     text
+
                 };
 
 
@@ -1986,6 +1973,7 @@ class GameScene extends Phaser.Scene {
 
             obj.sprite.x =
                 obs.x;
+
 
             obj.sprite.y =
                 obs.y;
@@ -2018,11 +2006,14 @@ class GameScene extends Phaser.Scene {
 
                     obj.sprite.destroy();
 
+
                     if (
                         obj.text
                     ) {
+
                         obj.text.destroy();
                     }
+
 
                     this.obstacleSpritesMap.delete(
                         id
@@ -2054,6 +2045,7 @@ function startGame() {
         type:
             Phaser.AUTO,
 
+
         render: {
 
             antialias:
@@ -2069,6 +2061,7 @@ function startGame() {
                     2
                 )
         },
+
 
         scale: {
 
@@ -2088,8 +2081,10 @@ function startGame() {
                 GAME_HEIGHT
         },
 
+
         roundPixels:
             true,
+
 
         physics: {
 
@@ -2106,6 +2101,7 @@ function startGame() {
                     false
             }
         },
+
 
         scene: [
             GameScene
@@ -2193,10 +2189,12 @@ const gamesNavBtn =
         "gamesNavBtn"
     );
 
+
 const sidebarMenu =
     document.getElementById(
         "sidebarMenu"
     );
+
 
 const closeMenuBtn =
     document.getElementById(
