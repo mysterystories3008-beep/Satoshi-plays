@@ -705,10 +705,6 @@
         </button>
     </div>
 
-
-
-
-
     <!-- GAME CONTAINER -->
     <div id="game-wrapper-box">
         <div id="in-game-login-bar">
@@ -1263,7 +1259,7 @@ if (window.ethereum) {
 async function loadLeaderboards(){
     try{
        // Ako je na lokaciji localhost, koristi port 3000, inače koristi prazan string (relativnu putanju) za live sajt
-const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' : '';
+const baseUrl = window.location.hostname === 'localhost' ? 'http://localhost:3000' :  'https://api.satoshiplays.com';
 
         const dailyResponse = await fetch(`${baseUrl}/get-scores/daily`);
         const dailyData = await dailyResponse.json();
