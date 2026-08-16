@@ -36,33 +36,33 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 50px;
+    padding: 14px 35px;
     background: rgba(10,10,10,0.85);
     backdrop-filter: blur(7px);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     position: fixed;
     top: 0;
     z-index: 1000;
     flex-wrap: wrap;
 }
 body {
-    padding-top: 80px;
+    padding-top: 65px;
 }
 
 .nav-left {
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 20px;
 }
 
 .nav-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
 }
 
 .logo {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 800;
     color: var(--bitcoin-orange);
 }
@@ -70,8 +70,8 @@ body {
 .nav-links a {
     color: #ccc;
     text-decoration: none;
-    margin: 0 15px;
-    font-size: 14px;
+    margin: 0 10px;
+    font-size: 13px;
     transition: .3s;
 }
 
@@ -81,17 +81,17 @@ body {
 
 .social-links {
     display: flex;
-    gap: 10px;
+    gap: 7px;
 }
 
 .btn-social {
     background: #222;
     color: white;
-    padding: 8px 18px;
-    border-radius: 20px;
+    padding: 6px 14px;
+    border-radius: 18px;
     text-decoration: none;
-    font-size: 12px;
-    border: 1px solid #444;
+    font-size: 11px;
+    border: 2px solid #444;
     transition: .3s;
 }
 
