@@ -2564,21 +2564,35 @@ footer p {
 }
 
 /* ==========================================================
-   REDUCED MOTION
+   MOBILE STATUS TOOLTIP - TAP TO OPEN
 ========================================================== */
 
-@media (prefers-reduced-motion: reduce) {
+@media (max-width: 700px) {
 
-    *,
-    *::before,
-    *::after {
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        scroll-behavior: auto !important;
-        transition-duration: .01ms !important;
+    .status-module {
+        cursor: pointer;
+    }
+
+    .status-module:hover .status-tooltip {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .status-module.active .status-tooltip {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+
+        transform:
+            translate(-50%, 0)
+            scale(1);
+    }
+
+    .status-module.active .status-main {
+        background: rgba(255,255,255,.07);
     }
 }
-
 
 
 
