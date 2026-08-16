@@ -2313,10 +2313,79 @@ footer p {
         height: 24px;
     }
 
-    /* Status tooltip is not useful on touch */
-    .status-tooltip {
-        display: none;
+    /* ==========================================================
+   MOBILE STATUS TOOLTIP - TAP TO OPEN
+========================================================== */
+
+@media (max-width: 700px) {
+
+    .status-module {
+        cursor: pointer;
     }
+
+    .status-module .status-tooltip {
+        display: block;
+
+        left: 50%;
+        top: calc(100% + 10px);
+        bottom: auto;
+
+        width: 220px;
+        max-width: calc(100vw - 20px);
+
+        padding: 15px;
+
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+
+        transform:
+            translate(-50%, -6px)
+            scale(.97);
+
+        z-index: 9999;
+    }
+
+
+    /* Tooltip arrow points upward on mobile */
+    .status-module .status-tooltip::after {
+        top: -6px;
+        bottom: auto;
+
+        border-right: 0;
+        border-bottom: 0;
+
+        border-left: 1px solid rgba(255,255,255,.1);
+        border-top: 1px solid rgba(255,255,255,.1);
+    }
+
+    /* Disable desktop hover behavior on touch */
+    .status-module:hover .status-tooltip {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+
+        transform:
+            translate(-50%, -6px)
+            scale(.97);
+    }
+
+    /* But active tooltip must remain visible */
+    .status-module.active .status-tooltip {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+
+        transform:
+            translate(-50%, 0)
+            scale(1);
+    }
+
+    /* Small visual feedback when tapped */
+    .status-module.active .status-main {
+        background: rgba(255,255,255,.07);
+    }
+}
 
     /* Game size buttons */
     #gameSizeWrapper {
@@ -2509,3 +2578,4 @@ footer p {
         transition-duration: .01ms !important;
     }
 }
+
