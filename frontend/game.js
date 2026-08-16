@@ -1700,11 +1700,12 @@ closeMenuBtn.addEventListener("click", function () {
 // MOBILE STATUS TOOLTIP - TAP TO OPEN
 // ==========================================
 
-function initMobileStatusTooltip() {
+function initMobileStatusTooltips() {
 
     const statusModules = document.querySelectorAll(".status-module");
 
     if (!statusModules.length) {
+        console.warn("No .status-module elements found");
         return;
     }
 
@@ -1712,8 +1713,8 @@ function initMobileStatusTooltip() {
 
         module.addEventListener("click", (e) => {
 
-            // Na desktopu ništa ne menjamo
-            if (window.matchMedia("(hover: hover)").matches) {
+            // Samo touch uređaji
+            if (!window.matchMedia("(hover: none)").matches) {
                 return;
             }
 
@@ -1721,12 +1722,12 @@ function initMobileStatusTooltip() {
 
             const wasActive = module.classList.contains("active");
 
-            // Zatvori sve ostale
+            // Zatvori sve
             statusModules.forEach(other => {
                 other.classList.remove("active");
             });
 
-            // Otvori kliknuti
+            // Ako nije bio otvoren - otvori
             if (!wasActive) {
                 module.classList.add("active");
             }
@@ -1734,7 +1735,7 @@ function initMobileStatusTooltip() {
 
     });
 
-    // Klik/tap van statusa zatvara tooltip
+    // Klik/tap van tooltip modula = zatvori
     document.addEventListener("click", (e) => {
 
         if (!e.target.closest(".status-module")) {
@@ -1746,11 +1747,16 @@ function initMobileStatusTooltip() {
         }
 
     });
+
+    console.log("Mobile status tooltips initialized");
 }
 
-// Ako je DOM već učitan, pokreni odmah
+
+// game.js se kod tebe učitava DINAMIČKI,
+// zato ne smemo zavisiti samo od DOMContentLoaded.
+
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initMobileStatusTooltip);
+    document.addEventListener("DOMContentLoaded", initMobileStatusTooltips);
 } else {
-    initMobileStatusTooltip();
+    initMobileStatusTooltips();
 }
