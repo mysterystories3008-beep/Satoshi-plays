@@ -1696,39 +1696,49 @@ closeMenuBtn.addEventListener("click", function () {
     sidebarMenu.style.width = "0";
 });
 
-/* ==========================================================
-   MOBILE STATUS TOOLTIP - TAP HANDLER
-========================================================== */
+// ==========================================
+// MOBILE STATUS TOOLTIP - TAP TO OPEN
+// ==========================================
 
-const statusModules = document.querySelectorAll(".status-module");
+document.addEventListener("DOMContentLoaded", () => {
 
-statusModules.forEach(module => {
-
-    module.addEventListener("click", (event) => {
-
-        if (window.matchMedia("(hover: hover)").matches) {
-            return;
-        }
-
-        event.stopPropagation();
-
-        const wasActive = module.classList.contains("active");
-
-        statusModules.forEach(item => {
-            item.classList.remove("active");
-        });
-
-        if (!wasActive) {
-            module.classList.add("active");
-        }
-    });
-
-});
-
-document.addEventListener("click", () => {
+    const statusModules = document.querySelectorAll(".status-module");
 
     statusModules.forEach(module => {
-        module.classList.remove("active");
+
+        module.addEventListener("click", (e) => {
+
+            // Samo touch uređaji
+            if (!window.matchMedia("(hover: none)").matches) {
+                return;
+            }
+
+            e.stopPropagation();
+
+            const wasActive = module.classList.contains("active");
+
+            // Zatvori sve
+            statusModules.forEach(other => {
+                other.classList.remove("active");
+            });
+
+            // Ako nije bio otvoren, otvori ga
+            if (!wasActive) {
+                module.classList.add("active");
+            }
+        });
+
+    });
+
+    // Tap bilo gde van status modula = zatvori
+    document.addEventListener("click", (e) => {
+
+        if (!e.target.closest(".status-module")) {
+            statusModules.forEach(module => {
+                module.classList.remove("active");
+            });
+        }
+
     });
 
 });
