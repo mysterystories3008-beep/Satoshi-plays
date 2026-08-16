@@ -119,36 +119,42 @@ class BackgroundManager {
             y: S(75)
         };
 
-        // SLOJEVI
-        this.layer1 =
-            scene.add.graphics().setDepth(-20);
+        // =====================================================
+        // BUILDING LAYERS
+        //
+        // OPTIMIZACIJA:
+        // Više ne koristimo 10 Graphics objekata koji se
+        // clear() + redraw() svaki frame.
+        //
+        // Svaki layer se iscrta samo JEDNOM u teksturu.
+        // Posle toga samo pomeramo tilePositionX.
+        // =====================================================
 
-        this.layer2 =
-            scene.add.graphics().setDepth(-19);
+        this.layerSpeeds = [
+            0.0025,
+            0.005,
+            0.01,
+            0.0175,
+            0.025,
+            0.035,
+            0.0475,
+            0.065,
+            0.085,
+            0.11
+        ];
 
-        this.layer3 =
-            scene.add.graphics().setDepth(-18);
-
-        this.layer4 =
-            scene.add.graphics().setDepth(-17);
-
-        this.layer5 =
-            scene.add.graphics().setDepth(-16);
-
-        this.layer6 =
-            scene.add.graphics().setDepth(-15);
-
-        this.layer7 =
-            scene.add.graphics().setDepth(-14);
-
-        this.layer8 =
-            scene.add.graphics().setDepth(-13);
-
-        this.layer9 =
-            scene.add.graphics().setDepth(-12);
-
-        this.layer10 =
-            scene.add.graphics().setDepth(-11);
+        this.layerColors = [
+            0x0b0b14,
+            0x0f0f1c,
+            0x131324,
+            0x17172c,
+            0x1b1b36,
+            0x1f1f40,
+            0x24244a,
+            0x292955,
+            0x2e2e60,
+            0x34346b
+        ];
 
         this.offsets = {
             l1: 0,
@@ -164,6 +170,10 @@ class BackgroundManager {
         };
 
         this.totalWidth = S(2200);
+
+        // =====================================================
+        // BUILDINGS
+        // =====================================================
 
         this.buildingsL1 =
             this.generateBuildings(
@@ -244,7 +254,60 @@ class BackgroundManager {
                 50,
                 105
             );
+
+        // =====================================================
+        // BUILDING ARRAYS
+        // Kreiramo ih samo JEDNOM.
+        // =====================================================
+
+        this.layers = [];
+        this.buildings = [];
+
+        this.buildings.push(
+            this.buildingsL1,
+            this.buildingsL2,
+            this.buildingsL3,
+            this.buildingsL4,
+            this.buildingsL5,
+            this.buildingsL6,
+            this.buildingsL7,
+            this.buildingsL8,
+            this.buildingsL9,
+            this.buildingsL10
+        );
+
+        // =====================================================
+        // KREIRANJE TEKSTURA ZA SVIH 10 LAYERA
+        // =====================================================
+
+        for (let i = 0; i < 10; i++) {
+
+            const textureKey =
+                "background-layer-" + i;
+
+            this.createLayerTexture(
+                textureKey,
+                this.buildings[i],
+                this.layerColors[i]
+            );
+
+            const layer =
+                scene.add.tileSprite(
+                    GAME_WIDTH / 2,
+                    S(345) / 2,
+                    GAME_WIDTH,
+                    S(345),
+                    textureKey
+                );
+
+            layer.setDepth(
+                -20 + i
+            );
+
+            this.layers.push(layer);
+        }
     }
+
 
     generateBuildings(
         minW,
@@ -296,32 +359,36 @@ class BackgroundManager {
         return arr;
     }
 
-    drawLayer(
-        graphics,
+
+    // ==========================================================
+    // NOVO:
+    // ZGRADE I PROZORI SE CRTaju SAMO JEDNOM
+    // ==========================================================
+
+    createLayerTexture(
+        textureKey,
         buildings,
-        offset,
-        color,
-        alpha
+        color
     ) {
 
-        graphics.clear();
+        const graphics =
+            this.scene.make.graphics({
+                x: 0,
+                y: 0,
+                add: false
+            });
+
+        const groundY =
+            S(345);
 
         graphics.fillStyle(
             color,
-            alpha
+            0.95
         );
-
-        let groundY = S(345);
 
         for (let b of buildings) {
 
-            let x =
-                b.x -
-                offset;
-
-            while (x < -b.width) {
-                x += this.totalWidth;
-            }
+            const x = b.x;
 
             graphics.fillRect(
                 x,
@@ -340,9 +407,14 @@ class BackgroundManager {
                     0.7
                 );
 
-                let windowSize = S(1.5);
-                let gapX = S(4);
-                let gapY = S(6);
+                const windowSize =
+                    S(1.5);
+
+                const gapX =
+                    S(4);
+
+                const gapY =
+                    S(6);
 
                 for (
                     let wx = x + S(3);
@@ -380,21 +452,37 @@ class BackgroundManager {
 
                 graphics.fillStyle(
                     color,
-                    alpha
+                    0.95
                 );
             }
         }
+
+        graphics.generateTexture(
+            textureKey,
+            Math.ceil(this.totalWidth),
+            Math.ceil(groundY)
+        );
+
+        graphics.destroy();
     }
+
 
     update(speed) {
 
+        // =====================================================
         // SKY
+        // =====================================================
+
         this.sky.tilePositionX +=
             speed *
             0.08 *
             GAME_SCALE;
 
+
+        // =====================================================
         // OBLACI
+        // =====================================================
+
         this.cloudX +=
             speed *
             0.015 *
@@ -439,7 +527,11 @@ class BackgroundManager {
             S(25)
         );
 
+
+        // =====================================================
         // PTICE
+        // =====================================================
+
         this.birdsGraphics.clear();
 
         this.birdsGraphics.lineStyle(
@@ -502,7 +594,11 @@ class BackgroundManager {
             this.birdsGraphics.strokePath();
         }
 
+
+        // =====================================================
         // AVION
+        // =====================================================
+
         this.planeGraphics.clear();
 
         this.plane.x -=
@@ -561,88 +657,41 @@ class BackgroundManager {
             S(8)
         );
 
+
+        // =====================================================
         // BUILDING LAYERS
-        let speeds = [
-            0.0025,
-            0.005,
-            0.01,
-            0.0175,
-            0.025,
-            0.035,
-            0.0475,
-            0.065,
-            0.085,
-            0.11
-        ];
-
-        let colors = [
-            0x0b0b14,
-            0x0f0f1c,
-            0x131324,
-            0x17172c,
-            0x1b1b36,
-            0x1f1f40,
-            0x24244a,
-            0x292955,
-            0x2e2e60,
-            0x34346b
-        ];
-
-        let layers = [
-            this.layer1,
-            this.layer2,
-            this.layer3,
-            this.layer4,
-            this.layer5,
-            this.layer6,
-            this.layer7,
-            this.layer8,
-            this.layer9,
-            this.layer10
-        ];
-
-        let buildings = [
-            this.buildingsL1,
-            this.buildingsL2,
-            this.buildingsL3,
-            this.buildingsL4,
-            this.buildingsL5,
-            this.buildingsL6,
-            this.buildingsL7,
-            this.buildingsL8,
-            this.buildingsL9,
-            this.buildingsL10
-        ];
+        //
+        // OVO JE SADA VEOMA LAGANO.
+        //
+        // NEMA:
+        // graphics.clear()
+        // fillRect()
+        // petlji za prozore
+        // kreiranja arrays
+        //
+        // Samo pomeramo postojeću teksturu.
+        // =====================================================
 
         for (let i = 0; i < 10; i++) {
 
-            this.offsets[
-                "l" + (i + 1)
-            ] +=
+            const key =
+                "l" + (i + 1);
+
+            this.offsets[key] +=
                 speed *
-                speeds[i] *
+                this.layerSpeeds[i] *
                 GAME_SCALE;
 
             if (
-                this.offsets[
-                    "l" + (i + 1)
-                ] >= this.totalWidth
+                this.offsets[key] >=
+                this.totalWidth
             ) {
 
-                this.offsets[
-                    "l" + (i + 1)
-                ] = 0;
+                this.offsets[key] = 0;
             }
 
-            this.drawLayer(
-                layers[i],
-                buildings[i],
-                this.offsets[
-                    "l" + (i + 1)
-                ],
-                colors[i],
-                0.95
-            );
+            this.layers[i].tilePositionX =
+                this.offsets[key];
         }
     }
 }
@@ -711,7 +760,6 @@ class GameScene extends Phaser.Scene {
 
     preload() {
 
-        // PLAYER RUN
         this.load.spritesheet(
             "player-run",
             "assets/run_sheet.png",
@@ -721,7 +769,6 @@ class GameScene extends Phaser.Scene {
             }
         );
 
-        // PLAYER JUMP
         this.load.spritesheet(
             "player-jump",
             "assets/jump_sheet.png",
@@ -941,30 +988,29 @@ class GameScene extends Phaser.Scene {
 
 
             socket.on(
-    "game-started",
-    (data) => {
+                "game-started",
+                (data) => {
 
-        currentGameId =
-            data.gameId;
+                    currentGameId =
+                        data.gameId;
 
-        this.speed =
-            data.speed;
+                    this.speed =
+                        data.speed;
 
-        this.gameStarted =
-            true;
+                    this.gameStarted =
+                        true;
 
-        this.gameOver =
-            false;
+                    this.gameOver =
+                        false;
 
-        // TEK SADA POČINJE DA TRČI
-        this.playerSprite.setFrame(0);
+                    this.playerSprite.setFrame(0);
 
-        if (this.startText) {
+                    if (this.startText) {
 
-            this.startText.destroy();
-        }
-    }
-);
+                        this.startText.destroy();
+                    }
+                }
+            );
 
 
             socket.on(
@@ -999,18 +1045,20 @@ class GameScene extends Phaser.Scene {
                         ) *
                         GAME_SCALE;
 
+                    // =================================================
+                    // OPTIMIZACIJA:
+                    //
+                    // Nema više:
+                    //
+                    // state.obstacles.map(...)
+                    //
+                    // i nema pravljenja novih objekata sa spreadom.
+                    //
+                    // Podaci ostaju isti, samo čuvamo originalni array.
+                    // =================================================
+
                     this.serverObstacles =
-                        state.obstacles.map(
-                            obs => ({
-                                ...obs,
-                                x:
-                                    obs.x *
-                                    GAME_SCALE,
-                                y:
-                                    obs.y *
-                                    GAME_SCALE
-                            })
-                        );
+                        state.obstacles;
                 }
             );
 
@@ -1206,53 +1254,46 @@ class GameScene extends Phaser.Scene {
                 this.playerSprite.x =
                     (
                         this.playerSprite.x +
-                        hitObstacle.x
+                        hitObstacle.x * GAME_SCALE
                     ) / 2;
 
                 this.playerSprite.y =
-                    hitObstacle.y -
+                    hitObstacle.y * GAME_SCALE -
                     S(15);
             }
         }
 
+
         // ==========================================
-// HIT EFFECT
-// ==========================================
+        // HIT EFFECT
+        // ==========================================
 
-// jako kratko trešenje ekrana
-this.cameras.main.shake(
-    250,
-    0.015
-);
+        this.cameras.main.shake(
+            250,
+            0.015
+        );
 
-// crveni flash lika
-this.playerSprite.setTint(0xff3333);
+        this.playerSprite.setTint(0xff3333);
 
-this.tweens.add({
+        this.tweens.add({
 
-    targets: this.playerSprite,
+            targets: this.playerSprite,
 
-    scaleX: 1.35,
-    scaleY: 0.65,
+            scaleX: 1.35,
+            scaleY: 0.65,
 
-    duration: 80,
+            duration: 80,
 
-    yoyo: true,
+            yoyo: true,
 
-    ease: "Quad.easeOut",
+            ease: "Quad.easeOut",
 
-    onComplete: () => {
+            onComplete: () => {
 
-        this.playerSprite.setScale(1.2);
-        this.playerSprite.clearTint();
-    }
-});
-       
-
-
-
-
-
+                this.playerSprite.setScale(1.2);
+                this.playerSprite.clearTint();
+            }
+        });
 
 
         const finalScore =
@@ -1339,26 +1380,38 @@ this.tweens.add({
             this.serverPlayerY;
 
 
-        // ==========================================  
+        // ==========================================
         // RUN / JUMP ANIMATION
         // ==========================================
 
         if (this.playerSprite.y < S(330)) {
 
-    if (this.playerSprite.anims.currentAnim?.key !== "player-jump") {
-        this.playerSprite.play("player-jump");
-    }
+            if (
+                this.playerSprite.anims.currentAnim?.key !==
+                "player-jump"
+            ) {
 
-    this.playerSprite.rotation = 0;
+                this.playerSprite.play(
+                    "player-jump"
+                );
+            }
 
-} else {
+            this.playerSprite.rotation = 0;
 
-    if (this.playerSprite.anims.currentAnim?.key !== "player-run") {
-        this.playerSprite.play("player-run");
-    }
+        } else {
 
-    this.playerSprite.rotation = 0;
-}
+            if (
+                this.playerSprite.anims.currentAnim?.key !==
+                "player-run"
+            ) {
+
+                this.playerSprite.play(
+                    "player-run"
+                );
+            }
+
+            this.playerSprite.rotation = 0;
+        }
 
 
         // ==========================================
@@ -1455,8 +1508,8 @@ this.tweens.add({
 
                     const spr =
                         this.add.sprite(
-                            obs.x,
-                            obs.y,
+                            obs.x * GAME_SCALE,
+                            obs.y * GAME_SCALE,
                             key
                         )
                         .setScale(
@@ -1484,8 +1537,8 @@ this.tweens.add({
 
                         txt =
                             this.add.text(
-                                obs.x,
-                                obs.y +
+                                obs.x * GAME_SCALE,
+                                obs.y * GAME_SCALE +
                                 S(15),
                                 label,
                                 {
@@ -1515,10 +1568,10 @@ this.tweens.add({
 
 
                 obj.sprite.x =
-                    obs.x;
+                    obs.x * GAME_SCALE;
 
                 obj.sprite.y =
-                    obs.y;
+                    obs.y * GAME_SCALE;
 
 
                 if (obj.text) {
@@ -1680,18 +1733,48 @@ if (fullscreenBtn) {
 
 
 
-const gamesNavBtn = document.getElementById("gamesNavBtn");
-const sidebarMenu = document.getElementById("sidebarMenu");
-const closeMenuBtn = document.getElementById("closeMenuBtn");
+const gamesNavBtn =
+    document.getElementById(
+        "gamesNavBtn"
+    );
 
-gamesNavBtn.addEventListener("click", function () {
-    if (sidebarMenu.style.width === "280px") {
-        sidebarMenu.style.width = "0";
-    } else {
-        sidebarMenu.style.width = "280px";
+const sidebarMenu =
+    document.getElementById(
+        "sidebarMenu"
+    );
+
+const closeMenuBtn =
+    document.getElementById(
+        "closeMenuBtn"
+    );
+
+
+gamesNavBtn.addEventListener(
+    "click",
+    function () {
+
+        if (
+            sidebarMenu.style.width ===
+            "280px"
+        ) {
+
+            sidebarMenu.style.width =
+                "0";
+
+        } else {
+
+            sidebarMenu.style.width =
+                "280px";
+        }
     }
-});
+);
 
-closeMenuBtn.addEventListener("click", function () {
-    sidebarMenu.style.width = "0";
-});
+
+closeMenuBtn.addEventListener(
+    "click",
+    function () {
+
+        sidebarMenu.style.width =
+            "0";
+    }
+);
