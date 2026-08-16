@@ -2580,3 +2580,8 @@ footer p {
         cursor: pointer;
     }
 }
+
+.games-menu-text {
+    font-size: 16px;
+    font-weight: 800;
+}
