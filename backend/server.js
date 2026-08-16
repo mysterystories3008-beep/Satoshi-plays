@@ -18,7 +18,6 @@ const { Pool } = require("pg");
 // Povezivanje na PostgreSQL bazu preko DATABASE_URL
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: false
 });
 
 pool.connect()
@@ -225,7 +224,7 @@ function tickGame(state) {
         const elapsed = (Date.now() - state.startTime) / 1000;
         const difficultyFactor = Math.max(0.70, 1 - (elapsed * 0.002)); 
         
-        state.nextSpawn = Math.floor((25 + Math.floor(Math.random() * 22)) * difficultyFactor); 
+        state.nextSpawn = Math.floor((15 + Math.floor(Math.random() * 22)) * difficultyFactor); 
         spawnObstacle(state);
     }
 
@@ -233,16 +232,16 @@ function tickGame(state) {
 
     state.obstacles = state.obstacles.filter(obs => {
         if (obs.type === "meteor") {
-            obs.x -= state.speed * 0.8; 
+            obs.x -= state.speed * 1; 
             obs.y += 3.8; 
         } else if (obs.type === "liquidation") {
-            obs.x -= state.speed * 0.8;    
+            obs.x -= state.speed * 1;    
             if (obs.x < 250) obs.y = 350;
         } else if (obs.type === "fud") {
-            obs.x -= state.speed * 0.8;    
+            obs.x -= state.speed * 1;    
             obs.y += Math.sin(state.tick * 0.05) * 4.5;
         } else {
-            obs.x -= state.speed * 0.8;    
+            obs.x -= state.speed * 1;    
         }
 
         if (obs.x < -100 || obs.y > 500) return false;
