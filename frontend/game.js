@@ -1,13 +1,12 @@
-
 /* ==========================================================
-GAME.JS - STATIC / NO ANIMATIONS
-1200x555
-SERVER AUTHORITATIVE
+GAME.JS - 1200x555 - CPU OPTIMIZED
+NO VISUAL ANIMATIONS
+GAMEPLAY LOGIC UNCHANGED
 ========================================================== */
 
 
 /* ==========================================================
-BACKEND
+LIVE STATUS BAR
 ========================================================== */
 
 const BACKEND_URL =
@@ -15,10 +14,6 @@ const BACKEND_URL =
         ? "http://localhost:3000"
         : "https://api.satoshiplays.com";
 
-
-/* ==========================================================
-LIVE STATUS BAR
-========================================================== */
 
 async function updateLiveStatus() {
 
@@ -94,14 +89,586 @@ GLOBAL
 
 let highScore =
     Number(
-        localStorage.getItem("highScore")
+        localStorage.getItem(
+            "highScore"
+        )
     ) || 0;
 
 let socket = null;
+
 let currentGameId = null;
 
+
+const GAME_SCALE = 1.5;
+
 const GAME_WIDTH = 1200;
+
 const GAME_HEIGHT = 555;
+
+
+const S =
+    value =>
+        value * GAME_SCALE;
+
+
+/* ==========================================================
+BACKGROUND CONSTANTS
+========================================================== */
+
+const BG_COLORS = [
+    0x0b0b14,
+    0x0f0f1c,
+    0x131324,
+    0x17172c,
+    0x1b1b36,
+    0x1f1f40,
+    0x24244a,
+    0x292955,
+    0x2e2e60,
+    0x34346b
+];
+
+
+/* ==========================================================
+BACKGROUND MANAGER
+CPU OPTIMIZED
+
+Background is generated ONCE.
+No animation.
+No per-frame clear().
+No per-frame building redraw.
+No birds animation.
+No plane animation.
+No cloud animation.
+No parallax calculations.
+========================================================== */
+
+class BackgroundManager {
+
+    constructor(scene) {
+
+        this.scene = scene;
+
+        this.totalWidth =
+            S(2200);
+
+        this.groundY =
+            S(345);
+
+
+        /* ==================================================
+        SKY
+        ================================================== */
+
+        this.sky =
+            scene.add.tileSprite(
+                GAME_WIDTH / 2,
+                300,
+                GAME_WIDTH,
+                600,
+                "sky"
+            );
+
+        this.sky.setDepth(-25);
+
+
+        /* ==================================================
+        SUN
+        ================================================== */
+
+        this.sun =
+            scene.add.graphics();
+
+        this.sun.setDepth(-24);
+
+        this.sun.fillStyle(
+            0xffaa22,
+            1
+        );
+
+        this.sun.fillCircle(
+            S(650),
+            S(95),
+            S(30)
+        );
+
+
+        /* ==================================================
+        CLOUD
+        STATIC
+        ================================================== */
+
+        this.cloud =
+            scene.add.graphics();
+
+        this.cloud.setDepth(-23);
+
+        this.cloud.fillStyle(
+            0xffffff,
+            1
+        );
+
+        const cloudX =
+            S(150);
+
+        const cloudY =
+            S(95);
+
+        this.cloud.fillCircle(
+            cloudX,
+            cloudY,
+            S(28)
+        );
+
+        this.cloud.fillCircle(
+            cloudX + S(25),
+            cloudY - S(12),
+            S(35)
+        );
+
+        this.cloud.fillCircle(
+            cloudX + S(52),
+            cloudY,
+            S(25)
+        );
+
+        this.cloud.fillRect(
+            cloudX - S(10),
+            cloudY,
+            S(80),
+            S(25)
+        );
+
+
+        /* ==================================================
+        BIRDS
+        STATIC
+        ================================================== */
+
+        this.birds =
+            scene.add.graphics();
+
+        this.birds.setDepth(-22);
+
+        this.birds.lineStyle(
+            S(2),
+            0x111111,
+            1
+        );
+
+        this.drawBird(
+            S(120),
+            S(120),
+            1
+        );
+
+        this.drawBird(
+            S(280),
+            S(90),
+            0.7
+        );
+
+        this.drawBird(
+            S(520),
+            S(135),
+            0.9
+        );
+
+        this.drawBird(
+            S(720),
+            S(105),
+            0.6
+        );
+
+
+        /* ==================================================
+        PLANE
+        STATIC
+        ================================================== */
+
+        this.plane =
+            scene.add.graphics();
+
+        this.plane.setDepth(-22);
+
+        const px =
+            S(900);
+
+        const py =
+            S(75);
+
+        this.plane.fillStyle(
+            0x222222,
+            0.8
+        );
+
+        this.plane.fillRect(
+            px,
+            py,
+            S(35),
+            S(3)
+        );
+
+        this.plane.fillTriangle(
+            px + S(10),
+            py,
+            px + S(25),
+            py - S(8),
+            px + S(28),
+            py
+        );
+
+        this.plane.fillTriangle(
+            px + S(10),
+            py + S(3),
+            px + S(25),
+            py + S(10),
+            px + S(28),
+            py + S(3)
+        );
+
+        this.plane.fillRect(
+            px,
+            py - S(4),
+            S(8),
+            S(8)
+        );
+
+
+        /* ==================================================
+        BUILDING LAYERS
+        ================================================== */
+
+        this.layers = [];
+
+
+        const buildingSettings = [
+
+            [10, 18, 10, 25],
+            [12, 20, 14, 32],
+            [14, 22, 18, 40],
+            [16, 25, 22, 48],
+            [18, 28, 26, 56],
+            [20, 31, 30, 65],
+            [22, 34, 35, 75],
+            [25, 38, 40, 85],
+            [28, 42, 45, 95],
+            [31, 46, 50, 105]
+
+        ];
+
+
+        for (
+            let i = 0;
+            i < 10;
+            i++
+        ) {
+
+            const buildings =
+                this.generateBuildings(
+                    ...buildingSettings[i]
+                );
+
+
+            const layer =
+                scene.add.graphics();
+
+            layer.setDepth(
+                -20 + i
+            );
+
+
+            this.drawLayer(
+                layer,
+                buildings,
+                BG_COLORS[i]
+            );
+
+
+            this.layers.push(
+                layer
+            );
+        }
+    }
+
+
+    /* ======================================================
+    DRAW BIRD
+    ====================================================== */
+
+    drawBird(
+        x,
+        y,
+        scale
+    ) {
+
+        const wingX =
+            S(7) * scale;
+
+        const wingY =
+            S(7) * scale;
+
+        const width =
+            S(12) * scale;
+
+        this.birds.beginPath();
+
+        this.birds.moveTo(
+            x - width,
+            y
+        );
+
+        this.birds.lineTo(
+            x - wingX,
+            y - wingY
+        );
+
+        this.birds.lineTo(
+            x,
+            y
+        );
+
+        this.birds.strokePath();
+
+
+        this.birds.beginPath();
+
+        this.birds.moveTo(
+            x,
+            y
+        );
+
+        this.birds.lineTo(
+            x + wingX,
+            y - wingY
+        );
+
+        this.birds.lineTo(
+            x + width,
+            y
+        );
+
+        this.birds.strokePath();
+    }
+
+
+    /* ======================================================
+    GENERATE BUILDINGS
+    ====================================================== */
+
+    generateBuildings(
+        minW,
+        maxW,
+        minH,
+        maxH
+    ) {
+
+        const arr = [];
+
+        let x = 0;
+
+
+        minW = S(minW);
+        maxW = S(maxW);
+
+        minH = S(minH);
+        maxH = S(maxH);
+
+
+        while (
+            x <
+            this.totalWidth
+        ) {
+
+            const w =
+                Phaser.Math.Between(
+                    minW,
+                    maxW
+                );
+
+            const h =
+                Phaser.Math.Between(
+                    minH,
+                    maxH
+                );
+
+
+            arr.push({
+
+                x,
+
+                width:
+                    w,
+
+                height:
+                    h,
+
+                type:
+                    Phaser.Math.Between(
+                        0,
+                        2
+                    )
+
+            });
+
+
+            x +=
+                w +
+                Phaser.Math.Between(
+                    S(80),
+                    S(150)
+                );
+        }
+
+
+        return arr;
+    }
+
+
+    /* ======================================================
+    DRAW STATIC LAYER
+    ====================================================== */
+
+    drawLayer(
+        graphics,
+        buildings,
+        color
+    ) {
+
+        const groundY =
+            this.groundY;
+
+
+        /* ==================================================
+        BUILDINGS
+        ================================================== */
+
+        graphics.fillStyle(
+            color,
+            0.95
+        );
+
+
+        for (
+            let i = 0;
+            i < buildings.length;
+            i++
+        ) {
+
+            const b =
+                buildings[i];
+
+
+            graphics.fillRect(
+                b.x,
+                groundY -
+                b.height,
+                b.width,
+                b.height
+            );
+        }
+
+
+        /* ==================================================
+        WINDOWS
+        ================================================== */
+
+        graphics.fillStyle(
+            0xffffff,
+            0.7
+        );
+
+
+        const windowSize =
+            S(1.5);
+
+        const gapX =
+            S(4);
+
+        const gapY =
+            S(6);
+
+
+        for (
+            let i = 0;
+            i < buildings.length;
+            i++
+        ) {
+
+            const b =
+                buildings[i];
+
+
+            if (
+                b.height <= S(35) ||
+                b.width <= S(15)
+            ) {
+                continue;
+            }
+
+
+            for (
+                let wx =
+                    b.x + S(3);
+
+                wx <
+                b.x +
+                b.width -
+                S(3);
+
+                wx += gapX
+            ) {
+
+                for (
+                    let wy =
+                        groundY -
+                        b.height +
+                        S(5);
+
+                    wy <
+                    groundY -
+                    S(6);
+
+                    wy += gapY
+                ) {
+
+                    if (
+                        (wx + wy) %
+                        S(5) !==
+                        0
+                    ) {
+
+                        graphics.fillRect(
+                            wx,
+                            wy,
+                            windowSize,
+                            windowSize
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+
+    /* ======================================================
+    UPDATE
+
+    Namerno prazno.
+
+    Background je statičan da bi se izbacilo:
+    - graphics.clear()
+    - 10x redraw
+    - parallax calculations
+    - cloud movement
+    - bird movement
+    - plane movement
+    ====================================================== */
+
+    update() {
+        return;
+    }
+}
 
 
 /* ==========================================================
@@ -112,17 +679,15 @@ class GameScene extends Phaser.Scene {
 
     constructor() {
 
-        super("GameScene");
+        super(
+            "GameScene"
+        );
 
-        this.globalKeyHandler = null;
+        this.globalKeyHandler =
+            null;
 
-        this.gameStarted = false;
-        this.gameOver = false;
-
-        this.serverObstacles = [];
-
-        this.obstacleSpritesMap =
-            new Map();
+        this.lastScore =
+            -1;
     }
 
 
@@ -132,19 +697,43 @@ class GameScene extends Phaser.Scene {
 
     restartGame() {
 
-        this.gameOver = false;
-        this.gameStarted = false;
+        this.gameOver =
+            false;
+
+        this.gameStarted =
+            false;
+
 
         this.playerSprite.clearTint();
 
-        this.playerSprite.x = 180;
-        this.playerSprite.y = 495;
+        this.playerSprite.rotation =
+            0;
+
+        this.playerSprite.setScale(
+            1.2
+        );
+
+
+        this.playerSprite.x =
+            S(120);
+
+        this.playerSprite.y =
+            S(330);
+
+
+        /* NO PLAYER ANIMATION */
+
+        this.playerSprite.setFrame(
+            0
+        );
+
 
         if (this.gameOverText) {
 
             this.gameOverText.destroy();
 
-            this.gameOverText = null;
+            this.gameOverText =
+                null;
         }
 
 
@@ -152,15 +741,24 @@ class GameScene extends Phaser.Scene {
 
             this.startText =
                 this.add.text(
-                    GAME_WIDTH / 2,
+                    600,
                     150,
                     "TAP OR SPACE TO START",
                     {
-                        fontSize: "48px",
-                        fill: "#f3ba2f",
-                        fontStyle: "bold",
-                        stroke: "#000",
-                        strokeThickness: 6
+                        fontSize:
+                            "48px",
+
+                        fill:
+                            "#f3ba2f",
+
+                        fontStyle:
+                            "bold",
+
+                        stroke:
+                            "#000",
+
+                        strokeThickness:
+                            6
                     }
                 )
                 .setOrigin(0.5)
@@ -181,30 +779,55 @@ class GameScene extends Phaser.Scene {
 
     preload() {
 
-        this.load.image(
-            "player",
-            "assets/run_sheet.png"
+        /*
+         * Run/jump spritesheets are still loaded
+         * because the original asset structure remains.
+         * No animation is played.
+         */
+
+        this.load.spritesheet(
+            "player-run",
+            "assets/run_sheet.png",
+            {
+                frameWidth: 75,
+                frameHeight: 75
+            }
         );
+
+
+        this.load.spritesheet(
+            "player-jump",
+            "assets/jump_sheet.png",
+            {
+                frameWidth: 75,
+                frameHeight: 75
+            }
+        );
+
 
         this.load.image(
             "fud",
             "assets/fud.png"
         );
 
+
         this.load.image(
             "rugpull",
             "assets/rugpull.png"
         );
+
 
         this.load.image(
             "sky",
             "assets/sky.png"
         );
 
+
         this.load.image(
             "rekt",
             "assets/rekt.png"
         );
+
 
         this.load.image(
             "liquidation",
@@ -219,52 +842,30 @@ class GameScene extends Phaser.Scene {
 
     create() {
 
-        this.gameStarted = false;
-        this.gameOver = false;
+        this.gameStarted =
+            false;
 
-        this.score = 0;
-        this.speed = 0;
-
-        this.serverPlayerY = 330;
-
-        this.serverObstacles = [];
+        this.gameOver =
+            false;
 
 
-        /* ==================================================
-        STATIC SKY
-        ================================================== */
+        this.score =
+            0;
 
-        this.add.image(
-            GAME_WIDTH / 2,
-            GAME_HEIGHT / 2,
-            "sky"
-        )
-        .setDisplaySize(
-            GAME_WIDTH,
-            GAME_HEIGHT
-        )
-        .setDepth(-30);
+        this.speed =
+            5;
 
 
-        /* ==================================================
-        STATIC BACKGROUND
-        ================================================== */
-
-        this.add.rectangle(
-            GAME_WIDTH / 2,
-            500,
-            GAME_WIDTH,
-            110,
-            0x0b0b14
-        )
-        .setDepth(-20);
+        this.gameOverText =
+            null;
 
 
-        /* ==================================================
-        STATIC BUILDINGS
-        ================================================== */
+        this.serverPlayerY =
+            S(330);
 
-        this.createStaticBuildings();
+
+        this.serverObstacles =
+            [];
 
 
         /* ==================================================
@@ -284,22 +885,30 @@ class GameScene extends Phaser.Scene {
 
         /* ==================================================
         PLAYER
+        NO ANIMATION
         ================================================== */
 
         this.playerSprite =
             this.add.sprite(
                 180,
                 495,
-                "player"
+                "player-run"
             )
             .setScale(1.2)
             .setDepth(10);
 
-        /*
-         * Ako je run_sheet spritesheet,
-         * ovde samo prikazujemo prvi frame.
-         */
-        this.playerSprite.setFrame(0);
+
+        this.playerSprite.setFrame(
+            0
+        );
+
+
+        /* ==================================================
+        OBSTACLES
+        ================================================== */
+
+        this.obstacleSpritesMap =
+            new Map();
 
 
         /* ==================================================
@@ -312,11 +921,20 @@ class GameScene extends Phaser.Scene {
                 30,
                 "Score: 0",
                 {
-                    fontSize: "36px",
-                    fill: "#f3ba2f",
-                    fontStyle: "bold",
-                    stroke: "#000",
-                    strokeThickness: 4
+                    fontSize:
+                        "36px",
+
+                    fill:
+                        "#f3ba2f",
+
+                    fontStyle:
+                        "bold",
+
+                    stroke:
+                        "#000",
+
+                    strokeThickness:
+                        4
                 }
             )
             .setDepth(20);
@@ -326,13 +944,23 @@ class GameScene extends Phaser.Scene {
             this.add.text(
                 30,
                 75,
-                "Best: " + highScore,
+                "Best: " +
+                highScore,
                 {
-                    fontSize: "30px",
-                    fill: "#ffffff",
-                    fontStyle: "bold",
-                    stroke: "#000",
-                    strokeThickness: 4
+                    fontSize:
+                        "30px",
+
+                    fill:
+                        "#ffffff",
+
+                    fontStyle:
+                        "bold",
+
+                    stroke:
+                        "#000",
+
+                    strokeThickness:
+                        4
                 }
             )
             .setDepth(20);
@@ -345,18 +973,37 @@ class GameScene extends Phaser.Scene {
         this.startText =
             this.add.text(
                 GAME_WIDTH / 2,
-                100,
+                S(100),
                 "TAP OR SPACE TO START",
                 {
-                    fontSize: "48px",
-                    fill: "#f3ba2f",
-                    fontStyle: "bold",
-                    stroke: "#000",
-                    strokeThickness: 4
+                    fontSize:
+                        "48px",
+
+                    fill:
+                        "#f3ba2f",
+
+                    fontStyle:
+                        "bold",
+
+                    stroke:
+                        "#000",
+
+                    strokeThickness:
+                        4
                 }
             )
             .setOrigin(0.5)
             .setDepth(20);
+
+
+        /* ==================================================
+        BACKGROUND
+        ================================================== */
+
+        this.background =
+            new BackgroundManager(
+                this
+            );
 
 
         /* ==================================================
@@ -393,113 +1040,181 @@ class GameScene extends Phaser.Scene {
                 );
 
 
-            /* ==================================================
+            /* ==============================================
             GAME STARTED
-            ================================================== */
+            ============================================== */
 
             socket.on(
                 "game-started",
-                (data) => {
+                data => {
 
                     currentGameId =
                         data.gameId;
 
+
                     this.speed =
                         data.speed;
 
+
                     this.gameStarted =
                         true;
+
 
                     this.gameOver =
                         false;
 
 
-                    if (this.startText) {
+                    /*
+                     * Static player frame.
+                     */
+
+                    this.playerSprite.setFrame(
+                        0
+                    );
+
+
+                    if (
+                        this.startText
+                    ) {
 
                         this.startText.destroy();
 
-                        this.startText = null;
+                        this.startText =
+                            null;
                     }
                 }
             );
 
 
-            /* ==================================================
+            /* ==============================================
             STATE
-            ================================================== */
+            ============================================== */
 
             socket.on(
                 "state",
-                (state) => {
+                state => {
 
                     if (
                         !this.gameStarted ||
                         this.gameOver
                     ) {
+
                         return;
                     }
 
 
-                    /*
-                     * SERVER SCORE
-                     */
-
                     this.score =
                         state.score;
 
-
-                    /*
-                     * SERVER SPEED
-                     */
 
                     this.speed =
                         state.speed;
 
 
                     /*
-                     * SCORE TEXT
+                     * Only update DOM-like Phaser text
+                     * when score actually changed.
                      */
 
-                    this.scoreText.setText(
-                        "Score: " +
+                    if (
+                        this.lastScore !==
                         state.score
-                    );
+                    ) {
+
+                        this.lastScore =
+                            state.score;
 
 
-                    /*
-                     * SERVER PLAYER POSITION
-                     *
-                     * Nema lokalne fizike.
-                     * Nema interpolation.
-                     * Nema prediction.
-                     */
+                        this.scoreText.setText(
+                            "Score: " +
+                            state.score
+                        );
+                    }
+
+
+                    /* ======================================
+                    PLAYER
+                    ====================================== */
 
                     this.serverPlayerY =
-                        state.player.y;
+                        (
+                            state.player.y -
+                            15
+                        ) *
+                        GAME_SCALE;
 
 
-                    /*
-                     * OBSTACLES
-                     *
-                     * Direktno čuvamo server state.
-                     */
+                    /* ======================================
+                    OBSTACLES
+
+                    Reuse existing array.
+                    No map().
+                    No spread.
+                    No new object per tick.
+                    ====================================== */
 
                     const incoming =
                         state.obstacles;
 
-                    this.serverObstacles =
-                        incoming;
+                    const current =
+                        this.serverObstacles;
+
+
+                    current.length =
+                        incoming.length;
+
+
+                    for (
+                        let i = 0;
+                        i < incoming.length;
+                        i++
+                    ) {
+
+                        const source =
+                            incoming[i];
+
+
+                        let target =
+                            current[i];
+
+
+                        if (!target) {
+
+                            target = {};
+
+                            current[i] =
+                                target;
+                        }
+
+
+                        target.id =
+                            source.id;
+
+
+                        target.type =
+                            source.type;
+
+
+                        target.x =
+                            source.x *
+                            GAME_SCALE;
+
+
+                        target.y =
+                            source.y *
+                            GAME_SCALE;
+                    }
                 }
             );
 
 
-            /* ==================================================
+            /* ==============================================
             GAME OVER
-            ================================================== */
+            ============================================== */
 
             socket.on(
                 "game-over",
-                (result) => {
+                result => {
 
                     this.onGameOver(
                         result
@@ -508,13 +1223,13 @@ class GameScene extends Phaser.Scene {
             );
 
 
-            /* ==================================================
+            /* ==============================================
             SOCKET ERROR
-            ================================================== */
+            ============================================== */
 
             socket.on(
                 "error",
-                (err) => {
+                err => {
 
                     console.error(
                         "Server error:",
@@ -532,15 +1247,19 @@ class GameScene extends Phaser.Scene {
         const handleJump =
             () => {
 
-                if (this.gameOver) {
+                if (
+                    this.gameOver
+                ) {
 
-                    this.restartGame();
+                    this.scene.restart();
 
                     return;
                 }
 
 
-                if (!this.gameStarted) {
+                if (
+                    !this.gameStarted
+                ) {
 
                     this.requestStart();
 
@@ -549,10 +1268,32 @@ class GameScene extends Phaser.Scene {
 
 
                 /*
-                 * NEMA LOKALNOG SKOKA.
-                 *
-                 * Samo server dobija jump.
+                 * Same local jump prediction
+                 * as original code.
                  */
+
+                if (
+                    this.playerSprite &&
+                    this.playerSprite.y >= 320
+                ) {
+
+                    this.playerSprite.y -=
+                        45;
+
+                    this.isLocallyJumping =
+                        true;
+
+
+                    /*
+                     * No delayedCall required.
+                     * Server state controls the player
+                     * position anyway.
+                     */
+
+                    this.isLocallyJumping =
+                        false;
+                }
+
 
                 if (socket) {
 
@@ -567,7 +1308,9 @@ class GameScene extends Phaser.Scene {
         KEYBOARD
         ================================================== */
 
-        if (this.globalKeyHandler) {
+        if (
+            this.globalKeyHandler
+        ) {
 
             window.removeEventListener(
                 "keydown",
@@ -577,7 +1320,7 @@ class GameScene extends Phaser.Scene {
 
 
         this.globalKeyHandler =
-            (event) => {
+            event => {
 
                 if (
                     event.code ===
@@ -609,144 +1352,6 @@ class GameScene extends Phaser.Scene {
 
 
     /* ======================================================
-    STATIC BUILDINGS
-    ====================================================== */
-
-    createStaticBuildings() {
-
-        const buildings = [
-
-            {
-                x: 0,
-                y: 410,
-                w: 90,
-                h: 90
-            },
-
-            {
-                x: 110,
-                y: 380,
-                w: 70,
-                h: 120
-            },
-
-            {
-                x: 200,
-                y: 425,
-                w: 100,
-                h: 75
-            },
-
-            {
-                x: 325,
-                y: 360,
-                w: 80,
-                h: 140
-            },
-
-            {
-                x: 430,
-                y: 400,
-                w: 110,
-                h: 100
-            },
-
-            {
-                x: 565,
-                y: 345,
-                w: 75,
-                h: 155
-            },
-
-            {
-                x: 665,
-                y: 390,
-                w: 120,
-                h: 110
-            },
-
-            {
-                x: 810,
-                y: 350,
-                w: 90,
-                h: 150
-            },
-
-            {
-                x: 925,
-                y: 405,
-                w: 100,
-                h: 95
-            },
-
-            {
-                x: 1050,
-                y: 370,
-                w: 110,
-                h: 130
-            },
-
-            {
-                x: 1180,
-                y: 340,
-                w: 100,
-                h: 160
-            }
-        ];
-
-
-        for (
-            let i = 0;
-            i < buildings.length;
-            i++
-        ) {
-
-            const b =
-                buildings[i];
-
-
-            this.add.rectangle(
-                b.x + b.w / 2,
-                b.y + b.h / 2,
-                b.w,
-                b.h,
-                0x17172c
-            )
-            .setDepth(-10);
-
-
-            /*
-             * Nekoliko statičnih prozora.
-             */
-
-            for (
-                let wx = b.x + 12;
-                wx < b.x + b.w - 8;
-                wx += 20
-            ) {
-
-                for (
-                    let wy = b.y + 12;
-                    wy < b.y + b.h - 10;
-                    wy += 25
-                ) {
-
-                    this.add.rectangle(
-                        wx,
-                        wy,
-                        4,
-                        4,
-                        0xffffff,
-                        0.6
-                    )
-                    .setDepth(-9);
-                }
-            }
-        }
-    }
-
-
-    /* ======================================================
     REQUEST START
     ====================================================== */
 
@@ -766,7 +1371,9 @@ class GameScene extends Phaser.Scene {
             "no_signature";
 
 
-        if (this.startText) {
+        if (
+            this.startText
+        ) {
 
             this.startText.setText(
                 "Connecting..."
@@ -790,24 +1397,107 @@ class GameScene extends Phaser.Scene {
 
     onGameOver(result) {
 
-        if (this.gameOver) {
+        if (
+            this.gameOver
+        ) {
+
             return;
         }
 
 
-        this.gameOver = true;
-        this.gameStarted = false;
+        this.gameOver =
+            true;
+
+        this.gameStarted =
+            false;
 
 
         /*
-         * NEMA:
-         * shake
-         * tween
-         * tint
-         * flash
-         * animation
+         * NO animation.
+         * NO tween.
+         * NO camera shake.
          */
 
+        this.playerSprite.setFrame(
+            0
+        );
+
+
+        /* ==================================================
+        FIND CLOSEST OBSTACLE
+        ================================================== */
+
+        const obstacles =
+            this.serverObstacles;
+
+
+        if (
+            obstacles.length > 0
+        ) {
+
+            let hitObstacle =
+                obstacles[0];
+
+
+            let bestDistance =
+                Math.abs(
+                    hitObstacle.x -
+                    this.playerSprite.x
+                );
+
+
+            for (
+                let i = 1;
+                i < obstacles.length;
+                i++
+            ) {
+
+                const obstacle =
+                    obstacles[i];
+
+
+                const distance =
+                    Math.abs(
+                        obstacle.x -
+                        this.playerSprite.x
+                    );
+
+
+                if (
+                    distance <
+                    bestDistance
+                ) {
+
+                    bestDistance =
+                        distance;
+
+                    hitObstacle =
+                        obstacle;
+                }
+            }
+
+
+            if (
+                hitObstacle
+            ) {
+
+                this.playerSprite.x =
+                    (
+                        this.playerSprite.x +
+                        hitObstacle.x
+                    ) / 2;
+
+
+                this.playerSprite.y =
+                    hitObstacle.y -
+                    S(15);
+            }
+        }
+
+
+        /* ==================================================
+        SCORE
+        ================================================== */
 
         const finalScore =
             result.score ||
@@ -840,36 +1530,47 @@ class GameScene extends Phaser.Scene {
         GAME OVER TEXT
         ================================================== */
 
-        this.time.delayedCall(
-            300,
-            () => {
+        /*
+         * No delayedCall.
+         * Show immediately.
+         */
 
-                if (!this.gameOver) {
-                    return;
+        this.gameOverText =
+            this.add.text(
+                600,
+                165,
+                "GAME OVER\n\nTAP OR SPACE",
+                {
+                    fontSize:
+                        "51px",
+
+                    fill:
+                        "#ff3333",
+
+                    align:
+                        "center",
+
+                    fontStyle:
+                        "bold",
+
+                    stroke:
+                        "#000",
+
+                    strokeThickness:
+                        7
                 }
+            )
+            .setOrigin(0.5)
+            .setDepth(30);
 
 
-                this.gameOverText =
-                    this.add.text(
-                        GAME_WIDTH / 2,
-                        165,
-                        "GAME OVER\n\nTAP OR SPACE",
-                        {
-                            fontSize: "51px",
-                            fill: "#ff3333",
-                            align: "center",
-                            fontStyle: "bold",
-                            stroke: "#000",
-                            strokeThickness: 7
-                        }
-                    )
-                    .setOrigin(0.5)
-                    .setDepth(30);
-            }
-        );
+        /* ==================================================
+        SCORE SUBMITTED
+        ================================================== */
 
-
-        if (result.success) {
+        if (
+            result.success
+        ) {
 
             window.dispatchEvent(
                 new Event(
@@ -890,6 +1591,7 @@ class GameScene extends Phaser.Scene {
             !this.gameStarted ||
             this.gameOver
         ) {
+
             return;
         }
 
@@ -898,34 +1600,153 @@ class GameScene extends Phaser.Scene {
         PLAYER
         ================================================== */
 
-        /*
-         * Samo server position.
-         */
-
         this.playerSprite.y =
             this.serverPlayerY;
+
+
+        /*
+         * NO animation switching.
+         * Static frame only.
+         */
+
+        this.playerSprite.setFrame(
+            0
+        );
+
+        this.playerSprite.rotation =
+            0;
 
 
         /* ==================================================
         OBSTACLES
         ================================================== */
 
-        const incoming =
+        const obstacles =
             this.serverObstacles;
 
 
+        /* ==================================================
+        REMOVE OLD OBSTACLES
+        ================================================== */
+
         /*
-         * 1. Ažuriraj postojeće prepreke.
+         * We don't create a Set.
+         * We compare the existing map against
+         * the current server array.
          */
+
+        this.obstacleSpritesMap.forEach(
+            (obj, id) => {
+
+                let exists =
+                    false;
+
+
+                for (
+                    let i = 0;
+                    i < obstacles.length;
+                    i++
+                ) {
+
+                    if (
+                        obstacles[i].id ===
+                        id
+                    ) {
+
+                        exists =
+                            true;
+
+                        break;
+                    }
+                }
+
+
+                if (!exists) {
+
+                    if (
+                        obj.sprite
+                    ) {
+
+                        obj.sprite.destroy();
+                    }
+
+
+                    if (
+                        obj.text
+                    ) {
+
+                        obj.text.destroy();
+                    }
+
+
+                    this.obstacleSpritesMap.delete(
+                        id
+                    );
+                }
+            }
+        );
+
+
+        /* ==================================================
+        UPDATE OBSTACLES
+        ================================================== */
 
         for (
             let i = 0;
-            i < incoming.length;
+            i < obstacles.length;
             i++
         ) {
 
             const obs =
-                incoming[i];
+                obstacles[i];
+
+
+            let key =
+                "rugpull";
+
+
+            let label =
+                "";
+
+
+            if (
+                obs.type ===
+                "fud"
+            ) {
+
+                key =
+                    "fud";
+
+            } else if (
+                obs.type ===
+                "meteor"
+            ) {
+
+                key =
+                    "rekt";
+
+                label =
+                    "REKT";
+
+            } else if (
+                obs.type ===
+                "liquidation"
+            ) {
+
+                key =
+                    "liquidation";
+
+                label =
+                    "LIQUIDATED";
+
+            } else if (
+                obs.type ===
+                "rug"
+            ) {
+
+                label =
+                    "rugpull";
+            }
 
 
             let obj =
@@ -934,78 +1755,42 @@ class GameScene extends Phaser.Scene {
                 );
 
 
-            /*
-             * Ako sprite ne postoji,
-             * napravi ga jednom.
-             */
+            /* ==================================================
+            CREATE OBSTACLE ONLY ONCE
+            ================================================== */
 
             if (!obj) {
-
-                let key =
-                    "rugpull";
-
-                let label =
-                    "";
-
-
-                if (
-                    obs.type ===
-                    "fud"
-                ) {
-
-                    key =
-                        "fud";
-                }
-
-                else if (
-                    obs.type ===
-                    "meteor"
-                ) {
-
-                    key =
-                        "rekt";
-
-                    label =
-                        "REKT";
-                }
-
-                else if (
-                    obs.type ===
-                    "liquidation"
-                ) {
-
-                    key =
-                        "liquidation";
-
-                    label =
-                        "LIQUIDATED";
-                }
-
-                else if (
-                    obs.type ===
-                    "rug"
-                ) {
-
-                    key =
-                        "rugpull";
-
-                    label =
-                        "rugpull";
-                }
-
 
                 const sprite =
                     this.add.sprite(
                         obs.x,
                         obs.y,
                         key
-                    )
-                    .setScale(
-                        obs.type === "fud"
-                            ? 1.05
-                            : 1.2
-                    )
-                    .setDepth(8);
+                    );
+
+
+                sprite.setScale(
+                    obs.type ===
+                    "fud"
+                        ? 1.05
+                        : 1.2
+                );
+
+
+                sprite.setDepth(
+                    8
+                );
+
+
+                if (
+                    obs.type ===
+                    "meteor"
+                ) {
+
+                    sprite.setTint(
+                        0xff0000
+                    );
+                }
 
 
                 let text =
@@ -1017,14 +1802,24 @@ class GameScene extends Phaser.Scene {
                     text =
                         this.add.text(
                             obs.x,
-                            obs.y + 15,
+                            obs.y +
+                            S(15),
                             label,
                             {
-                                fontSize: "18px",
-                                fill: "#fff",
-                                fontStyle: "bold",
-                                stroke: "#000",
-                                strokeThickness: 3
+                                fontSize:
+                                    "18px",
+
+                                fill:
+                                    "#fff",
+
+                                fontStyle:
+                                    "bold",
+
+                                stroke:
+                                    "#000",
+
+                                strokeThickness:
+                                    3
                             }
                         )
                         .setOrigin(0.5)
@@ -1045,9 +1840,9 @@ class GameScene extends Phaser.Scene {
             }
 
 
-            /*
-             * DIREKTNA SERVER POZICIJA.
-             */
+            /* ==================================================
+            UPDATE POSITION
+            ================================================== */
 
             obj.sprite.x =
                 obs.x;
@@ -1056,63 +1851,25 @@ class GameScene extends Phaser.Scene {
                 obs.y;
 
 
-            if (obj.text) {
+            if (
+                obj.text
+            ) {
 
                 obj.text.x =
                     obs.x;
 
                 obj.text.y =
-                    obs.y + 15;
+                    obs.y +
+                    S(15);
             }
         }
 
 
         /*
-         * 2. Obriši prepreke koje server
-         * više ne šalje.
+         * Background update intentionally omitted.
+         *
+         * Background is static.
          */
-
-        this.obstacleSpritesMap.forEach(
-            (obj, id) => {
-
-                let exists =
-                    false;
-
-
-                for (
-                    let i = 0;
-                    i < incoming.length;
-                    i++
-                ) {
-
-                    if (
-                        incoming[i].id ===
-                        id
-                    ) {
-
-                        exists = true;
-
-                        break;
-                    }
-                }
-
-
-                if (!exists) {
-
-                    obj.sprite.destroy();
-
-
-                    if (obj.text) {
-                        obj.text.destroy();
-                    }
-
-
-                    this.obstacleSpritesMap.delete(
-                        id
-                    );
-                }
-            }
-        );
     }
 }
 
@@ -1131,11 +1888,15 @@ function startGame() {
 
         render: {
 
+            /*
+             * Lower GPU/CPU load.
+             */
+
             antialias:
                 false,
 
             pixelArt:
-                true,
+                false,
 
             resolution:
                 1
@@ -1166,7 +1927,8 @@ function startGame() {
 
 
         /*
-         * NEMA PHYSICS.
+         * Arcade physics is not used by the game.
+         * Server controls the gameplay physics.
          */
 
         scene: [
@@ -1191,7 +1953,9 @@ const fullscreenBtn =
     );
 
 
-if (fullscreenBtn) {
+if (
+    fullscreenBtn
+) {
 
     fullscreenBtn.addEventListener(
         "click",
@@ -1251,10 +2015,12 @@ const gamesNavBtn =
         "gamesNavBtn"
     );
 
+
 const sidebarMenu =
     document.getElementById(
         "sidebarMenu"
     );
+
 
 const closeMenuBtn =
     document.getElementById(
