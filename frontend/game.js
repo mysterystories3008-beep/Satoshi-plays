@@ -1695,3 +1695,40 @@ gamesNavBtn.addEventListener("click", function () {
 closeMenuBtn.addEventListener("click", function () {
     sidebarMenu.style.width = "0";
 });
+
+/* ==========================================================
+   MOBILE STATUS TOOLTIP - TAP HANDLER
+========================================================== */
+
+const statusModules = document.querySelectorAll(".status-module");
+
+statusModules.forEach(module => {
+
+    module.addEventListener("click", (event) => {
+
+        if (window.matchMedia("(hover: hover)").matches) {
+            return;
+        }
+
+        event.stopPropagation();
+
+        const wasActive = module.classList.contains("active");
+
+        statusModules.forEach(item => {
+            item.classList.remove("active");
+        });
+
+        if (!wasActive) {
+            module.classList.add("active");
+        }
+    });
+
+});
+
+document.addEventListener("click", () => {
+
+    statusModules.forEach(module => {
+        module.classList.remove("active");
+    });
+
+});
