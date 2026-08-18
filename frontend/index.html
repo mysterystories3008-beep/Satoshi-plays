@@ -1364,30 +1364,6 @@ function loadSelectedGame(file){
     };
     document.body.appendChild(script);
 }
-
-const btnSatoshiRunner = document.getElementById('btnSatoshiRunner');
-if (btnSatoshiRunner) {
-    btnSatoshiRunner.addEventListener('click', () => {
-        // 1. Zatvori sidebar
-        const sidebarMenu = document.getElementById('sidebarMenu');
-        if (sidebarMenu) {
-            sidebarMenu.style.width = '0';
-        }
-
-        const activeWallet = localStorage.getItem("userWallet");
-
-        // 2. Pripremi ekrane za prikaz igre
-        launchGameContainer(!activeWallet);
-
-        // 3. Pokreni igru
-        if (activeWallet) {
-            window.isGuestMode = false;
-            localStorage.setItem("gameMode", "normal");
-            loadSelectedGame("game.js");
-        } else {
-            window.isGuestMode = true;
-            localStorage.setItem("gameMode", "normal");
-            loadSelectedGame("game.js");
-        }
-    });
-}
+</script>
+</body>
+</html>
