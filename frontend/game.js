@@ -44,8 +44,12 @@ setInterval(updateLiveStatus, 5000);
 
 
 let highScore = localStorage.getItem("highScore") || 0;
+
 let socket = null;
 let currentGameId = null;
+
+// Jedina aktivna Phaser instanca
+window.phaserGame = null;
 
 const GAME_SCALE = 1.5;
 const GAME_WIDTH = 1200;
@@ -1547,6 +1551,51 @@ PHASER START
 
 function startGame() {
 
+    // Ako već postoji Phaser igra,
+    // potpuno je uništi pre pravljenja nove.
+    if (window.phaserGame) {
+
+        console.log("Destroying previous Phaser instance...");
+
+        try {
+            window.phaserGame.destroy(true);
+        } catch (error) {
+            console.warn(
+                "Error destroying previous Phaser instance:",
+                error
+            );
+        }
+
+        window.phaserGame = null;
+    }
+
+    // Prethodni Socket.IO mora takođe da se zatvori.
+    // U suprotnom listeneri mogu ostati vezani
+    // za staru GameScene.
+    if (socket) {
+
+        try {
+            socket.removeAllListeners();
+            socket.disconnect();
+        } catch (error) {
+            console.warn(
+                "Error cleaning previous socket:",
+                error
+            );
+        }
+
+        socket = null;
+        currentGameId = null;
+    }
+
+    // Osiguraj da nema zaostalih canvas elemenata.
+    const phaserContainer =
+        document.getElementById("phaser-game");
+
+    if (phaserContainer) {
+        phaserContainer.innerHTML = "";
+    }
+
     const config = {
 
         type: Phaser.AUTO,
@@ -1604,9 +1653,11 @@ function startGame() {
         ]
     };
 
+    window.phaserGame =
+        new Phaser.Game(config);
 
-    new Phaser.Game(
-        config
+    console.log(
+        "Phaser instance created."
     );
 }
 
@@ -1683,6 +1734,10 @@ if (fullscreenBtn) {
 const gamesNavBtn = document.getElementById("gamesNavBtn");
 const sidebarMenu = document.getElementById("sidebarMenu");
 const closeMenuBtn = document.getElementById("closeMenuBtn");
+
+
+
+
 
 gamesNavBtn.addEventListener("click", function () {
     if (sidebarMenu.style.width === "280px") {
