@@ -1246,34 +1246,82 @@ document.getElementById('btnInGameLogout').addEventListener('click', () => {
 });
 
 // INTERACTIVE CHAT LOGIC
+
 document.getElementById('btnSendChat').addEventListener('click', sendChatMessage);
+
 document.getElementById('chatInputMsg').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendChatMessage();
 });
 
+let chatSocket = null;
+
+const chatBackendUrl =
+    window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : "https://api.satoshiplays.com";
+
+chatSocket = io(chatBackendUrl, {
+    transports: ["websocket", "polling"],
+    secure: false
+});
+
 function sendChatMessage() {
+
     const input = document.getElementById('chatInputMsg');
     const msgText = input.value.trim();
+
     if (!msgText) return;
 
-    const savedWallet = localStorage.getItem("userWallet");
-    const authorName = savedWallet ? savedWallet.slice(0, 6) + "..." : "Guest";
+    if (!chatSocket || !chatSocket.connected) {
+        console.warn("Chat: Socket.IO nije povezan.");
+        return;
+    }
 
-    const chatBox = document.getElementById('chatMessagesBox');
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'chat-msg';
-    msgDiv.innerHTML = `<span class="author">${authorName}:</span><span class="text">${escapeHtml(msgText)}</span>`;
-    
-    chatBox.appendChild(msgDiv);
-    chatBox.scrollTop = chatBox.scrollHeight;
+    const savedWallet = localStorage.getItem("userWallet");
+    const wallet = savedWallet || "Guest";
+
+    chatSocket.emit("chat-message", {
+        wallet: wallet,
+        message: msgText
+    });
+
     input.value = '';
 }
 
 function escapeHtml(text) {
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 }
 
+chatSocket.on("chat-message", (data) => {
+
+    if (!data || typeof data.message !== "string") return;
+
+    const chatBox = document.getElementById("chatMessagesBox");
+    if (!chatBox) return;
+
+    const authorName = data.wallet
+    ? formatAddress(data.wallet)
+    : "Guest";
+
+    const msgDiv = document.createElement("div");
+    msgDiv.className = "chat-msg";
+
+    msgDiv.innerHTML =
+        `<span class="author">${escapeHtml(authorName)}:</span>` +
+        `<span class="text">${escapeHtml(data.message)}</span>`;
+
+    chatBox.appendChild(msgDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+});
+
+
+
 let gameScriptLoaded = false;
+
+
 
 window.addEventListener('load', () => {
     const savedWallet = localStorage.getItem("userWallet");
