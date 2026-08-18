@@ -108,7 +108,7 @@ function generateGameId() {
 // GAME ENGINE NA SERVERU
 // ==========================================
 
-const TICK_MS = 30;          
+const TICK_MS = 30;           
 const GRAVITY = 1.7;        
 const JUMP_V = -18;         
 const GROUND_Y = 350;
@@ -116,6 +116,7 @@ const PLAYER_X = 120;
 const MAX_GAME_MS = 180000; 
 
 const games = new Map();
+const lastMessageTimes = new Map();
 const onlinePlayers = new Set();
 
 function createGameState(wallet, gameId) {
@@ -167,7 +168,7 @@ function spawnObstacle(state) {
     if (rand < 0.40) {
         chosenType = "fud";          
     } else if (rand < 0.62) {
-        chosenType = "meteor";       
+        chosenType = "meteor";      
     } else if (rand < 0.84) {
         chosenType = "liquidation";  
     } else if (rand < 0.92) {
@@ -351,8 +352,60 @@ io.on("connection", (socket) => {
         }
     });
 
+    // ==========================================
+    // GLOBAL CHAT
+    // ==========================================
+
+    socket.on("chat-message", (data) => {
+        if (!data || typeof data.message !== "string") return;
+
+        const message = data.message.trim();
+        if (!message) return;
+
+        // Zaštita od predugačkih poruka
+        if (message.length > 200) return;
+
+        // RATE LIMITING (1 poruka na svake 2 sekunde)
+        const now = Date.now();
+        const lastTime = lastMessageTimes.get(socket.id) || 0;
+        const cooldown = 2000;
+
+        if (now - lastTime < cooldown) {
+            const timeLeft = ((cooldown - (now - lastTime)) / 1000).toFixed(1);
+            socket.emit("chat-error", { 
+                message: `Sačekaj još ${timeLeft}s pre sledeće poruke.` 
+            });
+            return;
+        }
+
+        lastMessageTimes.set(socket.id, now);
+
+      const wallet = typeof data.wallet === "string"
+    ? data.wallet.trim()
+    : "";
+
+let displayWallet = "Guest";
+
+if (wallet) {
+    displayWallet =
+        wallet.substring(0, 6) +
+        "..." +
+        wallet.substring(wallet.length - 4);
+}
+
+const chatMessage = {
+    wallet: displayWallet,
+    message,
+    timestamp: Date.now()
+};
+
+        // ŠALJE PORUKU SVIM POVEZANIM KORISNICIMA
+        io.emit("chat-message", chatMessage);
+    });
+
     socket.on("disconnect", () => {
         onlinePlayers.delete(socket.id);
+        lastMessageTimes.delete(socket.id);
 
         const state = games.get(socket.id);
         if (state) {
@@ -361,7 +414,11 @@ io.on("connection", (socket) => {
         }
         console.log("Klijent diskonektovan:", socket.id);
     });
-});
+}); // <--- OVDE JE ISPRAVNO ZATVOREN io.on("connection") BLOK
+
+// ==========================================
+// FUNKCIJE ZA ZAVRŠETAK IGRE
+// ==========================================
 
 async function finishGame(socket, state, signature) {
     const endTime = Date.now();
@@ -438,7 +495,6 @@ async function finishGame(socket, state, signature) {
     saveFile(SESSION_FILE, sessions);
 
     try {
-        // Upis istorije pojedinačne partije u tabelu scores
         const queryText = `
             INSERT INTO scores (game_id, wallet, start_time, end_time, score, timestamp, signature, duration, verified, type)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -451,7 +507,6 @@ async function finishGame(socket, state, signature) {
             session.gameId, session.wallet, session.startTime, endTime, finalScore, endTime, signature, duration, verified, "weekly"
         ]);
 
-        // Osvežavanje zbirnih poena i ličnog rekorda u user_scores
         const userScoresQuery = `
             INSERT INTO user_scores (wallet_address, weekly_total, daily_best, updated_at)
             VALUES ($1, $2, $2, NOW())
@@ -482,7 +537,7 @@ async function finishGame(socket, state, signature) {
 
 app.get("/get-scores/:type", async (req, res) => {
     try {
-        const type = req.params.type; // 'daily' ili 'weekly'
+        const type = req.params.type; 
         const scoreColumn = type === 'weekly' ? 'weekly_total' : 'daily_best';
 
         const query = `
@@ -517,10 +572,7 @@ app.get("/api/game-stats", async (req, res) => {
         const wallet = req.query.wallet;
         const now = Date.now();
 
-        // Poslednja 24 sata
         const startOfToday = now - (24 * 60 * 60 * 1000);
-
-        // Poslednjih 7 dana
         const startOfWeek = now - (7 * 24 * 60 * 60 * 1000);
 
         const globalTodayQuery = `
@@ -533,7 +585,7 @@ app.get("/api/game-stats", async (req, res) => {
         const globalWeekQuery = `
             SELECT COUNT(*)
             FROM scores
-            WHERE type = 'daily'
+            WHERE type = 'weekly'
             AND timestamp >= $1
         `;
 
@@ -543,11 +595,7 @@ app.get("/api/game-stats", async (req, res) => {
         let myTodayCount = 0;
         let myWeekCount = 0;
 
-        if (
-            wallet &&
-            wallet !== "undefined" &&
-            wallet !== "null"
-        ) {
+        if (wallet && wallet !== "undefined" && wallet !== "null") {
             const myTodayQuery = `
                 SELECT COUNT(*)
                 FROM scores
@@ -559,7 +607,7 @@ app.get("/api/game-stats", async (req, res) => {
             const myWeekQuery = `
                 SELECT COUNT(*)
                 FROM scores
-                WHERE type = 'daily'
+                WHERE type = 'weekly'
                 AND LOWER(wallet) = LOWER($1)
                 AND timestamp >= $2
             `;
