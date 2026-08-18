@@ -1396,7 +1396,17 @@ if (btnSatoshiRunner) {
 
         // 4. Prikazivanje kontejnera i pokretanje igre sa konekcijom
         launchGameContainer(window.isGuestMode);
-        loadSelectedGame("game.js");
+
+        // 5. Pokreni igru i mrežnu konekciju
+        if (typeof gameStarted !== 'undefined' && gameStarted) {
+            // Ako je game.js već u memoriji, pozovi startGame() direktno
+            if (typeof startGame === "function") {
+                startGame();
+            }
+        } else {
+            // Ako se učitava prvi put, pozovi loadSelectedGame
+            loadSelectedGame("game.js");
+        }
     });
 }
 
@@ -1406,4 +1416,3 @@ if (btnSatoshiRunner) {
 </script>
 </body>
 </html>
-
