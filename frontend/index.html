@@ -700,7 +700,8 @@
         </div>
     </div>
 
-    <!-- Mode Selection Buttons -->
+
+ <!-- Mode Selection Buttons -->
     <div class="play-section-wrapper" id="modeSelectionWrapper">
         <button id="btnPlayWallet" class="btn-play-action">
             🎮 PLAY WITH WALLET (Leaderboard)
@@ -709,6 +710,13 @@
             👤 PLAY AS GUEST (No Leaderboard)
         </button>
     </div>
+
+
+   
+
+
+
+
 
     <!-- GAME CONTAINER -->
     <div id="game-wrapper-box">
@@ -1394,18 +1402,15 @@ if (btnSatoshiRunner) {
         }
         localStorage.setItem("gameMode", "normal");
 
-        // 4. Prikazivanje kontejnera i pokretanje igre sa konekcijom
-        launchGameContainer(window.isGuestMode);
-
-        // 5. Pokreni igru i mrežnu konekciju
-        if (typeof gameStarted !== 'undefined' && gameStarted) {
-            // Ako je game.js već u memoriji, pozovi startGame() direktno
-            if (typeof startGame === "function") {
-                startGame();
-            }
+        // 4. i 5. Čisto pokretanje igre i sveže WebSocket veze
+        if (typeof switchGame === "function") {
+            switchGame("game.js");
         } else {
-            // Ako se učitava prvi put, pozovi loadSelectedGame
-            loadSelectedGame("game.js");
+            // Sigurnosna alternativa ako switchGame slučajno nije učitana
+            launchGameContainer(window.isGuestMode);
+            if (typeof loadSelectedGame === "function") {
+                loadSelectedGame("game.js");
+            }
         }
     });
 }
