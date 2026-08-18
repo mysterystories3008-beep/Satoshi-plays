@@ -6,8 +6,8 @@
 <meta name="viewport" content="width=1200, initial-scale=0.35, maximum-scale=3.0, user-scalable=yes">
 <title>Satoshi plays | $SPLAY</title>
 
-<meta name="description" content="Book of Bitcoin - BBTC Web3 browser game.">
-<meta name="keywords" content="BBTC, Bitcoin, Crypto, Web3 Game">
+<meta name="description" content="Satoshi plays - $SPLAY Web3 browser game.">
+<meta name="keywords" content="SPLAY, Bitcoin, Crypto, Web3 Game">
 
 <link rel="stylesheet" href="style.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -1085,22 +1085,75 @@ function launchGameContainer(isGuest) {
     document.getElementById('game-wrapper-box').style.display = 'block';
     document.getElementById('in-game-login-bar').style.display = 'flex';
     refreshAuthBarState();
-
-    if (!gameInitialized) {
-        if (typeof startGame === "function") {
-            startGame();
-            gameInitialized = true;
-        } else {
-            console.warn("startGame() function is not defined yet.");
-        }
-    }
 }
 
 function returnToMainScreen() {
-    document.getElementById('game-wrapper-box').style.display = 'none';
-    document.getElementById('top-hero-showcase').style.display = 'grid';
-    document.getElementById('modeSelectionWrapper').style.display = 'flex';
-    localStorage.removeItem("gameMode");
+
+    // Zaustavi i uništi Phaser
+    if (window.phaserGame) {
+
+        console.log(
+            "Destroying Phaser game..."
+        );
+
+        try {
+            window.phaserGame.destroy(true);
+        } catch (error) {
+            console.warn(
+                "Error destroying Phaser:",
+                error
+            );
+        }
+
+        window.phaserGame = null;
+    }
+
+    // Očisti Socket.IO vezu
+    if (socket) {
+
+        try {
+            socket.removeAllListeners();
+            socket.disconnect();
+        } catch (error) {
+            console.warn(
+                "Error disconnecting socket:",
+                error
+            );
+        }
+
+        socket = null;
+        currentGameId = null;
+    }
+
+    // Obriši eventualni zaostali canvas
+    const phaserContainer =
+        document.getElementById("phaser-game");
+
+    if (phaserContainer) {
+        phaserContainer.innerHTML = "";
+    }
+
+    // Ako postoji globalni reset za Game Over,
+    // ukloni referencu na staru scenu.
+    window.resetGameOverScreen = null;
+
+    // Vrati UI
+    document.getElementById(
+        'game-wrapper-box'
+    ).style.display = 'none';
+
+    document.getElementById(
+        'top-hero-showcase'
+    ).style.display = 'grid';
+
+    document.getElementById(
+        'modeSelectionWrapper'
+    ).style.display = 'flex';
+
+    localStorage.removeItem(
+        "gameMode"
+    );
+
     gameInitialized = false;
 }
 
@@ -1220,7 +1273,7 @@ function escapeHtml(text) {
     return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-let gameStarted = false;
+let gameScriptLoaded = false;
 
 window.addEventListener('load', () => {
     const savedWallet = localStorage.getItem("userWallet");
@@ -1357,20 +1410,57 @@ async function loadGameStatistics() {
     }
 }
 
-function loadSelectedGame(file){
-    launchGameContainer(window.isGuestMode);
+function loadSelectedGame(file) {
 
-    if(gameStarted) return;
+    launchGameContainer(
+        window.isGuestMode
+    );
 
-    let script = document.createElement("script");
-    script.src = file;
-    script.onload = function(){
-        gameStarted = true;
+    // Ako je game.js već učitan,
+    // samo pokreni novu Phaser instancu.
+    if (gameScriptLoaded) {
+
         if (typeof startGame === "function") {
+
             startGame();
+
+            gameInitialized = true;
+        }
+
+        return;
+    }
+
+    // Prvo učitavanje game.js
+    const script =
+        document.createElement("script");
+
+    script.src = file;
+
+    script.onload = function() {
+
+        gameScriptLoaded = true;
+
+        if (
+            typeof startGame === "function"
+        ) {
+
+            startGame();
+
+            gameInitialized = true;
         }
     };
-    document.body.appendChild(script);
+
+    script.onerror = function(error) {
+
+        console.error(
+            "Failed to load game script:",
+            error
+        );
+    };
+
+    document.body.appendChild(
+        script
+    );
 }
 
 
