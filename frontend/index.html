@@ -664,10 +664,10 @@
                 <span>YouTube</span>
             </a>
 
-            <a href="javascript:void(0)" id="gamesNavBtn" class="nav-link">
-                <span class="nav-icon">🎮</span>
-                <span class="games-menu-text">Games</span>
-            </a>
+            <a href="javascript:void(0)" id="gamesNavBtn" class="nav-link" onclick="document.getElementById('sidebarMenu').style.width='250px'">
+    <span class="nav-icon">🎮</span>
+    <span class="games-menu-text">Games</span>
+</a>
         </div>
     </nav>
 </header>
@@ -1025,14 +1025,14 @@
 
 <!-- Sidebar Menu -->
 <div id="sidebarMenu" class="sidebar">
-    <a href="javascript:void(0)" id="closeMenuBtn" class="close-btn">&times;</a>
+    <a href="javascript:void(0)" id="closeMenuBtn" class="close-btn" onclick="document.getElementById('sidebarMenu').style.width='0'">&times;</a>
     <h3>Choose a game</h3>
     <div class="sidebar-links">
-        <button>🏃 Satoshi Runner</button>
-        <button>🔒 Splay Collector </button>
-        <button>🔒 Knowledge Quiz </button>
-        <button>🔒 Coin Catcher </button>
-        <button>🔒 Perfect Circle </button>
+        <button id="btnSatoshiRunner" type="button">🏃 Satoshi Runner</button>
+        <button type="button">🔒 Splay Collector </button>
+        <button type="button">🔒 Knowledge Quiz </button>
+        <button type="button">🔒 Coin Catcher </button>
+        <button type="button">🔒 Perfect Circle </button>
     </div>
 </div>
 
@@ -1364,6 +1364,30 @@ function loadSelectedGame(file){
     };
     document.body.appendChild(script);
 }
-</script>
-</body>
-</html>
+
+const btnSatoshiRunner = document.getElementById('btnSatoshiRunner');
+if (btnSatoshiRunner) {
+    btnSatoshiRunner.addEventListener('click', () => {
+        // 1. Zatvori sidebar
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        if (sidebarMenu) {
+            sidebarMenu.style.width = '0';
+        }
+
+        const activeWallet = localStorage.getItem("userWallet");
+
+        // 2. Pripremi ekrane za prikaz igre
+        launchGameContainer(!activeWallet);
+
+        // 3. Pokreni igru
+        if (activeWallet) {
+            window.isGuestMode = false;
+            localStorage.setItem("gameMode", "normal");
+            loadSelectedGame("game.js");
+        } else {
+            window.isGuestMode = true;
+            localStorage.setItem("gameMode", "normal");
+            loadSelectedGame("game.js");
+        }
+    });
+}
