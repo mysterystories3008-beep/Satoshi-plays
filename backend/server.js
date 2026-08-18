@@ -35,7 +35,19 @@ pool.query(`
         verified BOOLEAN,
         type VARCHAR(50)
     )
-`).catch(err => console.error("Greška pri kreiranju tabele:", err));
+`).catch(err => console.error("Greška pri kreiranju tabele scores:", err));
+
+// Automatsko kreiranje tabele user_scores za brzu rang listu
+pool.query(`
+    CREATE TABLE IF NOT EXISTS user_scores (
+        wallet_address VARCHAR(66) PRIMARY KEY,
+        weekly_total BIGINT DEFAULT 0,
+        daily_best BIGINT DEFAULT 0,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE INDEX IF NOT EXISTS idx_weekly_total ON user_scores(weekly_total DESC);
+    CREATE INDEX IF NOT EXISTS idx_daily_best ON user_scores(daily_best DESC);
+`).catch(err => console.error("Greška pri kreiranju tabele user_scores:", err));
 
 const app = express();
 const server = http.createServer(app);
@@ -138,16 +150,16 @@ function spawnObstacle(state) {
     const startX = 850;
 
     const add = (t, x, y, w, h) => {
-    state.obstacles.push({
-        id: generateGameId(),
-        type: t,
-        x,
-        y,
-        w,
-        h,
-        dead: false
-    });
-};
+        state.obstacles.push({
+            id: generateGameId(),
+            type: t,
+            x,
+            y,
+            w,
+            h,
+            dead: false
+        });
+    };
 
     const rand = Math.random();
     let chosenType = "fud";
@@ -426,6 +438,7 @@ async function finishGame(socket, state, signature) {
     saveFile(SESSION_FILE, sessions);
 
     try {
+        // Upis istorije pojedinačne partije u tabelu scores
         const queryText = `
             INSERT INTO scores (game_id, wallet, start_time, end_time, score, timestamp, signature, duration, verified, type)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -437,6 +450,17 @@ async function finishGame(socket, state, signature) {
         await pool.query(queryText, [
             session.gameId, session.wallet, session.startTime, endTime, finalScore, endTime, signature, duration, verified, "weekly"
         ]);
+
+        // Osvežavanje zbirnih poena i ličnog rekorda u user_scores
+        const userScoresQuery = `
+            INSERT INTO user_scores (wallet_address, weekly_total, daily_best, updated_at)
+            VALUES ($1, $2, $2, NOW())
+            ON CONFLICT (wallet_address) DO UPDATE SET
+              weekly_total = user_scores.weekly_total + EXCLUDED.weekly_total,
+              daily_best = GREATEST(user_scores.daily_best, EXCLUDED.daily_best),
+              updated_at = NOW();
+        `;
+        await pool.query(userScoresQuery, [session.wallet, finalScore]);
 
         console.log(`[SCORE SAVED & VERIFIED IN DB] ${state.wallet} | Score: ${finalScore}`);
     } catch (dbErr) {
@@ -451,22 +475,35 @@ async function finishGame(socket, state, signature) {
 
     games.delete(socket.id);
 }
+
 // ==========================================
-// API RUTE ZA SKOROVE (POSTGRESQL)
+// API RUTE ZA SKOROVE (USER_SCORES)
 // ==========================================
 
 app.get("/get-scores/:type", async (req, res) => {
     try {
         const type = req.params.type; // 'daily' ili 'weekly'
-        
-        const result = await pool.query(
-            "SELECT * FROM scores WHERE type = $1 ORDER BY score DESC LIMIT 10",
-            [type]
-        );
+        const scoreColumn = type === 'weekly' ? 'weekly_total' : 'daily_best';
 
-        res.json(result.rows);
+        const query = `
+            SELECT wallet_address AS wallet, ${scoreColumn} AS score 
+            FROM user_scores 
+            WHERE ${scoreColumn} > 0 
+            ORDER BY ${scoreColumn} DESC 
+            LIMIT 10
+        `;
+
+        const result = await pool.query(query);
+
+        const formattedScores = result.rows.map((row, index) => ({
+            rank: index + 1,
+            wallet: row.wallet,
+            score: Number(row.score)
+        }));
+
+        res.json(formattedScores);
     } catch (err) {
-        console.error("Greška pri čitanju skorova:", err);
+        console.error("Greška pri čitanju rang liste:", err);
         res.status(500).json([]);
     }
 });
@@ -478,7 +515,6 @@ app.get("/get-scores/:type", async (req, res) => {
 app.get("/api/game-stats", async (req, res) => {
     try {
         const wallet = req.query.wallet;
-
         const now = Date.now();
 
         // Poslednja 24 sata
@@ -486,16 +522,6 @@ app.get("/api/game-stats", async (req, res) => {
 
         // Poslednjih 7 dana
         const startOfWeek = now - (7 * 24 * 60 * 60 * 1000);
-
-        // ==========================================
-        // GLOBALNA STATISTIKA
-        // ==========================================
-        // Koristimo samo type = 'daily'
-        // da se jedna igra ne broji dva puta.
-        //
-        // finishGame() upisuje svaki rezultat jednom
-        // kao "daily" i jednom kao "weekly".
-        // ==========================================
 
         const globalTodayQuery = `
             SELECT COUNT(*)
@@ -511,19 +537,8 @@ app.get("/api/game-stats", async (req, res) => {
             AND timestamp >= $1
         `;
 
-        const globalTodayRes = await pool.query(
-            globalTodayQuery,
-            [startOfToday]
-        );
-
-        const globalWeekRes = await pool.query(
-            globalWeekQuery,
-            [startOfWeek]
-        );
-
-        // ==========================================
-        // MOJA STATISTIKA
-        // ==========================================
+        const globalTodayRes = await pool.query(globalTodayQuery, [startOfToday]);
+        const globalWeekRes = await pool.query(globalWeekQuery, [startOfWeek]);
 
         let myTodayCount = 0;
         let myWeekCount = 0;
@@ -533,7 +548,6 @@ app.get("/api/game-stats", async (req, res) => {
             wallet !== "undefined" &&
             wallet !== "null"
         ) {
-
             const myTodayQuery = `
                 SELECT COUNT(*)
                 FROM scores
@@ -550,51 +564,22 @@ app.get("/api/game-stats", async (req, res) => {
                 AND timestamp >= $2
             `;
 
-            const myTodayRes = await pool.query(
-                myTodayQuery,
-                [wallet, startOfToday]
-            );
+            const myTodayRes = await pool.query(myTodayQuery, [wallet, startOfToday]);
+            const myWeekRes = await pool.query(myWeekQuery, [wallet, startOfWeek]);
 
-            const myWeekRes = await pool.query(
-                myWeekQuery,
-                [wallet, startOfWeek]
-            );
-
-            myTodayCount = parseInt(
-                myTodayRes.rows[0].count,
-                10
-            );
-
-            myWeekCount = parseInt(
-                myWeekRes.rows[0].count,
-                10
-            );
+            myTodayCount = parseInt(myTodayRes.rows[0].count, 10);
+            myWeekCount = parseInt(myWeekRes.rows[0].count, 10);
         }
-
-        // ==========================================
-        // RESPONSE
-        // ==========================================
 
         res.json({
             myGamesToday: myTodayCount,
             myGamesWeek: myWeekCount,
-            globalGamesToday: parseInt(
-                globalTodayRes.rows[0].count,
-                10
-            ),
-            globalGamesWeek: parseInt(
-                globalWeekRes.rows[0].count,
-                10
-            )
+            globalGamesToday: parseInt(globalTodayRes.rows[0].count, 10),
+            globalGamesWeek: parseInt(globalWeekRes.rows[0].count, 10)
         });
 
     } catch (err) {
-
-        console.error(
-            "Greška pri dohvatanju statistike igre:",
-            err
-        );
-
+        console.error("Greška pri dohvatanju statistike igre:", err);
         res.status(500).json({
             myGamesToday: 0,
             myGamesWeek: 0,
@@ -603,12 +588,6 @@ app.get("/api/game-stats", async (req, res) => {
         });
     }
 });
-
-
-
-
-
-
 
 // ==========================================
 // LIVE SERVER STATUS
