@@ -1364,6 +1364,47 @@ function loadSelectedGame(file){
     };
     document.body.appendChild(script);
 }
+
+
+const btnSatoshiRunner = document.getElementById('btnSatoshiRunner');
+if (btnSatoshiRunner) {
+    btnSatoshiRunner.addEventListener('click', () => {
+        // 1. Zatvori sidebar
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        if (sidebarMenu) {
+            sidebarMenu.style.width = '0';
+        }
+
+        const activeWallet = localStorage.getItem("userWallet");
+
+        // 2. Postavi mod igranja u zavisnosti od novčanika
+        if (activeWallet) {
+            window.isGuestMode = false;
+        } else {
+            window.isGuestMode = true;
+        }
+        localStorage.setItem("gameMode", "normal");
+
+        // 3. Prikaži ekran sa igrom (sakriva landing/splash delove)
+        launchGameContainer(window.isGuestMode);
+
+        // 4. Pokreni igru
+        if (typeof gameStarted !== 'undefined' && gameStarted) {
+            // Ako je igra već učitana ranije, samo pozovi njenu start funkciju
+            if (typeof startGame === "function") {
+                startGame();
+            }
+        } else {
+            // Ako igra nije još učitana, učitaj je prvi put
+            loadSelectedGame("game.js");
+        }
+    });
+}
+
+
+
+
 </script>
 </body>
 </html>
+
