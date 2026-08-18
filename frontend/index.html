@@ -1368,7 +1368,7 @@ function loadSelectedGame(file){
 
 const btnSatoshiRunner = document.getElementById('btnSatoshiRunner');
 if (btnSatoshiRunner) {
-    btnSatoshiRunner.addEventListener('click', () => {
+    btnSatoshiRunner.addEventListener('click', async () => {
         // 1. Zatvori sidebar
         const sidebarMenu = document.getElementById('sidebarMenu');
         if (sidebarMenu) {
@@ -1376,8 +1376,17 @@ if (btnSatoshiRunner) {
         }
 
         const activeWallet = localStorage.getItem("userWallet");
+        const activeSignature = localStorage.getItem("userSignature");
 
-        // 2. Postavi mod igranja u zavisnosti od novčanika
+        // 2. Ako nije logovan a ima/želi novčanik, pokreni autentifikaciju
+        if (activeWallet && !activeSignature) {
+            if (typeof connectMetaMaskAndSign === "function") {
+                const success = await connectMetaMaskAndSign();
+                if (!success) return;
+            }
+        }
+
+        // 3. Postavi mod igranja i pripremi prikaz
         if (activeWallet) {
             window.isGuestMode = false;
         } else {
@@ -1385,19 +1394,9 @@ if (btnSatoshiRunner) {
         }
         localStorage.setItem("gameMode", "normal");
 
-        // 3. Prikaži ekran sa igrom (sakriva landing/splash delove)
+        // 4. Prikazivanje kontejnera i pokretanje igre sa konekcijom
         launchGameContainer(window.isGuestMode);
-
-        // 4. Pokreni igru
-        if (typeof gameStarted !== 'undefined' && gameStarted) {
-            // Ako je igra već učitana ranije, samo pozovi njenu start funkciju
-            if (typeof startGame === "function") {
-                startGame();
-            }
-        } else {
-            // Ako igra nije još učitana, učitaj je prvi put
-            loadSelectedGame("game.js");
-        }
+        loadSelectedGame("game.js");
     });
 }
 
