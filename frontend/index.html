@@ -720,6 +720,138 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ==========================================
+   CYBER-WEB3 HIGH-END NAVBAR (EXCEPT GAMES)
+   ========================================== */
+
+/* Animacija za pulsirajući sjaj oko dugmića */
+@keyframes web3Glow {
+    0% { box-shadow: 0 0 8px rgba(243, 186, 47, 0.15), inset 0 0 8px rgba(243, 186, 47, 0.05); }
+    50% { box-shadow: 0 0 16px rgba(243, 186, 47, 0.35), inset 0 0 12px rgba(243, 186, 47, 0.15); }
+    100% { box-shadow: 0 0 8px rgba(243, 186, 47, 0.15), inset 0 0 8px rgba(243, 186, 47, 0.05); }
+}
+
+/* 1. LEVI NAV LINKOVI (O projektu, Token, itd.) */
+.nav-links a {
+    color: #f0c05a; /* Zlatno-žućkasti premium tekst */
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 12px;
+    
+    /* Tamna neon podloga sa zlatnim ivicama u startu */
+    background: linear-gradient(135deg, rgba(20, 18, 12, 0.85) 0%, rgba(10, 10, 10, 0.95) 100%);
+    border: 1px solid rgba(243, 186, 47, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    
+    /* Stalni efekat da svetli i pre klika */
+    animation: web3Glow 4s infinite ease-in-out;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+}
+
+/* Hover na leve linkove - pun "Power-Up" */
+.nav-links a:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #f3ba2f 0%, #d49f1f 100%);
+    border-color: #ffe699;
+    box-shadow: 0 0 25px rgba(243, 186, 47, 0.6), 0 0 10px rgba(255, 255, 255, 0.4);
+    transform: translateY(-3px) scale(1.03);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* 2. POSEBNO "BUY TOKEN" DUGME (Najjači akcenat u levoj strani) */
+.nav-links a[href*="pancakeswap"] {
+    color: #121212;
+    background: linear-gradient(135deg, #f3ba2f 0%, #ff9900 100%);
+    border: 1px solid #ffe082;
+    font-weight: 800;
+    box-shadow: 0 0 18px rgba(243, 186, 47, 0.4);
+    animation: none; /* Ima fiksno jak sjaj */
+}
+
+.nav-links a[href*="pancakeswap"]:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #f3ba2f 100%);
+    color: #000000;
+    box-shadow: 0 0 30px rgba(243, 186, 47, 0.8), 0 0 15px rgba(255, 255, 255, 0.8);
+    transform: translateY(-3px) scale(1.05);
+}
+
+/* 3. DESNI NAV LINKOVI I IKO NE (Osim #gamesNavBtn) */
+.nav-right .nav-link:not(#gamesNavBtn) {
+    color: #e5e5e5;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    padding: 9px 16px;
+    border-radius: 12px;
+    
+    /* Tamni cyber-panel stil od starta */
+    background: linear-gradient(180deg, rgba(30, 30, 35, 0.8) 0%, rgba(15, 15, 18, 0.95) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 2px solid rgba(243, 186, 47, 0.4); /* Zlatna linija na dnu dugmeta */
+    
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Ikonice u desnim dugmićima u startu */
+.nav-right .nav-link:not(#gamesNavBtn) .nav-icon {
+    font-size: 15px;
+    color: #f3ba2f; /* Zlatne ikone odmah, bez čekanja na hover */
+    filter: drop-shadow(0 0 4px rgba(243, 186, 47, 0.5));
+    transition: transform 0.3s ease;
+}
+
+/* Hover na desne dugmiće */
+.nav-right .nav-link:not(#gamesNavBtn):hover {
+    color: #ffffff;
+    border-color: rgba(243, 186, 47, 0.8);
+    border-bottom: 2px solid #f3ba2f;
+    background: linear-gradient(180deg, rgba(45, 40, 25, 0.9) 0%, rgba(20, 18, 10, 0.98) 100%);
+    box-shadow: 0 0 20px rgba(243, 186, 47, 0.35);
+    transform: translateY(-3px);
+}
+
+.nav-right .nav-link:not(#gamesNavBtn):hover .nav-icon {
+    transform: scale(1.25) rotate(-5deg);
+    color: #ffffff;
+}
+
+/* Poravnanje i spacing za kontejner */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+}
+
+.nav-left, .nav-right, .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+
+
+
+
+
+
+
 </style>
 </head>
 
