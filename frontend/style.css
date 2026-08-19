@@ -2592,3 +2592,420 @@ footer p {
     font-size: 16px;
     font-weight: 800;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Section Wrapper */
+.sp-section {
+    padding: 80px 20px;
+    color: #ffffff;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Feature Info Box Inside Game Guide */
+.sp-info-box {
+    padding: 35px 40px;
+}
+
+.sp-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    position: relative;
+    z-index: 2;
+}
+
+.sp-info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.sp-info-icon {
+    font-size: 2.2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    border-radius: 16px;
+    line-height: 1;
+}
+
+.sp-info-item h5 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    color: #fff;
+}
+
+.sp-info-item p {
+    margin: 0;
+    color: #aaa;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* About Us Main Narrative Card */
+.sp-about-card {
+    padding: 45px 40px;
+    margin-bottom: 30px;
+}
+
+.sp-about-content {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.sp-about-content h3 {
+    font-size: 1.8rem;
+    margin: 0 0 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #bbbbbb 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.sp-about-content p {
+    color: #b0b0b0;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin-bottom: 15px;
+}
+
+.sp-about-content p:last-child {
+    margin-bottom: 0;
+}
+
+.sp-about-content strong {
+    color: #f7931a;
+}
+
+
+
+
+/* Base & Smooth Scroll */
+html { scroll-behavior: smooth; }
+
+.sp-tokenomics-section {
+    padding: 100px 20px;
+    background: transparent;
+    color: #ffffff;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+}
+
+.sp-container { max-width: 1150px; margin: 0 auto; }
+
+/* Scroll Reveal Animation Classes */
+.sp-reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sp-reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Header */
+.sp-header { text-align: center; margin-bottom: 50px; }
+.sp-badge-glow {
+    display: inline-block;
+    background: rgba(247, 147, 26, 0.12);
+    border: 1.5px solid #f7931a;
+    color: #f7931a;
+    font-size: 0.9rem; /* Veći font */
+    font-weight: 900;
+    padding: 10px 24px; /* Veći razmak unutar badge-a */
+    border-radius: 50px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    box-shadow: 0 0 20px rgba(247, 147, 26, 0.35), inset 0 0 10px rgba(247, 147, 26, 0.15);
+    animation: badgePulse 3s infinite ease-in-out;
+    margin-bottom: 15px; /* Odmak od naslova ispod */
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(247, 147, 26, 0.35), inset 0 0 10px rgba(247, 147, 26, 0.15);
+        border-color: #f7931a;
+    }
+    50% {
+        box-shadow: 0 0 35px rgba(247, 147, 26, 0.65), inset 0 0 15px rgba(247, 147, 26, 0.3);
+        border-color: #ffa733;
+    }
+}
+.sp-title-glow {
+    font-size: 3.2rem;
+    font-weight: 900;
+    margin: 15px 0 10px;
+    background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.sp-subtitle { color: #888; font-size: 1.1rem; max-width: 650px; margin: 0 auto; }
+
+/* Dynamic Glow Cards */
+.glow-card {
+    background: rgba(18, 18, 24, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 22px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+    will-change: transform;
+}
+.sp-card-light {
+    position: absolute;
+    width: 350px;
+    height: 350px;
+    background: radial-gradient(circle, rgba(247, 147, 26, 0.2) 0%, rgba(247, 147, 26, 0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 1;
+}
+.glow-card:hover .sp-card-light { opacity: 1; }
+.glow-card:hover {
+    border-color: rgba(247, 147, 26, 0.5);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(247, 147, 26, 0.15);
+}
+
+/* Tooltip System (Pro Interactivity) */
+.sp-tooltip-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    cursor: help;
+    border-bottom: 1px dotted rgba(255,255,255,0.4);
+}
+.sp-tooltip {
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(10, 10, 15, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(247, 147, 26, 0.4);
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    z-index: 100;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+.sp-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(247, 147, 26, 0.4) transparent transparent transparent;
+}
+.sp-tooltip-wrapper:hover .sp-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Contract & Copy */
+.sp-contract-card {
+    padding: 25px 35px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+.sp-pulse-dot {
+    width: 8px; height: 8px; background-color: #00e676; border-radius: 50%;
+    box-shadow: 0 0 10px #00e676; animation: pulse 1.8s infinite; display: inline-block;
+}
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+}
+.sp-status-text { font-size: 0.75rem; font-weight: 800; color: #00e676; letter-spacing: 1.5px; margin-left: 10px;}
+.sp-address-text { font-family: 'JetBrains Mono', monospace; font-size: 1.2rem; font-weight: bold; color: #f7931a; margin-top: 8px;}
+.sp-pro-copy-btn {
+    position: relative; z-index: 2; background: rgba(247, 147, 26, 0.15);
+    border: 1px solid #f7931a; color: #fff; padding: 12px 26px; border-radius: 12px;
+    font-weight: 800; cursor: pointer; transition: all 0.3s ease;
+}
+.sp-pro-copy-btn:hover { background: #f7931a; color: #000; box-shadow: 0 0 20px rgba(247, 147, 26, 0.6); transform: translateY(-2px); }
+
+/* Grids & Cards */
+.sp-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 40px; }
+.sp-grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.sp-pro-card { padding: 35px 30px; display: flex; flex-direction: column; justify-content: space-between; }
+.sp-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: relative; z-index: 2; }
+.sp-card-icon { font-size: 2.5rem; }
+.sp-card-pill { font-size: 0.7rem; font-weight: 900; padding: 5px 12px; border-radius: 30px; letter-spacing: 1px; }
+
+/* Colors */
+.pill-red { background: rgba(255, 23, 68, 0.15); color: #ff1744; border: 1px solid rgba(255, 23, 68, 0.3); }
+.pill-green { background: rgba(0, 230, 118, 0.15); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.3); }
+.pill-blue { background: rgba(0, 176, 255, 0.15); color: #00b0ff; border: 1px solid rgba(0, 176, 255, 0.3); }
+.text-orange { color: #f7931a; } .text-green { color: #00e676; } .text-blue { color: #00b0ff; } .text-purple { color: #e040fb; }
+
+.sp-pro-card h3 { font-size: 1.4rem; color: #fff; margin: 0 0 12px; position: relative; z-index: 2; }
+.sp-pro-card p { color: #aaa; font-size: 0.95rem; line-height: 1.6; margin: 0 0 25px; position: relative; z-index: 2; }
+.sp-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed rgba(255, 255, 255, 0.1); padding-top: 18px; position: relative; z-index: 2; }
+.sp-foot-label { font-size: 0.75rem; color: #666; font-weight: 800; }
+.sp-foot-val { font-size: 0.85rem; font-weight: 800; }
+
+/* Distro Bars */
+.sp-distro-box { padding: 35px; }
+.sp-distro-title { text-align: center; margin: 0 0 30px; font-size: 1.3rem; position: relative; z-index: 2; }
+.sp-distro-bars { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 25px; position: relative; z-index: 2; }
+.sp-bar-head { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 800; margin-bottom: 8px; }
+.sp-bar-track { background: rgba(255, 255, 255, 0.05); height: 8px; border-radius: 10px; overflow: hidden; position: relative; }
+.sp-bar-fill { height: 100%; border-radius: 10px; position: relative; }
+.fill-green { background: #00e676; box-shadow: 0 0 10px #00e676; }
+.fill-orange { background: #f7931a; box-shadow: 0 0 10px #f7931a; }
+.fill-blue { background: #00b0ff; box-shadow: 0 0 10px #00b0ff; }
+.fill-purple { background: #e040fb; box-shadow: 0 0 10px #e040fb; }
+
+/* Shimmer Anim for TBA */
+.sp-bar-fill::after {
+    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2.5s infinite;
+}
+@keyframes shimmer { 100% { left: 100%; } }
+
+/* Game Guide Steps */
+.sp-step-pro { padding: 30px 25px; position: relative; cursor: pointer; }
+.sp-step-num {
+    font-size: 0.8rem; font-weight: 900; color: #f7931a;
+    background: rgba(247, 147, 26, 0.15); border: 1px solid rgba(247, 147, 26, 0.3);
+    padding: 4px 10px; border-radius: 8px; display: inline-block; margin-bottom: 15px; position: relative; z-index: 2;
+}
+.sp-step-icon { font-size: 2.2rem; margin-bottom: 15px; position: relative; z-index: 2; }
+.sp-step-pro h4 { margin: 0 0 10px; font-size: 1.2rem; position: relative; z-index: 2; }
+.sp-step-pro p { margin: 0; color: #aaa; font-size: 0.9rem; line-height: 1.5; position: relative; z-index: 2; }
+
+
+
+
+
+
+/* ================= FOOTER STYLING ================= */
+footer {
+    position: relative;
+    padding: 35px 20px;
+    background: linear-gradient(180deg, rgba(10, 10, 15, 0.4) 0%, rgba(5, 5, 8, 0.95) 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    margin-top: 60px;
+}
+
+/* Gornja svetleća narandžasta linija sa radijalnim prelivom */
+footer::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    max-width: 800px;
+    height: 1px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(247, 147, 26, 0.3) 20%, 
+        #f7931a 50%, 
+        rgba(247, 147, 26, 0.3) 80%, 
+        transparent 100%
+    );
+    box-shadow: 0 0 15px rgba(247, 147, 26, 0.8);
+}
+
+/* Suptilno pozadinsko narandžasto isijavanje na sredini */
+footer::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(247, 147, 26, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+footer p {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-family: 'JetBrains Mono', 'Inter', monospace, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #888899;
+    letter-spacing: 1.5px;
+    transition: all 0.3s ease;
+    cursor: default;
+}
+
+/* Efekat na prelaz mišem preko teksta */
+footer p:hover {
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(247, 147, 26, 0.5), 
+                 0 0 20px rgba(247, 147, 26, 0.3);
+}
