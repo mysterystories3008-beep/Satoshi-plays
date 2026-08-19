@@ -167,7 +167,7 @@
 #game-wrapper-box {
     display: none;
     width: 100%;
-    max-width: 800px;
+    max-width: 860px;
     margin: 0 auto;
 }
 
@@ -292,9 +292,9 @@
 }
 
 #btnInGameLogout {
-    background: rgba(231, 76, 60, 0.15);
-    color: #ff0033;
-    border: 1px solid rgba(231, 76, 60, 0.4);
+    background: #000000;
+    color: #ff0033; /* Unutrašnjost slova je čisto neon crvena */
+    border: 2px solid #ff0033; /* Okvir oko dugmeta je deblji (2px) */
     padding: 7px 14px;
     font-weight: 600;
     font-size: 13px;
@@ -307,10 +307,10 @@
 }
 
 #btnInGameLogout:hover {
-    background: #e74c3c;
+    background: #ff0033;
     color: #ffffff;
-    border-color: #e74c3c;
-    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+    border-color: #ff0033;
+    box-shadow: 0 4px 15px rgba(255, 0, 51, 0.4);
     transform: translateY(-1px);
 }
 
@@ -1646,10 +1646,6 @@ if (btnSatoshiRunner) {
         }
     });
 }
-
-
-
-
 </script>
 </body>
 </html>
