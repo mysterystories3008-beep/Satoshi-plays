@@ -2643,6 +2643,29 @@ footer p {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+
+
+
+
+
+
+.sp-subtitle {
+    color: #cbd5e1;
+    font-size: 1.1rem;
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.6;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.sp-header {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 20px;
+    border-radius: 12px;
+}
+
 /* Feature Info Box Inside Game Guide */
 .sp-info-box {
     padding: 35px 40px;
@@ -2779,11 +2802,11 @@ html { scroll-behavior: smooth; }
     font-size: 3.2rem;
     font-weight: 900;
     margin: 15px 0 10px;
-    background: linear-gradient(180deg, #ffffff 0%, #888888 100%);
+    background: linear-gradient(180deg, #FFFFFF 30%, #F7931A 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(247, 147, 26, 0.25));
 }
-.sp-subtitle { color: #888; font-size: 1.1rem; max-width: 650px; margin: 0 auto; }
 
 /* Dynamic Glow Cards */
 .glow-card {
