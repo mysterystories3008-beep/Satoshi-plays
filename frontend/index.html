@@ -287,7 +287,7 @@
 
 #btnInGameLogout {
     background: rgba(231, 76, 60, 0.15);
-    color: #ff6b6b;
+    color: #ff0033;
     border: 1px solid rgba(231, 76, 60, 0.4);
     padding: 7px 14px;
     font-weight: 600;
@@ -381,55 +381,106 @@
 /* CENTRAL HUB: RULES, REWARDS & LIVE CHAT */
 .central-info-hub {
     display: grid;
-    grid-template-columns: 1.3fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 20px;
     max-width: 1000px;
     margin: 0 auto 30px auto;
+    align-items: stretch; /* Obezbeđuje da obe kartice prate istu visinu */
 }
 
 .hub-card {
     background: linear-gradient(145deg, #181818 0%, #111111 100%);
     border: 1px solid rgba(243, 186, 47, 0.25);
     border-radius: 16px;
-    padding: 22px;
+    padding: 14px 16px !important;
     color: #d0d0d0;
     box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     display: flex;
     flex-direction: column;
+    height: 380px !important; /* Fiksirana visina da budu identične */
+    box-sizing: border-box;
 }
 
 .hub-card h3 {
-    color: #f3ba2f;
+    color: #00ffcc;
     margin-top: 0;
-    margin-bottom: 12px;
-    font-size: 18px;
+    margin-bottom: 6px;
+    font-size: 16px;
     font-family: monospace;
     border-bottom: 1px solid rgba(243, 186, 47, 0.2);
-    padding-bottom: 8px;
+    padding-bottom: 5px;
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
 .hub-card p {
-    font-size: 13.5px;
-    line-height: 1.6;
-    margin-bottom: 12px;
-    color: #b5b5b5;
+    font-size: 12px;
+    line-height: 1.35;
+    margin-bottom: 6px;
+    color: #ffffff !important;
+    font-weight: 400 !important;
+}
+
+.rule-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 5px;
+}
+
+.bullet {
+    color: #f3ba2f;
+    font-weight: bold;
+}
+
+.rule-content {
+    display: flex;
+    flex-wrap: wrap; 
+    gap: 4px; 
+    width: 100%;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #ffffff !important;
+    font-weight: 400 !important;
+}
+
+.rule-title {
+    color: #00ffcc !important; 
+    font-weight: 700;
+    min-width: 135px; 
+    flex-shrink: 0;
+}
+
+.rule-text {
+    color: #ffffff !important;
+    flex: 1;
+}
+
+.rule-text strong {
+    color: #ffffff !important; 
+    background: rgba(0, 0, 0, 0.7) !important; 
+    border: 1px solid #00ffcc !important; 
+    padding: 0px 3px !important; 
+    border-radius: 4px !important;
+    font-weight: 900 !important;
+    text-shadow: 0 0 8px rgba(243, 186, 47, 0.6) !important; 
+    display: inline-block !important; 
+    white-space: nowrap !important; 
 }
 
 .rules-list {
     list-style: none;
     padding: 0;
-    margin: 0 0 15px 0;
-    font-size: 13px;
+    margin: 0 0 6px 0;
+    font-size: 12px;
 }
 
 .rules-list li {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: 6px;
 }
 
 .rules-list li span.bullet {
@@ -437,51 +488,46 @@
     font-weight: bold;
 }
 
-.appeal-box {
-    background: rgba(243, 186, 47, 0.05);
-    border: 1px dashed rgba(243, 186, 47, 0.3);
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 12.5px;
-    margin-top: auto;
-}
-
-.appeal-box strong {
-    color: #f3ba2f;
-}
-
-.appeal-email {
-    color: #2ecc71;
-    font-family: monospace;
-    font-weight: bold;
-}
-
-/* INTERACTIVE CHAT STYLES */
 .chat-info-banner {
-    font-size: 11.5px;
-    color: #888;
-    background: rgba(255,255,255,0.03);
+    font-size: 12px;
+    color: #ffffff !important;
+    font-weight: 500 !important;
+    background: rgba(255, 255, 255, 0.05);
     padding: 6px 10px;
     border-radius: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     border-left: 3px solid #f3ba2f;
+    line-height: 1.35;
 }
 
+.chat-info-banner strong {
+    color: #00ffcc !important; 
+    font-weight: 800 !important; 
+    font-size: 12px !important; 
+    margin-right: 4px;
+}
+
+/* Prozor chata popunjava preostali prostor do dna */
 .chat-messages-box {
-    background: #0a0a0a;
-    border: 1px solid #333;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(243, 186, 47, 0.2);
     border-radius: 8px;
-    height: 160px;
-    overflow-y: auto;
-    padding: 10px;
-    margin-bottom: 12px;
-    font-size: 13px;
+    flex: 1 !important;
+    height: auto !important;
+    overflow-y: auto; 
+    padding: 8px;
+    margin-bottom: 6px;
+    font-size: 12px;
     font-family: monospace;
 }
 
 .chat-msg {
-    margin-bottom: 8px;
+    margin-bottom: 5px;
     word-break: break-all;
+    background: rgba(255, 255, 255, 0.03); 
+    border: 1px solid rgba(243, 186, 47, 0.15); 
+    padding: 5px 8px;
+    border-radius: 6px;
 }
 
 .chat-msg .author {
@@ -497,6 +543,8 @@
 .chat-input-row {
     display: flex;
     gap: 8px;
+    margin-top: auto !important;
+    align-items: stretch;
 }
 
 .chat-input-row input {
@@ -504,9 +552,9 @@
     background: #1a1a1a;
     border: 1px solid #444;
     border-radius: 6px;
-    padding: 8px 10px;
+    padding: 7px 10px;
     color: #fff;
-    font-size: 13px;
+    font-size: 12px;
     outline: none;
 }
 
@@ -519,14 +567,51 @@
     color: #121212;
     border: none;
     border-radius: 6px;
-    padding: 0 15px;
+    padding: 0 14px;
     font-weight: bold;
     cursor: pointer;
     transition: background 0.2s;
+    font-size: 12px;
 }
 
 .chat-input-row button:hover {
     background: #ffcc33;
+}
+
+.appeal-box {
+    background: rgba(243, 186, 47, 0.08);
+    border: 1px solid rgba(243, 186, 47, 0.4);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 12px; 
+    margin-top: 6px;
+    color: #ffffff !important;
+    font-weight: 500; 
+    line-height: 1.35;
+    box-shadow: 0 4px 15px rgba(243, 186, 47, 0.1);
+}
+
+.appeal-box strong {
+    color: #ffcc00 !important; 
+    font-size: 13px !important; 
+    font-weight: 800 !important; 
+    display: inline-block;
+    margin-bottom: 2px;
+}
+
+.appeal-email {
+    color: #00ffcc !important; 
+    font-family: monospace;
+    font-weight: 700 !important; 
+    font-size: 13px !important; 
+    display: inline-block;
+    margin-top: 2px;
+    text-decoration: underline;
+    letter-spacing: 0.5px;
+}
+
+.appeal-email:hover {
+    color: #ffffff !important;
 }
 
 /* LEADERBOARDS */
@@ -631,6 +716,7 @@
 </style>
 </head>
 
+
 <body>
 
 <header>
@@ -638,7 +724,7 @@
         <div class="nav-left">
             <div class="logo logoSplash">🚀 $SPLAY</div>
             <div class="nav-links">
-                <a href="#gameguide">Game Guide</a>
+                <a href="#buytoken">Game Guide</a>
                 <a href="#tokenomics">Tokenomics</a>
                 <a href="https://pancakeswap.finance/swap?chain=bsc">Buy token</a>
             </div>
@@ -731,8 +817,8 @@
                 <div class="account-info-wrapper">
                     <button id="btnBackToMenuLogged" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 6px 10px; font-size: 11px; border-radius: 6px; cursor: pointer; margin-right: 10px;">← Back</button>
                     <span class="status-dot"></span>
-                    <span style="color: #888; font-size: 13px;">Connected:</span>
-                    <span id="wallet-address-display" class="wallet-badge-pro">0x00...0000</span>
+                    <span style="color: #00ffcc; font-size: 13px;">Connected:</span>
+<span id="wallet-address-display" class="wallet-badge-pro" style="background-color: #050505; color: #00ffcc; font-weight: bold; padding: 4px 8px; border-radius: 6px; border: 1px solid #00ffcc;">0x00...0000</span>
                 </div>
                 <button id="btnInGameLogout">🚪 Disconnect</button>
             </div>
@@ -931,34 +1017,35 @@
             <p>Welcome to the official Satoshi Plays arena! Compete, dodge obstacles, and secure your spot on the top players leaderboard.</p>
             
             <div class="rules-container">
-                <div class="rule-box">
-                    <span class="bullet">▪️</span>
-                    <div class="rule-content">
-                        <strong class="rule-title">Reward Payouts:</strong>
-                        <span class="rule-text">The reward pool is automatically distributed every <strong>7 days</strong> to the top-performing players.</span>
-                    </div>
-                </div>
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <span class="rule-title">Reward Payouts:</span>
+            <span class="rule-text">The reward pool is distributed every <strong>7 days</strong> to the top-performing players.</span>
+        </div>
+    </div>
 
-                <div class="rule-box">
-                    <span class="bullet">▪️</span>
-                    <div class="rule-content">
-                        <strong class="rule-title">Verification Period:</strong>
-                        <span class="rule-text">After each cycle ends, there is a <strong>3-day appeal period</strong> for result review.</span>
-                    </div>
-                </div>
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <span class="rule-title">Verification Period:</span>
+            <span class="rule-text">After each cycle ends, there is <strong>3-day appeal period</strong> for result review.</span>
+        </div>
+    </div>
 
-                <div class="rule-box">
-                    <span class="bullet">▪️</span>
-                    <div class="rule-content">
-                        <strong class="rule-title">Fair Play:</strong>
-                        <span class="rule-text">The use of bots or unauthorized scripts will automatically disqualify the connected MetaMask wallet.</span>
-                    </div>
-                </div>
-            </div>
+    <div class="rule-box">
+        <span class="bullet">▪️</span>
+        <div class="rule-content">
+            <span class="rule-title">Fair Play:</span>
+            <span class="rule-text">The use of bots or unauthorized scripts will automatically disqualify the connected <strong>wallet</strong>.</span>
+        </div>
+    </div>
+</div>
+
 
             <div class="appeal-box">
                 <strong>Have a complaint or notice irregularities?</strong><br>
-                Send evidence (screenshot/video) to our official appeals email:<br>
+                Contact our official support team at:<br>
                 <a href="mailto:mysterystories3008@gmail.com?subject=Appeal%20/%20Inquiry%20-%20Satoshi%20Plays" class="appeal-email">support@satoshiplays.io</a>
             </div>
         </div>
