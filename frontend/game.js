@@ -1,61 +1,143 @@
 /* ==========================================================
 GAME.JS - 1200x555 RESOLUTION
+Satoshi Plays / $SPLAY
 ========================================================== */
 
-// ==========================================
-// LIVE STATUS BAR
-// ==========================================
+
+/* ==========================================================
+BACKEND URL
+========================================================== */
+
+function getBackendUrl() {
+
+    const hostname =
+        window.location.hostname;
+
+    if (
+        hostname === "localhost" ||
+        hostname === "127.0.0.1"
+    ) {
+
+        return "http://localhost:3000";
+    }
+
+    return "https://api.satoshiplays.com";
+}
+
+
+/* ==========================================================
+LIVE STATUS BAR
+========================================================== */
 
 async function updateLiveStatus() {
-    try {
-        const backendUrl = window.location.hostname === "localhost"
-            ? "http://localhost:3000"
-            : "https://api.satoshiplays.com";
 
-        const response = await fetch(`${backendUrl}/api/status`);
+    try {
+
+        const backendUrl =
+            getBackendUrl();
+
+        const response =
+            await fetch(
+                `${backendUrl}/api/status`
+            );
 
         if (!response.ok) {
-            throw new Error("Status request failed");
+
+            throw new Error(
+                "Status request failed"
+            );
         }
 
-        const data = await response.json();
+        const data =
+            await response.json();
 
-        const players = document.getElementById("livePlayersCount");
-        const tooltipPlayers = document.getElementById("tooltipPlayers");
-        const tooltipGames = document.getElementById("tooltipGames");
+        const players =
+            document.getElementById(
+                "livePlayersCount"
+            );
 
-        if (players) players.textContent = data.onlinePlayers;
-        if (tooltipPlayers) tooltipPlayers.textContent = data.onlinePlayers;
-        if (tooltipGames) tooltipGames.textContent = data.activeGames;
+        const tooltipPlayers =
+            document.getElementById(
+                "tooltipPlayers"
+            );
 
-    } catch (error) {
-        console.error("Live status error:", error);
-
-        const players = document.getElementById("livePlayersCount");
+        const tooltipGames =
+            document.getElementById(
+                "tooltipGames"
+            );
 
         if (players) {
-            players.textContent = "—";
+
+            players.textContent =
+                data.onlinePlayers;
+        }
+
+        if (tooltipPlayers) {
+
+            tooltipPlayers.textContent =
+                data.onlinePlayers;
+        }
+
+        if (tooltipGames) {
+
+            tooltipGames.textContent =
+                data.activeGames;
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Live status error:",
+            error
+        );
+
+        const players =
+            document.getElementById(
+                "livePlayersCount"
+            );
+
+        if (players) {
+
+            players.textContent =
+                "—";
         }
     }
 }
 
+
 updateLiveStatus();
-setInterval(updateLiveStatus, 5000);
+
+setInterval(
+    updateLiveStatus,
+    5000
+);
 
 
-let highScore = localStorage.getItem("highScore") || 0;
+/* ==========================================================
+GLOBAL GAME VARIABLES
+========================================================== */
+
+let highScore =
+    localStorage.getItem("highScore") || 0;
 
 let socket = null;
+
 let currentGameId = null;
+
 
 // Jedina aktivna Phaser instanca
 window.phaserGame = null;
 
+
 const GAME_SCALE = 1.5;
+
 const GAME_WIDTH = 1200;
+
 const GAME_HEIGHT = 555;
 
-const S = (value) => value * GAME_SCALE;
+
+const S = (value) =>
+    value * GAME_SCALE;
 
 
 /* ==========================================================
@@ -68,18 +150,24 @@ class BackgroundManager {
 
         this.scene = scene;
 
-        this.sky = scene.add.tileSprite(
-            GAME_WIDTH / 2,
-            300,
-            GAME_WIDTH,
-            600,
-            "sky"
-        );
+
+        this.sky =
+            scene.add.tileSprite(
+                GAME_WIDTH / 2,
+                300,
+                GAME_WIDTH,
+                600,
+                "sky"
+            );
 
         this.sky.setDepth(-25);
 
+
         // SUNCE
-        this.sun = scene.add.graphics();
+
+        this.sun =
+            scene.add.graphics();
+
         this.sun.setDepth(-24);
 
         this.sun.fillStyle(
@@ -93,68 +181,115 @@ class BackgroundManager {
             S(30)
         );
 
-        // OBLACI
-        this.cloudsGraphics =
-            scene.add.graphics().setDepth(-23);
 
-        this.cloudX = S(-150);
+        // OBLACI
+
+        this.cloudsGraphics =
+            scene.add.graphics()
+                .setDepth(-23);
+
+        this.cloudX =
+            S(-150);
+
 
         // PTICE
+
         this.birdsGraphics =
             scene.add.graphics();
 
         this.birdsGraphics.setDepth(-22);
 
+
         this.birds = [
-            { x: S(120), y: S(120), size: 1 },
-            { x: S(280), y: S(90), size: 0.7 },
-            { x: S(520), y: S(135), size: 0.9 },
-            { x: S(720), y: S(105), size: 0.6 }
+
+            {
+                x: S(120),
+                y: S(120),
+                size: 1
+            },
+
+            {
+                x: S(280),
+                y: S(90),
+                size: 0.7
+            },
+
+            {
+                x: S(520),
+                y: S(135),
+                size: 0.9
+            },
+
+            {
+                x: S(720),
+                y: S(105),
+                size: 0.6
+            }
+
         ];
 
+
         // AVION
+
         this.planeGraphics =
             scene.add.graphics();
 
         this.planeGraphics.setDepth(-22);
 
         this.plane = {
+
             x: S(900),
+
             y: S(75)
+
         };
 
+
         // SLOJEVI
+
         this.layer1 =
-            scene.add.graphics().setDepth(-20);
+            scene.add.graphics()
+                .setDepth(-20);
 
         this.layer2 =
-            scene.add.graphics().setDepth(-19);
+            scene.add.graphics()
+                .setDepth(-19);
 
         this.layer3 =
-            scene.add.graphics().setDepth(-18);
+            scene.add.graphics()
+                .setDepth(-18);
 
         this.layer4 =
-            scene.add.graphics().setDepth(-17);
+            scene.add.graphics()
+                .setDepth(-17);
 
         this.layer5 =
-            scene.add.graphics().setDepth(-16);
+            scene.add.graphics()
+                .setDepth(-16);
 
         this.layer6 =
-            scene.add.graphics().setDepth(-15);
+            scene.add.graphics()
+                .setDepth(-15);
 
         this.layer7 =
-            scene.add.graphics().setDepth(-14);
+            scene.add.graphics()
+                .setDepth(-14);
 
         this.layer8 =
-            scene.add.graphics().setDepth(-13);
+            scene.add.graphics()
+                .setDepth(-13);
 
         this.layer9 =
-            scene.add.graphics().setDepth(-12);
+            scene.add.graphics()
+                .setDepth(-12);
 
         this.layer10 =
-            scene.add.graphics().setDepth(-11);
+            scene.add.graphics()
+                .setDepth(-11);
+
 
         this.offsets = {
+
             l1: 0,
             l2: 0,
             l3: 0,
@@ -165,9 +300,13 @@ class BackgroundManager {
             l8: 0,
             l9: 0,
             l10: 0
+
         };
 
-        this.totalWidth = S(2200);
+
+        this.totalWidth =
+            S(2200);
+
 
         this.buildingsL1 =
             this.generateBuildings(
@@ -250,6 +389,7 @@ class BackgroundManager {
             );
     }
 
+
     generateBuildings(
         minW,
         maxW,
@@ -258,14 +398,22 @@ class BackgroundManager {
     ) {
 
         let arr = [];
+
         let x = 0;
 
+
         minW = S(minW);
+
         maxW = S(maxW);
+
         minH = S(minH);
+
         maxH = S(maxH);
 
-        while (x < this.totalWidth) {
+
+        while (
+            x < this.totalWidth
+        ) {
 
             let w =
                 Phaser.Math.Between(
@@ -273,21 +421,30 @@ class BackgroundManager {
                     maxW
                 );
 
+
             let h =
                 Phaser.Math.Between(
                     minH,
                     maxH
                 );
 
+
             arr.push({
+
                 x,
+
                 width: w,
+
                 height: h,
-                type: Phaser.Math.Between(
-                    0,
-                    2
-                )
+
+                type:
+                    Phaser.Math.Between(
+                        0,
+                        2
+                    )
+
             });
+
 
             x +=
                 w +
@@ -297,8 +454,10 @@ class BackgroundManager {
                 );
         }
 
+
         return arr;
     }
+
 
     drawLayer(
         graphics,
@@ -310,29 +469,48 @@ class BackgroundManager {
 
         graphics.clear();
 
+
         graphics.fillStyle(
             color,
             alpha
         );
 
-        let groundY = S(345);
 
-        for (let b of buildings) {
+        let groundY =
+            S(345);
+
+
+        for (
+            let b of buildings
+        ) {
 
             let x =
                 b.x -
                 offset;
 
-            while (x < -b.width) {
-                x += this.totalWidth;
+
+            while (
+                x < -b.width
+            ) {
+
+                x +=
+                    this.totalWidth;
             }
 
+
             graphics.fillRect(
+
                 x,
-                groundY - b.height,
+
+                groundY -
+                b.height,
+
                 b.width,
+
                 b.height
+
             );
+
 
             if (
                 b.height > S(35) &&
@@ -344,14 +522,26 @@ class BackgroundManager {
                     0.7
                 );
 
-                let windowSize = S(1.5);
-                let gapX = S(4);
-                let gapY = S(6);
+
+                let windowSize =
+                    S(1.5);
+
+                let gapX =
+                    S(4);
+
+                let gapY =
+                    S(6);
+
 
                 for (
-                    let wx = x + S(3);
+                    let wx =
+                        x + S(3);
+
                     wx <
-                    x + b.width - S(3);
+                    x +
+                    b.width -
+                    S(3);
+
                     wx += gapX
                 ) {
 
@@ -362,25 +552,33 @@ class BackgroundManager {
                             S(5);
 
                         wy <
-                        groundY - S(6);
+                        groundY -
+                        S(6);
 
                         wy += gapY
                     ) {
 
                         if (
                             (wx + wy) %
-                            S(5) !== 0
+                            S(5) !==
+                            0
                         ) {
 
                             graphics.fillRect(
+
                                 wx,
+
                                 wy,
+
                                 windowSize,
+
                                 windowSize
+
                             );
                         }
                     }
                 }
+
 
                 graphics.fillStyle(
                     color,
@@ -390,33 +588,50 @@ class BackgroundManager {
         }
     }
 
+
     update(speed) {
 
         // SKY
+
         this.sky.tilePositionX +=
             speed *
             0.08 *
             GAME_SCALE;
 
+
         // OBLACI
+
         this.cloudX +=
             speed *
             0.015 *
             GAME_SCALE;
 
-        if (this.cloudX > S(950)) {
-            this.cloudX = S(-200);
+
+        if (
+            this.cloudX >
+            S(950)
+        ) {
+
+            this.cloudX =
+                S(-200);
         }
 
+
         this.cloudsGraphics.clear();
+
 
         this.cloudsGraphics.fillStyle(
             0xffffff,
             1.0
         );
 
-        let cx = this.cloudX;
-        let cy = S(95);
+
+        let cx =
+            this.cloudX;
+
+        let cy =
+            S(95);
+
 
         this.cloudsGraphics.fillCircle(
             cx,
@@ -443,8 +658,11 @@ class BackgroundManager {
             S(25)
         );
 
+
         // PTICE
+
         this.birdsGraphics.clear();
+
 
         this.birdsGraphics.lineStyle(
             S(2),
@@ -452,22 +670,39 @@ class BackgroundManager {
             1
         );
 
-        for (let bird of this.birds) {
+
+        for (
+            let bird of this.birds
+        ) {
 
             bird.x +=
                 speed *
                 0.025 *
                 GAME_SCALE;
 
-            if (bird.x > S(850)) {
-                bird.x = S(-50);
+
+            if (
+                bird.x >
+                S(850)
+            ) {
+
+                bird.x =
+                    S(-50);
             }
 
-            let x = bird.x;
-            let y = bird.y;
-            let s = bird.size;
+
+            let x =
+                bird.x;
+
+            let y =
+                bird.y;
+
+            let s =
+                bird.size;
+
 
             this.birdsGraphics.beginPath();
+
 
             this.birdsGraphics.moveTo(
                 x - S(12) * s,
@@ -486,7 +721,9 @@ class BackgroundManager {
 
             this.birdsGraphics.strokePath();
 
+
             this.birdsGraphics.beginPath();
+
 
             this.birdsGraphics.moveTo(
                 x,
@@ -506,17 +743,26 @@ class BackgroundManager {
             this.birdsGraphics.strokePath();
         }
 
+
         // AVION
+
         this.planeGraphics.clear();
+
 
         this.plane.x -=
             speed *
             0.015 *
             GAME_SCALE;
 
-        if (this.plane.x < S(-100)) {
 
-            this.plane.x = S(950);
+        if (
+            this.plane.x <
+            S(-100)
+        ) {
+
+            this.plane.x =
+                S(950);
+
 
             this.plane.y =
                 Phaser.Math.Between(
@@ -525,13 +771,19 @@ class BackgroundManager {
                 );
         }
 
-        let px = this.plane.x;
-        let py = this.plane.y;
+
+        let px =
+            this.plane.x;
+
+        let py =
+            this.plane.y;
+
 
         this.planeGraphics.fillStyle(
             0x222222,
             0.8
         );
+
 
         this.planeGraphics.fillRect(
             px,
@@ -540,33 +792,50 @@ class BackgroundManager {
             S(3)
         );
 
+
         this.planeGraphics.fillTriangle(
+
             px + S(10),
             py,
+
             px + S(25),
             py - S(8),
+
             px + S(28),
             py
+
         );
+
 
         this.planeGraphics.fillTriangle(
+
             px + S(10),
             py + S(3),
+
             px + S(25),
             py + S(10),
+
             px + S(28),
             py + S(3)
+
         );
+
 
         this.planeGraphics.fillRect(
+
             px,
             py - S(4),
+
             S(8),
             S(8)
+
         );
 
+
         // BUILDING LAYERS
+
         let speeds = [
+
             0.0025,
             0.005,
             0.01,
@@ -577,9 +846,12 @@ class BackgroundManager {
             0.065,
             0.085,
             0.11
+
         ];
 
+
         let colors = [
+
             0x0b0b14,
             0x0f0f1c,
             0x131324,
@@ -590,9 +862,12 @@ class BackgroundManager {
             0x292955,
             0x2e2e60,
             0x34346b
+
         ];
 
+
         let layers = [
+
             this.layer1,
             this.layer2,
             this.layer3,
@@ -603,9 +878,12 @@ class BackgroundManager {
             this.layer8,
             this.layer9,
             this.layer10
+
         ];
 
+
         let buildings = [
+
             this.buildingsL1,
             this.buildingsL2,
             this.buildingsL3,
@@ -616,36 +894,55 @@ class BackgroundManager {
             this.buildingsL8,
             this.buildingsL9,
             this.buildingsL10
+
         ];
 
-        for (let i = 0; i < 10; i++) {
+
+        for (
+            let i = 0;
+            i < 10;
+            i++
+        ) {
 
             this.offsets[
-                "l" + (i + 1)
+                "l" +
+                (i + 1)
             ] +=
                 speed *
                 speeds[i] *
                 GAME_SCALE;
 
+
             if (
                 this.offsets[
-                    "l" + (i + 1)
-                ] >= this.totalWidth
+                    "l" +
+                    (i + 1)
+                ] >=
+                this.totalWidth
             ) {
 
                 this.offsets[
-                    "l" + (i + 1)
+                    "l" +
+                    (i + 1)
                 ] = 0;
             }
 
+
             this.drawLayer(
+
                 layers[i],
+
                 buildings[i],
+
                 this.offsets[
-                    "l" + (i + 1)
+                    "l" +
+                    (i + 1)
                 ],
+
                 colors[i],
+
                 0.95
+
             );
         }
     }
@@ -662,45 +959,92 @@ class GameScene extends Phaser.Scene {
 
         super("GameScene");
 
-        this.globalKeyHandler = null;
+        this.globalKeyHandler =
+            null;
+
+        this.socketListenersAttached =
+            false;
+
+        this.isRequestingStart =
+            false;
     }
+
 
     restartGame() {
 
-        this.gameOver = false;
-        this.gameStarted = false;
+        this.gameOver =
+            false;
 
-        this.playerSprite.clearTint();
-        this.playerSprite.rotation = 0;
+        this.gameStarted =
+            false;
 
-        this.playerSprite.setScale(1.2);
+        this.isRequestingStart =
+            false;
 
-        this.playerSprite.x = S(120);
-        this.playerSprite.y = S(330);
 
-        this.playerSprite.play("player-run");
+        if (
+            this.playerSprite
+        ) {
 
-        if (this.gameOverText) {
+            this.playerSprite.clearTint();
+
+            this.playerSprite.rotation =
+                0;
+
+            this.playerSprite.setScale(
+                1.2
+            );
+
+            this.playerSprite.x =
+                S(120);
+
+            this.playerSprite.y =
+                S(330);
+
+            this.playerSprite.play(
+                "player-run"
+            );
+        }
+
+
+        if (
+            this.gameOverText
+        ) {
 
             this.gameOverText.destroy();
 
-            this.gameOverText = null;
+            this.gameOverText =
+                null;
         }
 
-        if (!this.startText) {
+
+        if (
+            !this.startText
+        ) {
 
             this.startText =
                 this.add.text(
+
                     600,
+
                     150,
+
                     "TAP OR SPACE TO START",
+
                     {
+
                         fontSize: "48px",
+
                         fill: "#f3ba2f",
+
                         fontStyle: "bold",
+
                         stroke: "#000",
+
                         strokeThickness: 6
+
                     }
+
                 )
                 .setOrigin(0.5)
                 .setDepth(20);
@@ -710,50 +1054,77 @@ class GameScene extends Phaser.Scene {
             this.startText.setText(
                 "TAP OR SPACE TO START"
             );
+
+            this.startText.setVisible(
+                true
+            );
         }
     }
+
 
     preload() {
 
         // PLAYER RUN
+
         this.load.spritesheet(
+
             "player-run",
+
             "assets/run_sheet.png",
+
             {
+
                 frameWidth: 75,
+
                 frameHeight: 75
+
             }
+
         );
 
+
         // PLAYER JUMP
+
         this.load.spritesheet(
+
             "player-jump",
+
             "assets/jump_sheet.png",
+
             {
+
                 frameWidth: 75,
+
                 frameHeight: 75
+
             }
+
         );
+
 
         this.load.image(
             "fud",
             "assets/fud.png"
         );
 
+
         this.load.image(
             "rugpull",
             "assets/rugpull.png"
         );
+
 
         this.load.image(
             "sky",
             "assets/sky.png"
         );
 
+
         this.load.image(
             "rekt",
             "assets/rekt.png"
         );
+
 
         this.load.image(
             "liquidation",
@@ -761,26 +1132,44 @@ class GameScene extends Phaser.Scene {
         );
     }
 
+
     create() {
 
-        this.gameStarted = false;
-        this.gameOver = false;
+        this.gameStarted =
+            false;
 
-        this.score = 0;
-        this.speed = 5;
+        this.gameOver =
+            false;
 
-        this.gameOverText = null;
+        this.score =
+            0;
 
-        this.serverPlayerY = S(330);
-        this.serverObstacles = [];
+        this.speed =
+            5;
+
+        this.gameOverText =
+            null;
+
+        this.serverPlayerY =
+            S(330);
+
+        this.serverObstacles =
+            [];
+
 
         this.ground =
             this.add.rectangle(
+
                 600,
+
                 540,
+
                 1200,
+
                 60,
+
                 0x34a853
+
             )
             .setDepth(5);
 
@@ -795,16 +1184,23 @@ class GameScene extends Phaser.Scene {
 
             frames:
                 this.anims.generateFrameNumbers(
+
                     "player-run",
+
                     {
+
                         start: 0,
+
                         end: 2
+
                     }
+
                 ),
 
             frameRate: 10,
 
             repeat: -1
+
         });
 
 
@@ -814,16 +1210,23 @@ class GameScene extends Phaser.Scene {
 
             frames:
                 this.anims.generateFrameNumbers(
+
                     "player-jump",
+
                     {
+
                         start: 0,
+
                         end: 3
+
                     }
+
                 ),
 
             frameRate: 12,
 
             repeat: 0
+
         });
 
 
@@ -833,12 +1236,17 @@ class GameScene extends Phaser.Scene {
 
         this.playerSprite =
             this.add.sprite(
+
                 180,
+
                 495,
+
                 "player-run"
+
             )
             .setScale(1.2)
             .setDepth(10);
+
 
         this.playerSprite.setFrame(0);
 
@@ -853,32 +1261,55 @@ class GameScene extends Phaser.Scene {
 
         this.scoreText =
             this.add.text(
+
                 30,
+
                 30,
+
                 "Score: 0",
+
                 {
+
                     fontSize: "36px",
+
                     fill: "#f3ba2f",
+
                     fontStyle: "bold",
+
                     stroke: "#000",
+
                     strokeThickness: 4
+
                 }
+
             )
             .setDepth(20);
 
 
         this.bestText =
             this.add.text(
+
                 30,
+
                 75,
-                "Best: " + highScore,
+
+                "Best: " +
+                highScore,
+
                 {
+
                     fontSize: "30px",
+
                     fill: "#ffffff",
+
                     fontStyle: "bold",
+
                     stroke: "#000",
+
                     strokeThickness: 4
+
                 }
+
             )
             .setDepth(20);
 
@@ -889,216 +1320,143 @@ class GameScene extends Phaser.Scene {
 
         this.startText =
             this.add.text(
+
                 GAME_WIDTH / 2,
+
                 S(100),
+
                 "TAP OR SPACE TO START",
+
                 {
+
                     fontSize: "48px",
+
                     fill: "#f3ba2f",
+
                     fontStyle: "bold",
+
                     stroke: "#000",
+
                     strokeThickness: 4
+
                 }
+
             )
             .setOrigin(0.5)
             .setDepth(20);
 
 
         this.background =
-            new BackgroundManager(this);
-
-
-        window.resetGameOverScreen = () => {
-
-            if (
-                this &&
-                typeof this.restartGame ===
-                "function"
-            ) {
-
-                this.restartGame();
-            }
-        };
-
-
-        // ===============================
-        // SOCKET
-        // ===============================
-
-        if (!socket) {
-
-            const backendUrl =
-                window.location.hostname === "localhost"
-                    ? "http://localhost:3000"
-                    : "https://api.satoshiplays.com";
-
-            socket = io(
-                backendUrl,
-                {
-                    transports: [
-                        "websocket",
-                        "polling"
-                    ],
-                    secure: false
-                }
+            new BackgroundManager(
+                this
             );
 
 
-            socket.on(
-    "game-started",
-    (data) => {
+        window.resetGameOverScreen =
+            () => {
 
-        currentGameId =
-            data.gameId;
+                if (
+                    this &&
+                    typeof this.restartGame ===
+                    "function"
+                ) {
 
-        this.speed =
-            data.speed;
-
-        this.gameStarted =
-            true;
-
-        this.gameOver =
-            false;
-
-        // TEK SADA POČINJE DA TRČI
-        this.playerSprite.setFrame(0);
-
-        if (this.startText) {
-
-            this.startText.destroy();
-        }
-    }
-);
-
-
-            socket.on(
-                "state",
-                (state) => {
-
-                    if (
-                        !this.gameStarted ||
-                        this.gameOver
-                    ) {
-                        return;
-                    }
-
-                    this.score =
-                        state.score;
-
-                    this.speed =
-                        state.speed;
-
-                    this.scoreText.setText(
-                        "Score: " +
-                        state.score
-                    );
-
-                    let playerGroundOffset =
-                        15;
-
-                    this.serverPlayerY =
-                        (
-                            state.player.y -
-                            playerGroundOffset
-                        ) *
-                        GAME_SCALE;
-
-                    this.serverObstacles =
-                        state.obstacles.map(
-                            obs => ({
-                                ...obs,
-                                x:
-                                    obs.x *
-                                    GAME_SCALE,
-                                y:
-                                    obs.y *
-                                    GAME_SCALE
-                            })
-                        );
+                    this.restartGame();
                 }
-            );
+            };
 
 
-            socket.on(
-                "game-over",
-                (result) => {
+        // ==========================================
+        // SOCKET.IO
+        // ==========================================
 
-                    this.onGameOver(
-                        result
-                    );
-                }
-            );
+        this.initializeSocket();
 
 
-            socket.on(
-                "error",
-                (err) => {
-
-                    console.error(
-                        "Server error:",
-                        err
-                    );
-                }
-            );
-        }
-
-
-        // ===============================
+        // ==========================================
         // JUMP
-        // ===============================
+        // ==========================================
 
-        const handleJump = () => {
+        const handleJump =
+            () => {
 
-            if (this.gameOver) {
+                if (
+                    this.gameOver
+                ) {
 
-                this.scene.restart();
+                    /*
+                     * NE restartujemo Phaser instancu.
+                     *
+                     * Samo resetujemo trenutnu scenu.
+                     */
 
-                return;
-            }
+                    this.restartGame();
 
-            if (!this.gameStarted) {
-
-                this.requestStart();
-
-                return;
-            }
-
-
-            // Lokalni trenutni skok
-            if (
-                this.playerSprite &&
-                this.playerSprite.y >= 320
-            ) {
-
-                this.playerSprite.y -= 45;
-
-                this.isLocallyJumping = true;
-
-                this.time.delayedCall(
-                    250,
-                    () => {
-
-                        this.isLocallyJumping =
-                            false;
-                    }
-                );
-            }
+                    return;
+                }
 
 
-            if (socket) {
+                if (
+                    !this.gameStarted
+                ) {
 
-                socket.emit(
-                    "jump"
-                );
-            }
-        };
+                    this.requestStart();
+
+                    return;
+                }
 
 
-        if (this.globalKeyHandler) {
+                // Lokalni trenutni skok
+
+                if (
+                    this.playerSprite &&
+                    this.playerSprite.y >= 320
+                ) {
+
+                    this.playerSprite.y -=
+                        45;
+
+                    this.isLocallyJumping =
+                        true;
+
+
+                    this.time.delayedCall(
+
+                        250,
+
+                        () => {
+
+                            this.isLocallyJumping =
+                                false;
+
+                        }
+
+                    );
+                }
+
+
+                if (
+                    socket &&
+                    socket.connected
+                ) {
+
+                    socket.emit(
+                        "jump"
+                    );
+                }
+            };
+
+
+        if (
+            this.globalKeyHandler
+        ) {
 
             window.removeEventListener(
+
                 "keydown",
+
                 this.globalKeyHandler
+
             );
         }
 
@@ -1115,70 +1473,622 @@ class GameScene extends Phaser.Scene {
 
                     handleJump();
                 }
+
             };
 
 
         window.addEventListener(
+
             "keydown",
+
             this.globalKeyHandler
+
         );
 
 
         this.input.on(
+
             "pointerdown",
+
             () => {
 
                 handleJump();
+
             }
+
         );
     }
 
 
-    requestStart() {
+    /* ======================================================
+    SOCKET INITIALIZATION
+    ====================================================== */
 
-        const wallet =
-            localStorage.getItem(
-                "userWallet"
-            ) ||
-            "0xTestWallet1234567890abcdef";
+    initializeSocket() {
 
+        /*
+         * Ako socket već postoji i povezan je,
+         * koristimo postojeći socket.
+         */
 
-        const signature =
-            localStorage.getItem(
-                "userSignature"
-            ) ||
-            "no_signature";
+        if (
+            socket &&
+            socket.connected
+        ) {
 
-
-        if (this.startText) {
-
-            this.startText.setText(
-                "Connecting..."
+            console.log(
+                "Existing Socket.IO connection reused."
             );
-        }
-
-
-        socket.emit(
-            "start-game",
-            {
-                wallet,
-                signature
-            }
-        );
-    }
-
-
-    onGameOver(result) {
-
-        if (this.gameOver) {
 
             return;
         }
 
 
-        this.gameOver = true;
-        this.gameStarted = false;
-        this.playerSprite.anims.stop();
+        /*
+         * Ako socket postoji ali nije povezan,
+         * dozvoljavamo reconnect.
+         */
+
+        if (
+            socket &&
+            !socket.connected
+        ) {
+
+            try {
+
+                socket.connect();
+
+                console.log(
+                    "Existing Socket.IO reconnect requested."
+                );
+
+                return;
+
+            } catch (error) {
+
+                console.warn(
+                    "Existing socket reconnect failed:",
+                    error
+                );
+            }
+        }
+
+
+        const backendUrl =
+            getBackendUrl();
+
+
+        console.log(
+            "Connecting Socket.IO to:",
+            backendUrl
+        );
+
+
+        socket =
+            io(
+
+                backendUrl,
+
+                {
+
+                    transports: [
+                        "websocket",
+                        "polling"
+                    ],
+
+                    secure:
+                        backendUrl.startsWith(
+                            "https://"
+                        ),
+
+                    reconnection: true,
+
+                    reconnectionAttempts: Infinity,
+
+                    reconnectionDelay: 1000,
+
+                    reconnectionDelayMax: 5000,
+
+                    timeout: 10000
+
+                }
+
+            );
+
+
+        socket.on(
+            "connect",
+            () => {
+
+                console.log(
+                    "Socket.IO connected:",
+                    socket.id
+                );
+
+            }
+        );
+
+
+        socket.on(
+            "disconnect",
+            (reason) => {
+
+                console.warn(
+                    "Socket.IO disconnected:",
+                    reason
+                );
+
+                /*
+                 * VAŽNO:
+                 * Ne uništavamo Phaser igru ovde.
+                 *
+                 * Socket.IO sam pokušava reconnect.
+                 */
+
+            }
+        );
+
+
+        socket.on(
+            "connect_error",
+            (error) => {
+
+                console.error(
+                    "Socket.IO connection error:",
+                    error
+                );
+
+            }
+        );
+
+
+        socket.on(
+
+            "game-started",
+
+            (data) => {
+
+                console.log(
+                    "[GAME START RECEIVED]",
+                    data
+                );
+
+
+                currentGameId =
+                    data.gameId;
+
+
+                this.speed =
+                    data.speed;
+
+
+                this.gameStarted =
+                    true;
+
+
+                this.gameOver =
+                    false;
+
+
+                this.isRequestingStart =
+                    false;
+
+
+                // TEK SADA POČINJE DA TRČI
+
+                if (
+                    this.playerSprite
+                ) {
+
+                    this.playerSprite.setFrame(
+                        0
+                    );
+
+                    this.playerSprite.play(
+                        "player-run"
+                    );
+                }
+
+
+                if (
+                    this.startText
+                ) {
+
+                    this.startText.destroy();
+
+                    this.startText =
+                        null;
+                }
+
+            }
+
+        );
+
+
+        socket.on(
+
+            "state",
+
+            (state) => {
+
+                if (
+                    !this.gameStarted ||
+                    this.gameOver
+                ) {
+
+                    return;
+                }
+
+
+                if (
+                    !state
+                ) {
+
+                    return;
+                }
+
+
+                this.score =
+                    state.score;
+
+
+                this.speed =
+                    state.speed;
+
+
+                this.scoreText.setText(
+
+                    "Score: " +
+                    state.score
+
+                );
+
+
+                let playerGroundOffset =
+                    15;
+
+
+                if (
+                    state.player &&
+                    typeof state.player.y ===
+                    "number"
+                ) {
+
+                    this.serverPlayerY =
+
+                        (
+                            state.player.y -
+                            playerGroundOffset
+                        ) *
+                        GAME_SCALE;
+                }
+
+
+                if (
+                    Array.isArray(
+                        state.obstacles
+                    )
+                ) {
+
+                    this.serverObstacles =
+
+                        state.obstacles.map(
+
+                            obs => ({
+
+                                ...obs,
+
+                                x:
+                                    obs.x *
+                                    GAME_SCALE,
+
+                                y:
+                                    obs.y *
+                                    GAME_SCALE
+
+                            })
+
+                        );
+                }
+
+            }
+
+        );
+
+
+        socket.on(
+
+            "game-over",
+
+            (result) => {
+
+                this.onGameOver(
+                    result
+                );
+
+            }
+
+        );
+
+
+        socket.on(
+
+            "error",
+
+            (err) => {
+
+                console.error(
+                    "Server error:",
+                    err
+                );
+
+
+                this.isRequestingStart =
+                    false;
+
+
+                if (
+                    this.startText &&
+                    !this.gameStarted
+                ) {
+
+                    this.startText.setText(
+                        "TAP OR SPACE TO START"
+                    );
+
+                }
+
+            }
+
+        );
+    }
+
+
+    /* ======================================================
+    REQUEST START
+    ====================================================== */
+
+    requestStart() {
+
+        /*
+         * Sprečava višestruki start-game dok čekamo odgovor
+         * servera.
+         */
+
+        if (
+            this.isRequestingStart
+        ) {
+
+            return;
+        }
+
+
+        if (
+            this.gameStarted
+        ) {
+
+            return;
+        }
+
+
+        /*
+         * Socket mora biti povezan.
+         */
+
+        if (
+            !socket
+        ) {
+
+            console.warn(
+                "Cannot start game: socket does not exist."
+            );
+
+            this.initializeSocket();
+
+            return;
+        }
+
+
+        if (
+            !socket.connected
+        ) {
+
+            console.warn(
+                "Cannot start game: Socket.IO is not connected."
+            );
+
+            try {
+
+                socket.connect();
+
+            } catch (error) {
+
+                console.error(
+                    "Socket reconnect failed:",
+                    error
+                );
+
+            }
+
+            if (
+                this.startText
+            ) {
+
+                this.startText.setText(
+                    "CONNECTING..."
+                );
+
+            }
+
+            return;
+        }
+
+
+        /*
+         * VAŽNO:
+         *
+         * ethers više NIJE potreban u game.js.
+         *
+         * Server.js je zadužen za proveru potpisa.
+         *
+         * game.js samo prosleđuje wallet i signature
+         * koje je wallet/index.html već sačuvao.
+         */
+
+        const wallet =
+            localStorage.getItem(
+                "userWallet"
+            );
+
+
+        const signature =
+            localStorage.getItem(
+                "userSignature"
+            );
+
+
+        /*
+         * Ne šaljemo fake wallet/signature.
+         *
+         * Ako wallet nije povezan, index.html treba
+         * da spreči pokretanje igre.
+         */
+
+        if (
+            !wallet ||
+            !signature
+        ) {
+
+            console.warn(
+                "Wallet/signature missing."
+            );
+
+
+            if (
+                this.startText
+            ) {
+
+                this.startText.setText(
+                    "CONNECT WALLET FIRST"
+                );
+
+            }
+
+
+            this.isRequestingStart =
+                false;
+
+
+            return;
+        }
+
+
+        this.isRequestingStart =
+            true;
+
+
+        if (
+            this.startText
+        ) {
+
+            this.startText.setText(
+                "CONNECTING..."
+            );
+
+        }
+
+
+        console.log(
+            "[GAME START REQUEST]",
+            wallet
+        );
+
+
+        socket.emit(
+
+            "start-game",
+
+            {
+
+                wallet:
+                    wallet,
+
+                signature:
+                    signature
+
+            }
+
+        );
+
+
+        /*
+         * Ako server ne odgovori, omogućavamo ponovni pokušaj.
+         * Ovo ne prekida igru ako je server već odgovorio.
+         */
+
+        this.time.delayedCall(
+
+            5000,
+
+            () => {
+
+                if (
+                    !this.gameStarted
+                ) {
+
+                    this.isRequestingStart =
+                        false;
+
+
+                    if (
+                        this.startText
+                    ) {
+
+                        this.startText.setText(
+                            "TAP OR SPACE TO START"
+                        );
+
+                    }
+
+                }
+
+            }
+
+        );
+    }
+
+
+    /* ======================================================
+    GAME OVER
+    ====================================================== */
+
+    onGameOver(result) {
+
+        if (
+            this.gameOver
+        ) {
+
+            return;
+        }
+
+
+        this.gameOver =
+            true;
+
+        this.gameStarted =
+            false;
+
+        this.isRequestingStart =
+            false;
+
+
+        if (
+            this.playerSprite
+        ) {
+
+            this.playerSprite.anims.stop();
+        }
+
 
         if (
             this.serverObstacles &&
@@ -1186,82 +2096,111 @@ class GameScene extends Phaser.Scene {
         ) {
 
             let hitObstacle =
+
                 this.serverObstacles.reduce(
+
                     (prev, curr) => {
 
                         return (
+
                             Math.abs(
                                 curr.x -
                                 this.playerSprite.x
-                            ) <
+                            )
+
+                            <
+
                             Math.abs(
                                 prev.x -
                                 this.playerSprite.x
                             )
+
                         )
+
                             ? curr
                             : prev;
+
                     }
+
                 );
 
 
-            if (hitObstacle) {
+            if (
+                hitObstacle
+            ) {
 
                 this.playerSprite.x =
+
                     (
                         this.playerSprite.x +
                         hitObstacle.x
-                    ) / 2;
+                    ) /
+                    2;
+
 
                 this.playerSprite.y =
+
                     hitObstacle.y -
                     S(15);
+
             }
         }
 
+
         // ==========================================
-// HIT EFFECT
-// ==========================================
+        // HIT EFFECT
+        // ==========================================
 
-// jako kratko trešenje ekrana
-this.cameras.main.shake(
-    250,
-    0.015
-);
-
-// crveni flash lika
-this.playerSprite.setTint(0xff3333);
-
-this.tweens.add({
-
-    targets: this.playerSprite,
-
-    scaleX: 1.35,
-    scaleY: 0.65,
-
-    duration: 80,
-
-    yoyo: true,
-
-    ease: "Quad.easeOut",
-
-    onComplete: () => {
-
-        this.playerSprite.setScale(1.2);
-        this.playerSprite.clearTint();
-    }
-});
-       
+        this.cameras.main.shake(
+            250,
+            0.015
+        );
 
 
+        this.playerSprite.setTint(
+            0xff3333
+        );
 
 
+        this.tweens.add({
 
+            targets:
+                this.playerSprite,
+
+            scaleX:
+                1.35,
+
+            scaleY:
+                0.65,
+
+            duration:
+                80,
+
+            yoyo:
+                true,
+
+            ease:
+                "Quad.easeOut",
+
+            onComplete:
+                () => {
+
+                    this.playerSprite.setScale(
+                        1.2
+                    );
+
+                    this.playerSprite.clearTint();
+
+                }
+
+        });
 
 
         const finalScore =
-            result.score ||
-            this.score;
+            result &&
+            result.score
+                ? result.score
+                : this.score;
 
 
         if (
@@ -1272,57 +2211,93 @@ this.tweens.add({
             highScore =
                 finalScore;
 
+
             localStorage.setItem(
+
                 "highScore",
+
                 highScore
+
             );
 
+
             this.bestText.setText(
+
                 "Best: " +
                 highScore
+
             );
         }
 
 
         this.time.delayedCall(
+
             300,
+
             () => {
 
-                if (!this.gameOver) {
+                if (
+                    !this.gameOver
+                ) {
 
                     return;
                 }
 
+
                 this.gameOverText =
+
                     this.add.text(
+
                         600,
+
                         165,
+
                         "GAME OVER\n\nTAP OR SPACE",
+
                         {
+
                             fontSize: "51px",
+
                             fill: "#ff3333",
+
                             align: "center",
+
                             fontStyle: "bold",
+
                             stroke: "#000",
+
                             strokeThickness: 7
+
                         }
+
                     )
                     .setOrigin(0.5)
                     .setDepth(30);
+
             }
+
         );
 
 
-        if (result.success) {
+        if (
+            result &&
+            result.success
+        ) {
 
             window.dispatchEvent(
+
                 new Event(
                     "scoreSubmitted"
                 )
+
             );
         }
     }
 
+
+    /* ======================================================
+    UPDATE
+    ====================================================== */
 
     update(time, delta) {
 
@@ -1339,30 +2314,57 @@ this.tweens.add({
         // PLAYER
         // ==========================================
 
-        this.playerSprite.y =
-            this.serverPlayerY;
+        if (
+            typeof this.serverPlayerY ===
+            "number"
+        ) {
+
+            this.playerSprite.y =
+                this.serverPlayerY;
+        }
 
 
-        // ==========================================  
+        // ==========================================
         // RUN / JUMP ANIMATION
         // ==========================================
 
-        if (this.playerSprite.y < S(330)) {
+        if (
+            this.playerSprite.y <
+            S(330)
+        ) {
 
-    if (this.playerSprite.anims.currentAnim?.key !== "player-jump") {
-        this.playerSprite.play("player-jump");
-    }
+            if (
+                this.playerSprite.anims.currentAnim?.key !==
+                "player-jump"
+            ) {
 
-    this.playerSprite.rotation = 0;
+                this.playerSprite.play(
+                    "player-jump"
+                );
 
-} else {
+            }
 
-    if (this.playerSprite.anims.currentAnim?.key !== "player-run") {
-        this.playerSprite.play("player-run");
-    }
 
-    this.playerSprite.rotation = 0;
-}
+            this.playerSprite.rotation =
+                0;
+
+        } else {
+
+            if (
+                this.playerSprite.anims.currentAnim?.key !==
+                "player-run"
+            ) {
+
+                this.playerSprite.play(
+                    "player-run"
+                );
+
+            }
+
+
+            this.playerSprite.rotation =
+                0;
+        }
 
 
         // ==========================================
@@ -1370,60 +2372,81 @@ this.tweens.add({
         // ==========================================
 
         let activeIds =
+
             new Set(
+
                 this.serverObstacles.map(
                     obs => obs.id
                 )
+
             );
 
 
         this.obstacleSpritesMap.forEach(
+
             (obj, id) => {
 
                 if (
                     !activeIds.has(id)
                 ) {
 
-                    if (obj.sprite) {
+                    if (
+                        obj.sprite
+                    ) {
+
                         obj.sprite.destroy();
                     }
 
-                    if (obj.text) {
+
+                    if (
+                        obj.text
+                    ) {
+
                         obj.text.destroy();
                     }
+
 
                     this.obstacleSpritesMap.delete(
                         id
                     );
                 }
+
             }
+
         );
 
 
         this.serverObstacles.forEach(
+
             obs => {
 
                 let key =
                     "rugpull";
 
-                let label = "";
+                let label =
+                    "";
 
 
                 if (
-                    obs.type === "fud"
+                    obs.type ===
+                    "fud"
                 ) {
 
-                    key = "fud";
+                    key =
+                        "fud";
                 }
 
 
                 if (
-                    obs.type === "meteor"
+                    obs.type ===
+                    "meteor"
                 ) {
 
-                    key = "rekt";
+                    key =
+                        "rekt";
 
-                    label = "REKT";
+                    label =
+                        "REKT";
                 }
 
 
@@ -1441,7 +2464,8 @@ this.tweens.add({
 
 
                 if (
-                    obs.type === "rug"
+                    obs.type ===
+                    "rug"
                 ) {
 
                     label =
@@ -1450,29 +2474,40 @@ this.tweens.add({
 
 
                 let obj =
+
                     this.obstacleSpritesMap.get(
                         obs.id
                     );
 
 
-                if (!obj) {
+                if (
+                    !obj
+                ) {
 
                     const spr =
+
                         this.add.sprite(
+
                             obs.x,
+
                             obs.y,
+
                             key
+
                         )
                         .setScale(
+
                             obs.type === "fud"
                                 ? 1.05
                                 : 1.2
+
                         )
                         .setDepth(8);
 
 
                     if (
-                        obs.type === "meteor"
+                        obs.type ===
+                        "meteor"
                     ) {
 
                         spr.setTint(
@@ -1481,24 +2516,44 @@ this.tweens.add({
                     }
 
 
-                    let txt = null;
+                    let txt =
+                        null;
 
 
-                    if (label) {
+                    if (
+                        label
+                    ) {
 
                         txt =
+
                             this.add.text(
+
                                 obs.x,
+
                                 obs.y +
                                 S(15),
+
                                 label,
+
                                 {
-                                    fontSize: "18px",
-                                    fill: "#fff",
-                                    fontStyle: "bold",
-                                    stroke: "#000",
-                                    strokeThickness: 3
+
+                                    fontSize:
+                                        "18px",
+
+                                    fill:
+                                        "#fff",
+
+                                    fontStyle:
+                                        "bold",
+
+                                    stroke:
+                                        "#000",
+
+                                    strokeThickness:
+                                        3
+
                                 }
+
                             )
                             .setOrigin(0.5)
                             .setDepth(9);
@@ -1506,14 +2561,22 @@ this.tweens.add({
 
 
                     obj = {
-                        sprite: spr,
-                        text: txt
+
+                        sprite:
+                            spr,
+
+                        text:
+                            txt
+
                     };
 
 
                     this.obstacleSpritesMap.set(
+
                         obs.id,
+
                         obj
+
                     );
                 }
 
@@ -1521,26 +2584,74 @@ this.tweens.add({
                 obj.sprite.x =
                     obs.x;
 
+
                 obj.sprite.y =
                     obs.y;
 
 
-                if (obj.text) {
+                if (
+                    obj.text
+                ) {
 
                     obj.text.x =
                         obj.sprite.x;
+
 
                     obj.text.y =
                         obj.sprite.y +
                         S(15);
                 }
+
             }
+
         );
 
 
-        this.background.update(
-            this.speed
-        );
+        // ==========================================
+        // BACKGROUND
+        // ==========================================
+
+        if (
+            this.background
+        ) {
+
+            this.background.update(
+                this.speed
+            );
+        }
+    }
+
+
+    /* ======================================================
+    SHUTDOWN
+    ====================================================== */
+
+    shutdown() {
+
+        /*
+         * Uklanjamo samo event listener tastature.
+         *
+         * NE gasimo globalni Socket.IO ovde.
+         *
+         * Ovo je važno da slučajni Phaser lifecycle
+         * ne bi prekinuo aktivnu Socket.IO konekciju.
+         */
+
+        if (
+            this.globalKeyHandler
+        ) {
+
+            window.removeEventListener(
+
+                "keydown",
+
+                this.globalKeyHandler
+
+            );
+
+            this.globalKeyHandler =
+                null;
+        }
     }
 }
 
@@ -1551,68 +2662,114 @@ PHASER START
 
 function startGame() {
 
-    // Ako već postoji Phaser igra,
-    // potpuno je uništi pre pravljenja nove.
-    if (window.phaserGame) {
+    /*
+     * VAŽNO:
+     *
+     * Ako Phaser već postoji, NE pravimo novu instancu.
+     *
+     * Prethodna verzija je radila:
+     *
+     * phaserGame.destroy()
+     * socket.disconnect()
+     *
+     * svaki put kada se startGame() ponovo pozove.
+     *
+     * To može da se desi ako index.html pozove
+     * startGame() više od jednom.
+     *
+     * Sada samo koristimo postojeću instancu.
+     */
 
-        console.log("Destroying previous Phaser instance...");
+    if (
+        window.phaserGame
+    ) {
 
-        try {
-            window.phaserGame.destroy(true);
-        } catch (error) {
-            console.warn(
-                "Error destroying previous Phaser instance:",
-                error
-            );
-        }
+        console.log(
+            "Phaser game already exists - keeping current instance."
+        );
 
-        window.phaserGame = null;
+        return;
     }
 
-    // Prethodni Socket.IO mora takođe da se zatvori.
-    // U suprotnom listeneri mogu ostati vezani
-    // za staru GameScene.
-    if (socket) {
 
-        try {
-            socket.removeAllListeners();
-            socket.disconnect();
-        } catch (error) {
-            console.warn(
-                "Error cleaning previous socket:",
-                error
-            );
-        }
-
-        socket = null;
-        currentGameId = null;
-    }
-
-    // Osiguraj da nema zaostalih canvas elemenata.
     const phaserContainer =
-        document.getElementById("phaser-game");
+        document.getElementById(
+            "phaser-game"
+        );
 
-    if (phaserContainer) {
-        phaserContainer.innerHTML = "";
+
+    if (
+        !phaserContainer
+    ) {
+
+        console.error(
+            "ERROR: #phaser-game container not found."
+        );
+
+        return;
     }
+
+
+    /*
+     * Ukloni samo eventualni stari canvas.
+     *
+     * Ne diramo Socket.IO.
+     */
+
+    const oldCanvases =
+        phaserContainer.querySelectorAll(
+            "canvas"
+        );
+
+
+    oldCanvases.forEach(
+
+        canvas => {
+
+            try {
+
+                canvas.remove();
+
+            } catch (error) {
+
+                console.warn(
+                    "Could not remove old canvas:",
+                    error
+                );
+
+            }
+
+        }
+
+    );
+
 
     const config = {
 
-        type: Phaser.AUTO,
+        type:
+            Phaser.AUTO,
+
 
         render: {
 
-            antialias: true,
+            antialias:
+                true,
 
-            pixelArt: false,
+            pixelArt:
+                false,
 
             resolution:
                 Math.min(
+
                     window.devicePixelRatio ||
                     1,
+
                     2
+
                 )
+
         },
+
 
         scale: {
 
@@ -1626,45 +2783,76 @@ function startGame() {
                 Phaser.Scale.CENTER_BOTH,
 
             width:
-                1200,
+                GAME_WIDTH,
 
             height:
-                555
+                GAME_HEIGHT
+
         },
 
-        roundPixels: true,
+
+        roundPixels:
+            true,
+
 
         physics: {
 
-            default: "arcade",
+            default:
+                "arcade",
 
             arcade: {
 
                 gravity: {
+
                     y: 0
+
                 },
 
-                debug: false
+                debug:
+                    false
+
             }
+
         },
 
+
         scene: [
+
             GameScene
+
         ]
+
     };
 
-    window.phaserGame =
-        new Phaser.Game(config);
 
-    console.log(
-        "Phaser instance created."
-    );
+    try {
+
+        window.phaserGame =
+            new Phaser.Game(
+                config
+            );
+
+
+        console.log(
+            "Phaser instance created successfully."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Failed to create Phaser instance:",
+            error
+        );
+
+        window.phaserGame =
+            null;
+    }
 }
 
 
-// ==========================
-// FULLSCREEN BUTTON
-// ==========================
+/* ==========================================================
+FULLSCREEN BUTTON
+========================================================== */
 
 const fullscreenBtn =
     document.getElementById(
@@ -1672,16 +2860,29 @@ const fullscreenBtn =
     );
 
 
-if (fullscreenBtn) {
+if (
+    fullscreenBtn
+) {
 
     fullscreenBtn.addEventListener(
+
         "click",
+
         async () => {
 
             const gameContainer =
                 document.getElementById(
                     "game-container"
                 );
+
+
+            if (
+                !gameContainer
+            ) {
+
+                return;
+            }
+
 
             try {
 
@@ -1696,6 +2897,7 @@ if (fullscreenBtn) {
 
                     await document
                         .exitFullscreen();
+
                 }
 
             } catch (error) {
@@ -1705,12 +2907,16 @@ if (fullscreenBtn) {
                     error
                 );
             }
+
         }
+
     );
 
 
     document.addEventListener(
+
         "fullscreenchange",
+
         () => {
 
             if (
@@ -1725,93 +2931,233 @@ if (fullscreenBtn) {
                 fullscreenBtn.textContent =
                     "⛶ FULLSCREEN";
             }
+
         }
+
     );
 }
 
 
+/* ==========================================================
+GAMES NAVIGATION
+========================================================== */
 
-const gamesNavBtn = document.getElementById("gamesNavBtn");
-const sidebarMenu = document.getElementById("sidebarMenu");
-const closeMenuBtn = document.getElementById("closeMenuBtn");
+const gamesNavBtn =
+    document.getElementById(
+        "gamesNavBtn"
+    );
 
 
+const sidebarMenu =
+    document.getElementById(
+        "sidebarMenu"
+    );
 
 
+const closeMenuBtn =
+    document.getElementById(
+        "closeMenuBtn"
+    );
 
-gamesNavBtn.addEventListener("click", function () {
-    if (sidebarMenu.style.width === "280px") {
-        sidebarMenu.style.width = "0";
-    } else {
-        sidebarMenu.style.width = "280px";
-    }
-});
 
-closeMenuBtn.addEventListener("click", function () {
-    sidebarMenu.style.width = "0";
-});
+if (
+    gamesNavBtn &&
+    sidebarMenu
+) {
 
-// ==========================================
-// MOBILE STATUS TOOLTIP - TAP TO OPEN
-// ==========================================
+    gamesNavBtn.addEventListener(
 
-function initMobileStatusTooltips() {
+        "click",
 
-    const statusModules = document.querySelectorAll(".status-module");
+        function () {
 
-    if (!statusModules.length) {
-        console.warn("No .status-module elements found");
-        return;
-    }
+            if (
+                sidebarMenu.style.width ===
+                "280px"
+            ) {
 
-    statusModules.forEach(module => {
+                sidebarMenu.style.width =
+                    "0";
 
-        module.addEventListener("click", (e) => {
+            } else {
 
-            // Samo touch uređaji
-            if (!window.matchMedia("(hover: none)").matches) {
-                return;
+                sidebarMenu.style.width =
+                    "280px";
             }
-
-            e.stopPropagation();
-
-            const wasActive = module.classList.contains("active");
-
-            // Zatvori sve
-            statusModules.forEach(other => {
-                other.classList.remove("active");
-            });
-
-            // Ako nije bio otvoren - otvori
-            if (!wasActive) {
-                module.classList.add("active");
-            }
-        });
-
-    });
-
-    // Klik/tap van tooltip modula = zatvori
-    document.addEventListener("click", (e) => {
-
-        if (!e.target.closest(".status-module")) {
-
-            statusModules.forEach(module => {
-                module.classList.remove("active");
-            });
 
         }
 
-    });
-
-    console.log("Mobile status tooltips initialized");
+    );
 }
 
 
-// game.js se kod tebe učitava DINAMIČKI,
-// zato ne smemo zavisiti samo od DOMContentLoaded.
+if (
+    closeMenuBtn &&
+    sidebarMenu
+) {
 
-if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initMobileStatusTooltips);
+    closeMenuBtn.addEventListener(
+
+        "click",
+
+        function () {
+
+            sidebarMenu.style.width =
+                "0";
+
+        }
+
+    );
+}
+
+
+/* ==========================================================
+MOBILE STATUS TOOLTIP - TAP TO OPEN
+========================================================== */
+
+function initMobileStatusTooltips() {
+
+    const statusModules =
+        document.querySelectorAll(
+            ".status-module"
+        );
+
+
+    if (
+        !statusModules.length
+    ) {
+
+        console.warn(
+            "No .status-module elements found"
+        );
+
+        return;
+    }
+
+
+    statusModules.forEach(
+
+        module => {
+
+            module.addEventListener(
+
+                "click",
+
+                (e) => {
+
+                    // Samo touch uređaji
+
+                    if (
+                        !window.matchMedia(
+                            "(hover: none)"
+                        ).matches
+                    ) {
+
+                        return;
+                    }
+
+
+                    e.stopPropagation();
+
+
+                    const wasActive =
+                        module.classList.contains(
+                            "active"
+                        );
+
+
+                    // Zatvori sve
+
+                    statusModules.forEach(
+
+                        other => {
+
+                            other.classList.remove(
+                                "active"
+                            );
+
+                        }
+
+                    );
+
+
+                    // Ako nije bio otvoren - otvori
+
+                    if (
+                        !wasActive
+                    ) {
+
+                        module.classList.add(
+                            "active"
+                        );
+                    }
+
+                }
+
+            );
+
+        }
+
+    );
+
+
+    // Klik/tap van tooltip modula = zatvori
+
+    document.addEventListener(
+
+        "click",
+
+        (e) => {
+
+            if (
+                !e.target.closest(
+                    ".status-module"
+                )
+            ) {
+
+                statusModules.forEach(
+
+                    module => {
+
+                        module.classList.remove(
+                            "active"
+                        );
+
+                    }
+
+                );
+
+            }
+
+        }
+
+    );
+
+
+    console.log(
+        "Mobile status tooltips initialized"
+    );
+}
+
+
+/* ==========================================================
+INITIALIZE MOBILE TOOLTIPS
+========================================================== */
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+
+        "DOMContentLoaded",
+
+        initMobileStatusTooltips
+
+    );
+
 } else {
+
     initMobileStatusTooltips();
 }
