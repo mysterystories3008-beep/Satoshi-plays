@@ -1,247 +1,88 @@
 // ==========================================
-// BBTC WALLET SYSTEM V2
-// Compatible with SERVER.JS signature verification
+// BBTC WALLET SYSTEM V1
 // ==========================================
 
 console.log("WALLET JS LOADED");
-
-const connectBtn =
-    document.getElementById("connectBtn");
-
-const walletStatus =
-    document.getElementById("walletStatus");
-
-const disconnectBtn =
-    document.getElementById("disconnectBtn");
-
+const connectBtn = document.getElementById("connectBtn");
+const walletStatus = document.getElementById("walletStatus");
+const disconnectBtn = document.getElementById("disconnectBtn");
 
 connectBtn.onclick = async () => {
 
-    if (!window.ethereum) {
-
+    if(!window.ethereum){
         alert("Install MetaMask!");
-
         return;
     }
 
     try {
 
-        // ==========================================
-        // 1. REQUEST WALLET
-        // ==========================================
+        // 1. Request wallet
+        const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts"
+        });
 
-        const accounts =
-            await window.ethereum.request({
-                method: "eth_requestAccounts"
-            });
+        const wallet = accounts[0];
 
-        const wallet =
-            accounts[0];
+        // 2. Create message
+        const message = 
+`Book of Bitcoin Login
 
+Wallet:
+${wallet}
 
-        // ==========================================
-        // 2. CREATE EXACT SERVER MESSAGE
-        // ==========================================
-        //
-        // OVO MORA BITI IDENTIČNO SERVER.JS
-        //
-        // server.js proverava:
-        //
-        // Login to Satoshi Plays: ${state.wallet}
-        //
-        // ==========================================
+Time:
+${Date.now()}`;
 
-        const message =
-            `Login to Satoshi Plays: ${wallet}`;
+        // 3. Request signature
+        const signature = await window.ethereum.request({
+            method: "personal_sign",
+            params:[
+                message,
+                wallet
+            ]
+        });
 
+        console.log("Wallet:", wallet);
+        console.log("Signature:", signature);
 
-        // ==========================================
-        // 3. REQUEST SIGNATURE
-        // ==========================================
+        // Save wallet + signature
+        window.userWallet = wallet;
+        localStorage.setItem("userWallet", wallet);
+        localStorage.setItem("userSignature", signature);   // ← OVO JE NOVO
 
-        const signature =
-            await window.ethereum.request({
-
-                method: "personal_sign",
-
-                params: [
-                    message,
-                    wallet
-                ]
-            });
-
-
-        console.log(
-            "Wallet:",
-            wallet
-        );
-
-        console.log(
-            "Signed message:",
-            message
-        );
-
-        console.log(
-            "Signature:",
-            signature
-        );
-
-
-        // ==========================================
-        // 4. SAVE WALLET + SIGNATURE
-        // ==========================================
-
-        window.userWallet =
-            wallet;
-
-        localStorage.setItem(
-            "userWallet",
-            wallet
-        );
-
-        localStorage.setItem(
-            "userSignature",
-            signature
-        );
-
-
-        // ==========================================
-        // 5. UI
-        // ==========================================
-
-        const clickToPlayBtn =
-            document.getElementById(
-                "clickToPlayBtn"
-            );
-
-        if (clickToPlayBtn) {
-
-            clickToPlayBtn.style.display =
-                "block";
-        }
-
+        document.getElementById("clickToPlayBtn").style.display = "block";
 
         walletStatus.innerText =
-            "Status: Connected (" +
-            wallet.slice(0, 6) +
-            "..." +
-            wallet.slice(-4) +
-            ")";
+        "Status: Connected (" +
+        wallet.slice(0,6) +
+        "..." +
+        wallet.slice(-4) +
+        ")";
 
+        connectBtn.querySelector(".btn-main").innerText = "Wallet Connected";
+        connectBtn.querySelector(".btn-sub").innerText = "Ready to Play";
 
-        const mainText =
-            connectBtn.querySelector(
-                ".btn-main"
-            );
-
-        const subText =
-            connectBtn.querySelector(
-                ".btn-sub"
-            );
-
-
-        if (mainText) {
-
-            mainText.innerText =
-                "Wallet Connected";
-        }
-
-
-        if (subText) {
-
-            subText.innerText =
-                "Ready to Play";
-        }
-
-
-        if (disconnectBtn) {
-
-            disconnectBtn.style.display =
-                "block";
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "Wallet connection/signature error:",
-            error
-        );
-
-
-        walletStatus.innerText =
-            "Status: Connection cancelled";
+        disconnectBtn.style.display = "block";
+    }
+    catch(error){
+        console.log(error);
+        walletStatus.innerText = "Status: Connection cancelled";
     }
 };
 
-
-// ==========================================
-// DISCONNECT
-// ==========================================
-
 disconnectBtn.onclick = () => {
 
-    window.userWallet =
-        null;
+    window.userWallet = null;
+    localStorage.removeItem("userWallet");
+    localStorage.removeItem("userSignature");   // ← OVO JE NOVO
 
+    walletStatus.innerText = "Status: Playing as Guest";
 
-    localStorage.removeItem(
-        "userWallet"
-    );
+    connectBtn.querySelector(".btn-main").innerText = "Connect Wallet";
+    connectBtn.querySelector(".btn-sub").innerText = "Play & Earn Rewards";
 
+    disconnectBtn.style.display = "none";
+    document.getElementById("clickToPlayBtn").style.display = "none";
 
-    localStorage.removeItem(
-        "userSignature"
-    );
-
-
-    walletStatus.innerText =
-        "Status: Playing as Guest";
-
-
-    const mainText =
-        connectBtn.querySelector(
-            ".btn-main"
-        );
-
-    const subText =
-        connectBtn.querySelector(
-            ".btn-sub"
-        );
-
-
-    if (mainText) {
-
-        mainText.innerText =
-            "Connect Wallet";
-    }
-
-
-    if (subText) {
-
-        subText.innerText =
-            "Play & Earn Rewards";
-    }
-
-
-    disconnectBtn.style.display =
-        "none";
-
-
-    const clickToPlayBtn =
-        document.getElementById(
-            "clickToPlayBtn"
-        );
-
-
-    if (clickToPlayBtn) {
-
-        clickToPlayBtn.style.display =
-            "none";
-    }
-
-
-    console.log(
-        "Wallet disconnected from game"
-    );
+    console.log("Wallet disconnected from game");
 };
