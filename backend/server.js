@@ -25,7 +25,7 @@ app.set('trust proxy', true);
 const allowedOrigins = [
     "http://localhost:5173",
     "http://localhost:3000",
-    "https://satoshiplays.com",
+    "https://api.satoshiplays.com",
     "https://www.satoshiplays.com",
     "https://satoshi-plays.onrender.com"
 ];
