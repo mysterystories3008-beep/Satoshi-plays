@@ -947,6 +947,38 @@ class GameScene extends Phaser.Scene {
             );
 
 
+            socket.on(
+    "auth-session-invalid",
+    (data) => {
+
+        console.warn(
+            "[AUTH] Session token nije validan ili je istekao."
+        );
+
+        // Obriši nevažeći token
+        localStorage.removeItem(
+            "satoshiSessionToken"
+        );
+
+        // Vrati korisnika na login
+        if (this.startText) {
+
+            this.startText.setText(
+                "TAP OR SPACE TO START"
+            );
+        }
+
+        console.log(
+            "[AUTH] Nevažeći session token obrisan."
+        );
+    }
+);
+
+
+
+
+
+
         socket.on(
     "game-started",
     (data) => {
