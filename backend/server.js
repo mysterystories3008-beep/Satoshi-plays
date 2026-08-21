@@ -19,16 +19,6 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
 });
 
-
-// Hvatamo neočekivane greške na pool-u da ne bi pucao server
-pool.on('error', (err, client) => {
-    console.error('Neočekivana greška na idle PostgreSQL klijentu', err);
-    // Ne radimo process.exit ovde da server ne bi pao, 
-    // pg pool će sam automatski zameniti pokvarenu konekciju novom.
-});
-
-
-
 pool.connect()
     .then(() => console.log("Uspešno povezano na PostgreSQL bazu!"))
     .catch(err => console.error("Greška pri povezivanju na PostgreSQL:", err));
