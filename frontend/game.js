@@ -8,9 +8,11 @@ GAME.JS - 1200x555 RESOLUTION
 
 async function updateLiveStatus() {
     try {
-        const backendUrl = window.location.hostname === "localhost"
-            ? "http://localhost:3000"
-            : "https://api.satoshiplays.com";
+       const backendUrl =
+    (window.location.hostname === "localhost" ||
+     window.location.hostname === "127.0.0.1")
+        ? "http://localhost:3000"
+        : "https://api.satoshiplays.com";
 
         const response = await fetch(`${backendUrl}/api/status`);
 
@@ -928,9 +930,10 @@ class GameScene extends Phaser.Scene {
         if (!socket) {
 
             const backendUrl =
-                window.location.hostname === "localhost"
-                    ? "http://localhost:3000"
-                    : "https://api.satoshiplays.com";
+    (window.location.hostname === "localhost" ||
+     window.location.hostname === "127.0.0.1")
+        ? "http://localhost:3000"
+        : "https://api.satoshiplays.com";
 
             socket = io(
                 backendUrl,
@@ -944,7 +947,7 @@ class GameScene extends Phaser.Scene {
             );
 
 
-            socket.on(
+        socket.on(
     "game-started",
     (data) => {
 
@@ -960,16 +963,30 @@ class GameScene extends Phaser.Scene {
         this.gameOver =
             false;
 
+        // ==========================================
+        // SAČUVAJ AUTH SESSION TOKEN
+        // ==========================================
+
+        if (data.sessionToken) {
+
+            localStorage.setItem(
+                "satoshiSessionToken",
+                data.sessionToken
+            );
+
+            console.log(
+                "[AUTH] Session token sačuvan."
+            );
+        }
+
         // TEK SADA POČINJE DA TRČI
         this.playerSprite.setFrame(0);
 
         if (this.startText) {
-
             this.startText.destroy();
         }
     }
 );
-
 
             socket.on(
                 "state",
@@ -1134,38 +1151,170 @@ class GameScene extends Phaser.Scene {
     }
 
 
-    requestStart() {
+ async requestStart() {
 
-        const wallet =
+    const wallet =
+        localStorage.getItem("userWallet");
+
+    if (!wallet) {
+        console.error("Wallet nije pronađen.");
+        return;
+    }
+
+    if (this.startText) {
+        this.startText.setText("Connecting...");
+    }
+
+    try {
+
+        const backendUrl =
+            window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1"
+                ? "http://localhost:3000"
+                : "https://api.satoshiplays.com";
+
+
+        // ==========================================
+        // PROVERA POSTOJEĆE AUTH SESIJE
+        // ==========================================
+
+        const sessionToken =
             localStorage.getItem(
-                "userWallet"
-            ) ||
-            "0xTestWallet1234567890abcdef";
+                "satoshiSessionToken"
+            );
 
 
-        const signature =
-            localStorage.getItem(
-                "userSignature"
-            ) ||
-            "no_signature";
+        // ==========================================
+        // AKO VEĆ IMAMO SESSION TOKEN
+        // NEMA NOVOG METAMASK POTPISA
+        // ==========================================
+
+        if (sessionToken) {
+
+            console.log(
+                "[AUTH] Postojeći session token pronađen."
+            );
+
+            socket.emit(
+                "start-game",
+                {
+                    wallet,
+                    sessionToken
+                }
+            );
+
+            return;
+        }
 
 
-        if (this.startText) {
+        // ==========================================
+        // PRVA AUTENTIFIKACIJA
+        // POTREBAN JE METAMASK POTPIS
+        // ==========================================
 
-            this.startText.setText(
-                "Connecting..."
+        console.log(
+            "[AUTH] Nema session tokena - pokrećem wallet login."
+        );
+
+
+        // ==========================================
+        // DOBAVLJANJE AUTH NONCE-A
+        // ==========================================
+
+        const nonceResponse =
+            await fetch(
+                `${backendUrl}/api/auth/nonce?wallet=${encodeURIComponent(wallet)}`
+            );
+
+        if (!nonceResponse.ok) {
+
+            throw new Error(
+                "Nonce request failed: HTTP " +
+                nonceResponse.status
             );
         }
 
+
+        const nonceData =
+            await nonceResponse.json();
+
+
+        if (
+            !nonceData.success ||
+            !nonceData.nonce
+        ) {
+
+            throw new Error(
+                "Server nije vratio validan auth nonce."
+            );
+        }
+
+
+        const nonce =
+            nonceData.nonce;
+
+
+        console.log(
+            "[AUTH] Nonce uspešno dobijen:",
+            nonce
+        );
+
+
+        // ==========================================
+        // POTPISIVANJE NONCE-A
+        // SAMO PRVI PUT
+        // ==========================================
+
+        const message =
+            `Login to Satoshi Plays\n` +
+            `Wallet: ${wallet.toLowerCase()}\n` +
+            `Nonce: ${nonce}`;
+
+
+        const signature =
+            await window.ethereum.request({
+                method: "personal_sign",
+                params: [
+                    message,
+                    wallet
+                ]
+            });
+
+
+        console.log(
+            "[AUTH] Novi nonce uspešno potpisan."
+        );
+
+
+        // ==========================================
+        // START GAME SA NOVIM POTPISOM
+        // SERVER ĆE NAPRAVITI SESSION TOKEN
+        // ==========================================
 
         socket.emit(
             "start-game",
             {
                 wallet,
-                signature
+                signature,
+                nonce
             }
         );
+
+    } catch (error) {
+
+        console.error(
+            "[AUTH] Greška pri autentifikaciji:",
+            error
+        );
+
+        if (this.startText) {
+
+            this.startText.setText(
+                "Authentication failed"
+            );
+        }
     }
+}
 
 
     onGameOver(result) {
