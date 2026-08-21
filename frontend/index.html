@@ -1393,8 +1393,14 @@ async function connectMetaMaskAndSign() {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const wallet = accounts[0];
 
-       const nonceResponse = await fetch(
-    `http://localhost:3000/api/auth/nonce?wallet=${encodeURIComponent(wallet)}`
+    const backendUrl =
+    (window.location.hostname === "localhost" ||
+     window.location.hostname === "127.0.0.1")
+        ? "http://localhost:3000"
+        : "https://api.satoshiplays.com";
+
+const nonceResponse = await fetch(
+    `${backendUrl}/api/auth/nonce?wallet=${encodeURIComponent(wallet)}`
 );
 
 if (!nonceResponse.ok) {
