@@ -1188,8 +1188,28 @@ class GameScene extends Phaser.Scene {
     const wallet =
         localStorage.getItem("userWallet");
 
+    // ==========================================
+    // GUEST MODE
+    // Ako nema walleta, dozvoli igranje kao gost
+    // ==========================================
+
     if (!wallet) {
-        console.error("Wallet nije pronađen.");
+
+        console.log(
+            "[GUEST] Nema walleta - pokrećem Guest Mode."
+        );
+
+        if (this.startText) {
+            this.startText.setText("Starting...");
+        }
+
+        socket.emit(
+            "start-game",
+            {
+                signature: "guest_mode"
+            }
+        );
+
         return;
     }
 
