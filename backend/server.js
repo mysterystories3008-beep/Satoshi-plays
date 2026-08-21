@@ -15,15 +15,8 @@ const crypto = require("crypto");
 
 
 // Povezivanje na PostgreSQL bazu preko DATABASE_URL
-// Pronađi gde definišeš 'pool' i zameni ovako:
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    // Ako u .env fajlu (ili Coolify environment varijablama) piše 'true', uključiće SSL, 
-    // u suprotnom (ili ako varijabla ne postoji) biće 'false'.
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000
 });
 
 
