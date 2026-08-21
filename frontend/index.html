@@ -1393,7 +1393,7 @@ async function connectMetaMaskAndSign() {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const wallet = accounts[0];
 
-    const backendUrl =
+   const backendUrl =
     (window.location.hostname === "localhost" ||
      window.location.hostname === "127.0.0.1")
         ? "http://localhost:3000"
@@ -1631,6 +1631,22 @@ async function loadLeaderboards(){
         const weeklyResponse = await fetch(`${baseUrl}/get-scores/weekly`);
         const weeklyData = await weeklyResponse.json();
 
+        const wallet = localStorage.getItem("userWallet");
+
+let myRank = { daily: null, weekly: null };
+
+if (wallet) {
+    const rankResponse = await fetch(
+        `${baseUrl}/api/my-rank?wallet=${encodeURIComponent(wallet)}`
+    );
+    myRank = await rankResponse.json();
+}
+
+
+
+
+
+
         const weeklyTable = document.getElementById('weeklyTable');
         const bestTable = document.getElementById('bestTable');
 
@@ -1641,47 +1657,67 @@ async function loadLeaderboards(){
         const topWeekly = weeklyData.slice(0, 10);
 
         topDaily.forEach((e, index) => {
-            let rank = index + 1;
-            let medal = 
-                rank === 1 ? '<span class="rank-gold">🥇</span>' :
-                rank === 2 ? '<span class="rank-silver">🥈</span>' :
-                rank === 3 ? '<span class="rank-bronze">🥉</span>' : rank;
+    let rank = index + 1;
+    let medal = 
+        rank === 1 ? '<span class="rank-gold">🥇</span>' :
+        rank === 2 ? '<span class="rank-silver">🥈</span>' :
+        rank === 3 ? '<span class="rank-bronze">🥉</span>' : rank;
 
-            let rowClass = 
-                rank === 1 ? "gold-row" :
-                rank === 2 ? "silver-row" :
-                rank === 3 ? "bronze-row" : "normal-row";
+    let rowClass = 
+        rank === 1 ? "gold-row" :
+        rank === 2 ? "silver-row" :
+        rank === 3 ? "bronze-row" : "normal-row";
 
-            bestTable.innerHTML += `
-                <tr class="${rowClass}">
-                    <td>${medal}</td>
-                    <td>${e.wallet ? e.wallet.slice(0,6)+"..." : "Guest"}</td>
-                    <td>${e.score}</td>
-                </tr>`;
-        });
+    bestTable.innerHTML += `
+        <tr class="${rowClass}">
+            <td>${medal}</td>
+            <td>${e.wallet ? e.wallet.slice(0,6)+"..." : "Guest"}</td>
+            <td>${e.score}</td>
+        </tr>`;
+});
 
-        topWeekly.forEach((e, index) => {
-            let rank = index + 1;
-            let medal = 
-                rank === 1 ? '<span class="rank-gold">🥇</span>' :
-                rank === 2 ? '<span class="rank-silver">🥈</span>' :
-                rank === 3 ? '<span class="rank-bronze">🥉</span>' : rank;
+if (myRank.daily && Number(myRank.daily.rank) > 10) {
+    bestTable.innerHTML += `
+        <tr class="my-rank-row">
+            <td>${myRank.daily.rank}</td>
+            <td>${formatAddress(myRank.daily.wallet_address)}</td>
+            <td>${myRank.daily.score}</td>
+        </tr>`;
+}
 
-            let rowClass = 
-                rank === 1 ? "gold-row" :
-                rank === 2 ? "silver-row" :
-                rank === 3 ? "bronze-row" : "normal-row";
+topWeekly.forEach((e, index) => {
+    let rank = index + 1;
+    let medal = 
+        rank === 1 ? '<span class="rank-gold">🥇</span>' :
+        rank === 2 ? '<span class="rank-silver">🥈</span>' :
+        rank === 3 ? '<span class="rank-bronze">🥉</span>' : rank;
 
-            weeklyTable.innerHTML += `
-                <tr class="${rowClass}">
-                    <td>${medal}</td>
-                    <td>${e.wallet ? e.wallet.slice(0,6)+"..." : "Guest"}</td>
-                    <td>${e.score}</td>
-                </tr>`;
-        });
-    }catch(e){
-        console.log("Error loading leaderboards:", e);
-    }
+    let rowClass = 
+        rank === 1 ? "gold-row" :
+        rank === 2 ? "silver-row" :
+        rank === 3 ? "bronze-row" : "normal-row";
+
+    weeklyTable.innerHTML += `
+        <tr class="${rowClass}">
+            <td>${medal}</td>
+            <td>${e.wallet ? e.wallet.slice(0,6)+"..." : "Guest"}</td>
+            <td>${e.score}</td>
+        </tr>`;
+});
+
+// OVO JE SADA NA PRAVOM MESTU
+if (myRank.weekly && Number(myRank.weekly.rank) > 10) {
+    weeklyTable.innerHTML += `
+        <tr class="my-rank-row">
+            <td>${myRank.weekly.rank}</td>
+            <td>${formatAddress(myRank.weekly.wallet_address)}</td>
+            <td>${myRank.weekly.score}</td>
+        </tr>`;
+}
+
+}catch(e){
+    console.log("Error loading leaderboards:", e);
+}
 }
 
 async function loadGameStatistics() {
