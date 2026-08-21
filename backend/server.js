@@ -278,44 +278,6 @@ async function verifyAuthSession(sessionToken, wallet) {
 
 
 
-// ==========================================
-// KREIRANJE AUTH SESIJE
-// ==========================================
-
-async function createAuthSession(wallet) {
-
-    const sessionToken =
-        crypto.randomBytes(32).toString("hex");
-
-    const expiresAt =
-        new Date(Date.now() + 30 * 60 * 1000);
-
-    await pool.query(`
-        INSERT INTO auth_sessions (
-            session_token,
-            wallet_address,
-            created_at,
-            expires_at
-        )
-        VALUES ($1, $2, NOW(), $3)
-    `, [
-        sessionToken,
-        wallet.trim().toLowerCase(),
-        expiresAt
-    ]);
-
-    console.log(
-        `[AUTH SESSION CREATED] ${wallet}`
-    );
-
-    return {
-        sessionToken,
-        expiresAt: expiresAt.getTime()
-    };
-}
-
-
-
 
 // ==========================================
 // GAME ENGINE NA SERVERU
@@ -1242,6 +1204,205 @@ app.get("/get-scores/:type", async (req, res) => {
 });
 
 // ==========================================
+// API RUTA ZA MOJ RANG I MOJ SKOR
+// DAILY / WEEKLY
+// ==========================================
+
+app.get("/get-my-rank/:type", async (req, res) => {
+    try {
+
+        const type = req.params.type;
+        const wallet = req.query.wallet;
+
+        if (
+            !wallet ||
+            typeof wallet !== "string"
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: "Wallet address required"
+            });
+        }
+
+        const normalizedWallet =
+            wallet.trim().toLowerCase();
+
+        if (
+            !/^0x[a-fA-F0-9]{40}$/.test(
+                normalizedWallet
+            )
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid wallet address"
+            });
+        }
+
+        // DAILY = daily_best
+        // WEEKLY = weekly_total
+
+        const scoreColumn =
+            type === "weekly"
+                ? "weekly_total"
+                : "daily_best";
+
+
+        // ==========================================
+        // PRONAĐI MOJ SKOR
+        // ==========================================
+
+        const userResult =
+            await pool.query(
+                `
+                SELECT
+                    wallet_address AS wallet,
+                    ${scoreColumn} AS score
+                FROM user_scores
+                WHERE LOWER(wallet_address) = $1
+                LIMIT 1
+                `,
+                [
+                    normalizedWallet
+                ]
+            );
+
+
+        // Wallet još nema rezultat
+
+        if (
+            userResult.rows.length === 0
+        ) {
+
+            return res.json({
+                success: true,
+                rank: null,
+                wallet: normalizedWallet,
+                score: 0
+            });
+        }
+
+
+        const myScore =
+            Number(
+                userResult.rows[0].score
+            );
+
+
+        // ==========================================
+        // IZRAČUNAJ MOJ RANG
+        // ==========================================
+
+        const rankResult =
+            await pool.query(
+                `
+                SELECT COUNT(*) AS higher
+                FROM user_scores
+                WHERE ${scoreColumn} > $1
+                  AND ${scoreColumn} > 0
+                `,
+                [
+                    myScore
+                ]
+            );
+
+
+        const playersAhead =
+            Number(
+                rankResult.rows[0].higher
+            );
+
+
+        const myRank =
+            playersAhead + 1;
+
+
+        // ==========================================
+        // ODGOVOR
+        // ==========================================
+
+        res.json({
+            success: true,
+            rank: myRank,
+            wallet: normalizedWallet,
+            score: myScore
+        });
+
+    } catch (err) {
+
+        console.error(
+            "Greška pri računanju mog ranga:",
+            err
+        );
+
+        res.status(500).json({
+            success: false,
+            rank: null,
+            wallet: null,
+            score: 0
+        });
+    }
+});
+
+
+// ==========================================
+// API - MY DAILY & WEEKLY RANK
+// ==========================================
+
+app.get("/api/my-rank", async (req, res) => {
+    try {
+        const wallet = req.query.wallet;
+
+        if (!wallet) {
+            return res.json({ daily: null, weekly: null });
+        }
+
+        const normalized = wallet.toLowerCase();
+
+        // DAILY
+        const daily = await pool.query(`
+            SELECT rank, wallet_address, daily_best AS score
+            FROM (
+                SELECT
+                    wallet_address,
+                    daily_best,
+                    RANK() OVER (ORDER BY daily_best DESC) AS rank
+                FROM user_scores
+                WHERE daily_best > 0
+            ) t
+            WHERE LOWER(wallet_address) = $1
+        `, [normalized]);
+
+        // WEEKLY
+        const weekly = await pool.query(`
+            SELECT rank, wallet_address, weekly_total AS score
+            FROM (
+                SELECT
+                    wallet_address,
+                    weekly_total,
+                    RANK() OVER (ORDER BY weekly_total DESC) AS rank
+                FROM user_scores
+                WHERE weekly_total > 0
+            ) t
+            WHERE LOWER(wallet_address) = $1
+        `, [normalized]);
+
+        res.json({
+            daily: daily.rows[0] || null,
+            weekly: weekly.rows[0] || null
+        });
+
+    } catch (err) {
+        console.error("My Rank API:", err);
+        res.status(500).json({
+            daily: null,
+            weekly: null
+        });
+    }
+});
+
+
+
+// ==========================================
 // API RUTA ZA STATISTIKU IGRE (MY & GLOBAL)
 // ==========================================
 
@@ -1339,3 +1500,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
