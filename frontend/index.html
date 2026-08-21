@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en"> 
 
@@ -1392,11 +1393,34 @@ async function connectMetaMaskAndSign() {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const wallet = accounts[0];
 
-        const message = `Login to Satoshi Plays: ${wallet}-${Date.now()}`;
-        const signature = await window.ethereum.request({
-            method: 'personal_sign',
-            params: [message, wallet]
-        });
+       const nonceResponse = await fetch(
+    `http://localhost:3000/api/auth/nonce?wallet=${encodeURIComponent(wallet)}`
+);
+
+if (!nonceResponse.ok) {
+    throw new Error("Failed to obtain authentication nonce");
+}
+
+const nonceData = await nonceResponse.json();
+
+if (!nonceData.success || !nonceData.nonce) {
+    throw new Error("Invalid authentication nonce response");
+}
+
+const nonce = nonceData.nonce;
+
+const message =
+    `Login to Satoshi Plays\n` +
+    `Wallet: ${wallet.toLowerCase()}\n` +
+    `Nonce: ${nonce}`;
+
+const signature = await window.ethereum.request({
+    method: 'personal_sign',
+    params: [message, wallet]
+});
+
+localStorage.setItem("userSignature", signature);
+localStorage.setItem("authNonce", nonce);
 
         localStorage.setItem("userWallet", wallet);
         localStorage.setItem("userSignature", signature);
@@ -2206,34 +2230,9 @@ function copyContractAddress() {
 }
 </script>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <footer>
     <p>© 2026 Satoshi Play <span style="color: #f7931a; font-weight: 800;">$SPLAY</span></p>
 </footer>
-
-
-
 
 </body>
 </html>
