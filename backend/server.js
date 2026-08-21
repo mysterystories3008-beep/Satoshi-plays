@@ -1456,14 +1456,14 @@ app.get("/api/game-stats", async (req, res) => {
             SELECT COUNT(*)
             FROM scores
             WHERE type = 'daily'
-            AND timestamp >= $1
+            AND start_time >= $1
         `;
 
         const globalWeekQuery = `
             SELECT COUNT(*)
             FROM scores
             WHERE type = 'weekly'
-            AND timestamp >= $1
+            AND start_time >= $1
         `;
 
         const globalTodayRes = await pool.query(globalTodayQuery, [startOfToday]);
@@ -1478,7 +1478,7 @@ app.get("/api/game-stats", async (req, res) => {
                 FROM scores
                 WHERE type = 'daily'
                 AND LOWER(wallet) = LOWER($1)
-                AND timestamp >= $2
+                AND start_time >= $2
             `;
 
             const myWeekQuery = `
@@ -1486,7 +1486,7 @@ app.get("/api/game-stats", async (req, res) => {
                 FROM scores
                 WHERE type = 'weekly'
                 AND LOWER(wallet) = LOWER($1)
-                AND timestamp >= $2
+                AND start_time >= $2
             `;
 
             const myTodayRes = await pool.query(myTodayQuery, [wallet, startOfToday]);
@@ -1513,7 +1513,6 @@ app.get("/api/game-stats", async (req, res) => {
         });
     }
 });
-
 // ==========================================
 // LIVE SERVER STATUSnode 
 // ==========================================
