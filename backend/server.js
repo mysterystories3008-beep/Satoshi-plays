@@ -15,9 +15,26 @@ const crypto = require("crypto");
 
 
 // Povezivanje na PostgreSQL bazu preko DATABASE_URL
+// Pronađi gde definišeš 'pool' i zameni ovako:
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
+    // Ako u .env fajlu (ili Coolify environment varijablama) piše 'true', uključiće SSL, 
+    // u suprotnom (ili ako varijabla ne postoji) biće 'false'.
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000
 });
+
+
+// Hvatamo neočekivane greške na pool-u da ne bi pucao server
+pool.on('error', (err, client) => {
+    console.error('Neočekivana greška na idle PostgreSQL klijentu', err);
+    // Ne radimo process.exit ovde da server ne bi pao, 
+    // pg pool će sam automatski zameniti pokvarenu konekciju novom.
+});
+
+
 
 pool.connect()
     .then(() => console.log("Uspešno povezano na PostgreSQL bazu!"))
@@ -1500,4 +1517,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
