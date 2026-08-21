@@ -1166,7 +1166,7 @@ app.get("/api/auth/nonce", async (req, res) => {
         // Generisanje kriptografski sigurnog nonce-a
         const nonce = crypto.randomBytes(32).toString("hex");
 
-        // Nonce važi 5 minuta
+        // Nonce važi 5 minuta (ovde je već Date objekat)
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
         await pool.query(`
@@ -1185,24 +1185,23 @@ app.get("/api/auth/nonce", async (req, res) => {
         `, [
             normalizedWallet,
             nonce,
-            expiresAt.getTime()
+            expiresAt // <--- PROSLEĐUJEŠ DIREKTNO DATE OBJEKAT, A NE .getTime()
         ]);
 
         res.json({
             success: true,
             wallet: normalizedWallet,
             nonce,
-            expiresAt: expiresAt.getTime()
+            expiresAt: expiresAt.getTime() // Ovde na frontend slobodno pošalji broj ako im treba
         });
 
     } catch (err) {
-        console.error("Greška pri generisanju auth nonce-a:", err);
-
-        res.status(500).json({
-            success: false,
-            error: err.message
-        });
-    }
+    console.error("Greska:", err);
+    res.status(500).json({ 
+        success: false, 
+        error: err.message // <--- OVO ĆE OTKRITI SVE
+    });
+}
 });
 
 
