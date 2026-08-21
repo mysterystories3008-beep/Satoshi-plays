@@ -3033,3 +3033,68 @@ footer p:hover {
                  0 0 20px rgba(247, 147, 26, 0.3);
 }
 
+
+
+
+/* ==========================================
+   MY RANK - VERY VISIBLE
+========================================== */
+
+.my-rank-row {
+    background: linear-gradient(
+        90deg,
+        rgba(247, 147, 26, 0.35),
+        rgba(247, 147, 26, 0.15),
+        rgba(247, 147, 26, 0.35)
+    ) !important;
+
+    border-top: 3px solid #f7931a !important;
+    border-bottom: 3px solid #f7931a !important;
+
+    box-shadow:
+        0 0 10px rgba(247, 147, 26, 0.7),
+        0 0 25px rgba(247, 147, 26, 0.35);
+
+    font-weight: 900;
+
+    animation: myRankGlow 1.8s ease-in-out infinite alternate;
+}
+
+.my-rank-row td {
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    font-size: 1.05em;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+}
+
+.my-rank-row td:first-child {
+    color: #f7931a !important;
+    font-size: 1.25em !important;
+    text-shadow: 0 0 10px rgba(247, 147, 26, 0.9);
+}
+
+.my-rank-row td:nth-child(2) {
+    color: #ffd180 !important;
+    font-size: 1.05em !important;
+}
+
+.my-rank-row td:last-child {
+    color: #00e676 !important;
+    font-size: 1.2em !important;
+    text-shadow: 0 0 10px rgba(0, 230, 118, 0.7);
+}
+
+@keyframes myRankGlow {
+    from {
+        box-shadow:
+            0 0 8px rgba(247, 147, 26, 0.5),
+            0 0 15px rgba(247, 147, 26, 0.2);
+    }
+
+    to {
+        box-shadow:
+            0 0 15px rgba(247, 147, 26, 0.9),
+            0 0 35px rgba(247, 147, 26, 0.5);
+    }
+}
