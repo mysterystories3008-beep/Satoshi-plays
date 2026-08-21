@@ -28,6 +28,10 @@ pool.connect()
         console.error("Greška pri povezivanju na PostgreSQL:", err);
     });
 
+pool.on("error", (err) => {
+    console.error("[POSTGRES POOL ERROR]", err);
+});
+
 // Automatsko kreiranje tabele scores ako ne postoji
 pool.query(`
     CREATE TABLE IF NOT EXISTS scores (
@@ -474,16 +478,96 @@ io.on("connection", (socket) => {
 
 socket.on("start-game", async (data) => {
     const wallet = data?.wallet;
-    const signature = data?.signature;
-    const nonceFromClient = data?.nonce;
-    const sessionToken = data?.sessionToken;
+const signature = data?.signature;
+const nonceFromClient = data?.nonce;
+const sessionToken = data?.sessionToken;
 
 
+// ==========================================
+// GUEST MODE
+// Guest može da igra bez walleta
+// ==========================================
 
-    if (!wallet) {
-        socket.emit("error", { message: "Wallet required" });
-        return;
+if (!wallet && (!signature || signature === "guest_mode")) {
+
+    const guestId = "guest-" + generateGameId();
+
+    if (games.has(socket.id)) {
+        clearInterval(games.get(socket.id).interval);
+        games.delete(socket.id);
     }
+
+    const gameId = generateGameId();
+
+    const state = createGameState(
+        guestId,
+        gameId
+    );
+
+    state.started = true;
+    state.signature = "guest_mode";
+    state.authVerified = false;
+
+    const sessions = readFile(SESSION_FILE);
+
+    sessions.push({
+        gameId,
+        wallet: guestId,
+        signature: "guest_mode",
+        startTime: state.startTime,
+        active: true,
+        authVerified: false
+    });
+
+    saveFile(
+        SESSION_FILE,
+        sessions
+    );
+
+    const interval = setInterval(() => {
+
+        tickGame(state);
+
+        socket.emit(
+            "state",
+            getPublicState(state)
+        );
+
+        if (!state.alive) {
+
+            clearInterval(interval);
+
+            finishGame(
+                socket,
+                state,
+                state.signature
+            );
+        }
+
+    }, TICK_MS);
+
+    state.interval = interval;
+
+    games.set(
+        socket.id,
+        state
+    );
+
+    socket.emit(
+        "game-started",
+        {
+            gameId,
+            startTime: state.startTime,
+            speed: state.speed
+        }
+    );
+
+    console.log(
+        `[GAME START - GUEST] ${guestId} | ${gameId}`
+    );
+
+    return;
+}
 
 
         // ==========================================
@@ -625,57 +709,6 @@ socket.on("start-game", async (data) => {
     }
 
 
-    // ==========================================
-    // GUEST MODE
-    // ==========================================
-
-    if (!signature || signature === "guest_mode") {
-        if (games.has(socket.id)) {
-            clearInterval(games.get(socket.id).interval);
-            games.delete(socket.id);
-        }
-
-        const gameId = generateGameId();
-        const state = createGameState(wallet, gameId);
-
-        state.started = true;
-        state.signature = "guest_mode";
-        state.authVerified = false;
-
-        const sessions = readFile(SESSION_FILE);
-
-        sessions.push({
-            gameId,
-            wallet,
-            signature: "guest_mode",
-            startTime: state.startTime,
-            active: true
-        });
-
-        saveFile(SESSION_FILE, sessions);
-
-        const interval = setInterval(() => {
-            tickGame(state);
-            socket.emit("state", getPublicState(state));
-
-            if (!state.alive) {
-                clearInterval(interval);
-                finishGame(socket, state, state.signature);
-            }
-        }, TICK_MS);
-
-        state.interval = interval;
-        games.set(socket.id, state);
-
-        socket.emit("game-started", {
-            gameId,
-            startTime: state.startTime,
-            speed: state.speed
-        });
-
-        console.log(`[GAME START - GUEST] ${wallet} | ${gameId}`);
-        return;
-    }
 
     // ==========================================
     // WALLET AUTHENTICATION - NONCE
