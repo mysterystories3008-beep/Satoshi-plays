@@ -10,6 +10,9 @@ const path = require("path");
 const cors = require("cors");
 const { ethers } = require("ethers");
 const { Pool } = require("pg");
+const crypto = require("crypto");
+
+
 
 // Povezivanje na PostgreSQL bazu preko DATABASE_URL
 const pool = new Pool({
@@ -37,6 +40,101 @@ pool.query(`
     )
 `).catch(err => console.error("Greška pri kreiranju tabele scores:", err));
 
+// ==========================================
+// NONCE TABELA ZA WALLET AUTENTIFIKACIJU
+// KORAK 3
+// ==========================================
+
+pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_nonces (
+        wallet_address VARCHAR(66) PRIMARY KEY,
+        nonce TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+    );
+
+    ALTER TABLE auth_nonces
+    ADD COLUMN IF NOT EXISTS created_at
+    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+    ALTER TABLE auth_nonces
+    ADD COLUMN IF NOT EXISTS expires_at
+    TIMESTAMP WITH TIME ZONE;
+
+    CREATE INDEX IF NOT EXISTS idx_auth_nonces_expires_at
+    ON auth_nonces(expires_at);
+`).catch(err => console.error("Greška pri kreiranju tabele auth_nonces:", err));
+
+
+
+// ==========================================
+// AUTH SESIJE
+// Jedan MetaMask potpis -> kratkotrajna
+// server-side autentifikovana sesija
+// ==========================================
+
+pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+        id SERIAL PRIMARY KEY,
+        session_token_hash TEXT UNIQUE NOT NULL,
+        wallet_address VARCHAR(66) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        revoked BOOLEAN NOT NULL DEFAULT FALSE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_wallet
+    ON auth_sessions(wallet_address);
+
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at
+    ON auth_sessions(expires_at);
+
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_active
+    ON auth_sessions(wallet_address, revoked, expires_at);
+`).catch(err =>
+    console.error(
+        "Greška pri kreiranju tabele auth_sessions:",
+        err
+    )
+);
+
+
+
+
+// ==========================================
+// AUTH SESSION TABELA
+// Jedan MetaMask potpis -> autentifikovana sesija
+// ==========================================
+
+pool.query(`
+    CREATE TABLE IF NOT EXISTS auth_sessions (
+        id SERIAL PRIMARY KEY,
+        session_token_hash VARCHAR(128) UNIQUE NOT NULL,
+        wallet_address VARCHAR(66) NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        revoked BOOLEAN DEFAULT FALSE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_wallet
+    ON auth_sessions(wallet_address);
+
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_expires_at
+    ON auth_sessions(expires_at);
+
+    CREATE INDEX IF NOT EXISTS idx_auth_sessions_token_hash
+    ON auth_sessions(session_token_hash);
+`).catch(err =>
+    console.error(
+        "Greška pri kreiranju auth_sessions tabele:",
+        err
+    )
+);
+
+
+
+
+
 // Automatsko kreiranje tabele user_scores za brzu rang listu
 pool.query(`
     CREATE TABLE IF NOT EXISTS user_scores (
@@ -51,6 +149,8 @@ pool.query(`
 
 const app = express();
 const server = http.createServer(app);
+app.set("trust proxy", true);
+
 
 // Dozvoljeni domeni za CORS (lokalno testiranje + tvoj live domen)
 const allowedOrigins = [
@@ -101,8 +201,121 @@ function saveFile(filePath, data) {
 }
 
 function generateGameId() {
-    return Date.now().toString(36) + "-" + Math.random().toString(36).substring(2, 10);
+    return Date.now().toString(36) + "-" + crypto.randomBytes(4).toString("hex");
 }
+
+
+// ==========================================
+// PROVERA POSTOJEĆE AUTH SESIJE
+// ==========================================
+
+async function verifyAuthSession(sessionToken, wallet) {
+
+    if (
+        typeof sessionToken !== "string" ||
+        !sessionToken
+    ) {
+        return false;
+    }
+
+    if (
+        typeof wallet !== "string" ||
+        !/^0x[a-fA-F0-9]{40}$/.test(wallet.trim())
+    ) {
+        return false;
+    }
+
+    const normalizedWallet =
+        wallet.trim().toLowerCase();
+
+    const sessionTokenHash =
+        crypto
+            .createHash("sha256")
+            .update(sessionToken)
+            .digest("hex");
+
+    const result = await pool.query(`
+        SELECT wallet_address, expires_at, revoked
+        FROM auth_sessions
+        WHERE session_token_hash = $1
+        LIMIT 1
+    `, [
+        sessionTokenHash
+    ]);
+
+    if (result.rows.length === 0) {
+        return false;
+    }
+
+    const session =
+        result.rows[0];
+
+    if (
+        session.revoked === true
+    ) {
+        return false;
+    }
+
+    if (
+        session.wallet_address.toLowerCase() !==
+        normalizedWallet
+    ) {
+        return false;
+    }
+
+    const expiresAt =
+        new Date(session.expires_at).getTime();
+
+    if (
+        !Number.isFinite(expiresAt) ||
+        Date.now() >= expiresAt
+    ) {
+        return false;
+    }
+
+    return true;
+}
+
+
+
+// ==========================================
+// KREIRANJE AUTH SESIJE
+// ==========================================
+
+async function createAuthSession(wallet) {
+
+    const sessionToken =
+        crypto.randomBytes(32).toString("hex");
+
+    const expiresAt =
+        new Date(Date.now() + 30 * 60 * 1000);
+
+    await pool.query(`
+        INSERT INTO auth_sessions (
+            session_token,
+            wallet_address,
+            created_at,
+            expires_at
+        )
+        VALUES ($1, $2, NOW(), $3)
+    `, [
+        sessionToken,
+        wallet.trim().toLowerCase(),
+        expiresAt
+    ]);
+
+    console.log(
+        `[AUTH SESSION CREATED] ${wallet}`
+    );
+
+    return {
+        sessionToken,
+        expiresAt: expiresAt.getTime()
+    };
+}
+
+
+
 
 // ==========================================
 // GAME ENGINE NA SERVERU
@@ -289,15 +502,167 @@ io.on("connection", (socket) => {
 
     console.log("Klijent povezan:", socket.id);
 
-    socket.on("start-game", (data) => {
-        const wallet = data?.wallet;
-        const signature = data?.signature;
-        
-        if (!wallet) {
-            socket.emit("error", { message: "Wallet required" });
+
+
+
+socket.on("start-game", async (data) => {
+    const wallet = data?.wallet;
+    const signature = data?.signature;
+    const nonceFromClient = data?.nonce;
+    const sessionToken = data?.sessionToken;
+
+
+
+    if (!wallet) {
+        socket.emit("error", { message: "Wallet required" });
+        return;
+    }
+
+
+        // ==========================================
+    // POSTOJEĆA AUTH SESIJA
+    // Ako je korisnik već jednom potpisao MetaMask,
+    // koristi postojeći sessionToken bez novog potpisa.
+    // ==========================================
+
+    if (sessionToken) {
+
+        const normalizedWallet =
+            typeof wallet === "string"
+                ? wallet.trim().toLowerCase()
+                : "";
+
+        if (!/^0x[a-fA-F0-9]{40}$/.test(normalizedWallet)) {
+
+            socket.emit("error", {
+                message: "Invalid wallet address"
+            });
+
             return;
         }
 
+        const sessionValid =
+            await verifyAuthSession(
+                sessionToken,
+                normalizedWallet
+            );
+
+        if (sessionValid) {
+
+            console.log(
+                `[AUTH SESSION REUSED] ${normalizedWallet}`
+            );
+
+            // Ako je neka prethodna igra ostala aktivna
+            if (games.has(socket.id)) {
+
+                clearInterval(
+                    games.get(socket.id).interval
+                );
+
+                games.delete(socket.id);
+            }
+
+            const gameId =
+                generateGameId();
+
+            const state =
+                createGameState(
+                    normalizedWallet,
+                    gameId
+                );
+
+            state.started = true;
+
+            // Nema potrebe za novim MetaMask potpisom
+            state.signature = "session_auth";
+
+            // Sesija je već server-side verifikovana
+            state.authVerified = true;
+
+            const sessions =
+                readFile(SESSION_FILE);
+
+            sessions.push({
+                gameId,
+                wallet: normalizedWallet,
+                signature: "session_auth",
+                startTime: state.startTime,
+                active: true,
+                authVerified: true
+            });
+
+            saveFile(
+                SESSION_FILE,
+                sessions
+            );
+
+            const interval =
+                setInterval(() => {
+
+                    tickGame(state);
+
+                    socket.emit(
+                        "state",
+                        getPublicState(state)
+                    );
+
+                    if (!state.alive) {
+
+                        clearInterval(interval);
+
+                        finishGame(
+                            socket,
+                            state,
+                            state.signature
+                        );
+                    }
+
+                }, TICK_MS);
+
+            state.interval =
+                interval;
+
+            games.set(
+                socket.id,
+                state
+            );
+
+            socket.emit(
+                "game-started",
+                {
+                    gameId,
+                    startTime: state.startTime,
+                    speed: state.speed,
+
+                    // Vrati isti token klijentu
+                    // da ostane sačuvan.
+                    sessionToken
+                }
+            );
+
+            console.log(
+                `[GAME START - EXISTING SESSION] ${normalizedWallet} | ${gameId}`
+            );
+
+            return;
+        }
+
+        // Token postoji, ali nije validan.
+        // Očisti ga na klijentu preko posebne poruke.
+        socket.emit("auth-session-invalid", {
+            message: "Authentication session expired or invalid"
+        });
+
+        return;
+    }
+
+
+    // ==========================================
+    // GUEST MODE
+    // ==========================================
+
+    if (!signature || signature === "guest_mode") {
         if (games.has(socket.id)) {
             clearInterval(games.get(socket.id).interval);
             games.delete(socket.id);
@@ -305,17 +670,21 @@ io.on("connection", (socket) => {
 
         const gameId = generateGameId();
         const state = createGameState(wallet, gameId);
+
         state.started = true;
-        state.signature = signature;
+        state.signature = "guest_mode";
+        state.authVerified = false;
 
         const sessions = readFile(SESSION_FILE);
+
         sessions.push({
             gameId,
             wallet,
-            signature: signature || "no_signature",
+            signature: "guest_mode",
             startTime: state.startTime,
             active: true
         });
+
         saveFile(SESSION_FILE, sessions);
 
         const interval = setInterval(() => {
@@ -337,8 +706,259 @@ io.on("connection", (socket) => {
             speed: state.speed
         });
 
-        console.log(`[GAME START] ${wallet} | ${gameId}`);
-    });
+        console.log(`[GAME START - GUEST] ${wallet} | ${gameId}`);
+        return;
+    }
+
+    // ==========================================
+    // WALLET AUTHENTICATION - NONCE
+    // ==========================================
+
+    if (!nonceFromClient) {
+        socket.emit("error", {
+            message: "Authentication nonce required"
+        });
+        return;
+    }
+
+    const normalizedWallet = wallet.trim().toLowerCase();
+
+    if (!/^0x[a-fA-F0-9]{40}$/.test(normalizedWallet)) {
+        socket.emit("error", {
+            message: "Invalid wallet address"
+        });
+        return;
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const nonceResult = await client.query(`
+            SELECT wallet_address, nonce, expires_at
+            FROM auth_nonces
+            WHERE wallet_address = $1
+            FOR UPDATE
+        `, [normalizedWallet]);
+
+        if (nonceResult.rows.length === 0) {
+            await client.query("ROLLBACK");
+
+            socket.emit("error", {
+                message: "Authentication nonce not found"
+            });
+
+            return;
+        }
+
+        const nonceRecord = nonceResult.rows[0];
+
+        if (nonceRecord.nonce !== nonceFromClient) {
+            await client.query("ROLLBACK");
+
+            socket.emit("error", {
+                message: "Invalid authentication nonce"
+            });
+
+            return;
+        }
+
+        const expiresAt = Number(nonceRecord.expires_at);
+
+        if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) {
+            await client.query("ROLLBACK");
+
+            socket.emit("error", {
+                message: "Authentication nonce expired"
+            });
+
+            return;
+        }
+
+        const authMessage =
+            `Login to Satoshi Plays\n` +
+            `Wallet: ${normalizedWallet}\n` +
+            `Nonce: ${nonceFromClient}`;
+
+        let recoveredAddress;
+
+        try {
+            recoveredAddress = ethers.verifyMessage(
+                authMessage,
+                signature
+            );
+        } catch (err) {
+            await client.query("ROLLBACK");
+
+            console.log(
+                "[SECURITY WARNING] Nevažeći auth potpis:",
+                err.message
+            );
+
+            socket.emit("error", {
+                message: "Invalid wallet signature"
+            });
+
+            return;
+        }
+
+        if (recoveredAddress.toLowerCase() !== normalizedWallet) {
+            await client.query("ROLLBACK");
+
+            console.log(
+                `[SECURITY WARNING] Wallet mismatch | Expected: ${normalizedWallet} | Recovered: ${recoveredAddress}`
+            );
+
+            socket.emit("error", {
+                message: "Signature does not match wallet"
+            });
+
+            return;
+        }
+
+        // ==========================================
+        // NONCE SE TROŠI
+        // ==========================================
+
+        await client.query(`
+            DELETE FROM auth_nonces
+            WHERE wallet_address = $1
+        `, [normalizedWallet]);
+
+        await client.query("COMMIT");
+
+
+
+// ==========================================
+// KREIRANJE AUTH SESSION
+// Potpis je uspešno verifikovan.
+// Od sada wallet koristi session token.
+// ==========================================
+
+const sessionToken =
+    crypto.randomBytes(32).toString("hex");
+
+const sessionTokenHash =
+    crypto
+        .createHash("sha256")
+        .update(sessionToken)
+        .digest("hex");
+
+const sessionExpiresAt =
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+// Očisti eventualne stare sesije ovog walleta
+await pool.query(`
+    UPDATE auth_sessions
+    SET revoked = TRUE
+    WHERE wallet_address = $1
+      AND revoked = FALSE
+`, [normalizedWallet]);
+
+// Sačuvaj novu sesiju
+await pool.query(`
+    INSERT INTO auth_sessions (
+        session_token_hash,
+        wallet_address,
+        created_at,
+        expires_at,
+        revoked
+    )
+    VALUES ($1, $2, NOW(), $3, FALSE)
+`, [
+    sessionTokenHash,
+    normalizedWallet,
+    sessionExpiresAt
+]);
+
+console.log(
+    `[AUTH SESSION CREATED] ${normalizedWallet}`
+);
+
+socket.emit("auth-session-created", {
+    sessionToken,
+    expiresAt: sessionExpiresAt.getTime()
+});
+
+
+
+
+
+
+        // ==========================================
+        // AUTHENTICATED GAME
+        // ==========================================
+
+        if (games.has(socket.id)) {
+            clearInterval(games.get(socket.id).interval);
+            games.delete(socket.id);
+        }
+
+        const gameId = generateGameId();
+        const state = createGameState(wallet, gameId);
+
+        state.started = true;
+        state.signature = signature;
+        state.authVerified = true;
+
+        const sessions = readFile(SESSION_FILE);
+
+        sessions.push({
+            gameId,
+            wallet,
+            signature,
+            startTime: state.startTime,
+            active: true,
+            authVerified: true
+        });
+
+        saveFile(SESSION_FILE, sessions);
+
+        const interval = setInterval(() => {
+            tickGame(state);
+            socket.emit("state", getPublicState(state));
+
+            if (!state.alive) {
+                clearInterval(interval);
+                finishGame(socket, state, state.signature);
+            }
+        }, TICK_MS);
+
+        state.interval = interval;
+        games.set(socket.id, state);
+
+        socket.emit("game-started", {
+    gameId,
+    startTime: state.startTime,
+    speed: state.speed,
+    sessionToken
+});
+
+        console.log(
+            `[GAME START - AUTHENTICATED] ${wallet} | ${gameId}`
+        );
+
+    } catch (err) {
+        try {
+            await client.query("ROLLBACK");
+        } catch {}
+
+        console.error(
+            "Greška pri wallet autentifikaciji:",
+            err
+        );
+
+        socket.emit("error", {
+            message: "Authentication failed"
+        });
+
+    } finally {
+        client.release();
+    }
+});
+
+
 
     socket.on("jump", () => {
         const state = games.get(socket.id);
@@ -468,22 +1088,7 @@ async function finishGame(socket, state, signature) {
         return;
     }
 
-    let verified = true;
-
-    try {
-        const recoveredAddress = ethers.verifyMessage(
-            `Login to Satoshi Plays: ${state.wallet}`,
-            signature
-        );
-
-        if (recoveredAddress.toLowerCase() !== state.wallet.toLowerCase()) {
-            throw new Error("Potpis ne odgovara adresi novčanika!");
-        }
-
-    } catch (err) {
-        verified = false;
-        console.log("[SECURITY WARNING] Nevažeći potpis:", err.message);
-    }
+    const verified = state.authVerified === true;
 
     session.active = false;
     session.score = finalScore;
@@ -530,6 +1135,79 @@ async function finishGame(socket, state, signature) {
 
     games.delete(socket.id);
 }
+
+
+// ==========================================
+// AUTH NONCE API
+// KORAK 4
+// ==========================================
+
+app.get("/api/auth/nonce", async (req, res) => {
+    try {
+        const wallet = req.query.wallet;
+
+        if (!wallet || typeof wallet !== "string") {
+            return res.status(400).json({
+                success: false,
+                error: "Wallet address required"
+            });
+        }
+
+        const normalizedWallet = wallet.trim().toLowerCase();
+
+        // Osnovna validacija Ethereum/BSC wallet adrese
+        if (!/^0x[a-fA-F0-9]{40}$/.test(normalizedWallet)) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid wallet address"
+            });
+        }
+
+        // Generisanje kriptografski sigurnog nonce-a
+        const nonce = crypto.randomBytes(32).toString("hex");
+
+        // Nonce važi 5 minuta
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+        await pool.query(`
+            INSERT INTO auth_nonces (
+                wallet_address,
+                nonce,
+                created_at,
+                expires_at
+            )
+            VALUES ($1, $2, NOW(), $3)
+            ON CONFLICT (wallet_address)
+            DO UPDATE SET
+                nonce = EXCLUDED.nonce,
+                created_at = NOW(),
+                expires_at = EXCLUDED.expires_at
+        `, [
+            normalizedWallet,
+            nonce,
+            expiresAt.getTime()
+        ]);
+
+        res.json({
+            success: true,
+            wallet: normalizedWallet,
+            nonce,
+            expiresAt: expiresAt.getTime()
+        });
+
+    } catch (err) {
+        console.error("Greška pri generisanju auth nonce-a:", err);
+
+        res.status(500).json({
+            success: false,
+            error: "Failed to generate authentication nonce"
+        });
+    }
+});
+
+
+
+
 
 // ==========================================
 // API RUTE ZA SKOROVE (USER_SCORES)
@@ -638,7 +1316,7 @@ app.get("/api/game-stats", async (req, res) => {
 });
 
 // ==========================================
-// LIVE SERVER STATUS
+// LIVE SERVER STATUSnode 
 // ==========================================
 
 app.get("/api/status", (req, res) => {
@@ -661,4 +1339,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
