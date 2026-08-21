@@ -1200,7 +1200,7 @@ app.get("/api/auth/nonce", async (req, res) => {
 
         res.status(500).json({
             success: false,
-            error: "Failed to generate authentication nonce"
+            error: err.message
         });
     }
 });
