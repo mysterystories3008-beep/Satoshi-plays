@@ -20,8 +20,13 @@ const pool = new Pool({
 });
 
 pool.connect()
-    .then(() => console.log("Uspešno povezano na PostgreSQL bazu!"))
-    .catch(err => console.error("Greška pri povezivanju na PostgreSQL:", err));
+    .then(client => {
+        console.log("Uspešno povezano na PostgreSQL bazu!");
+        client.release();
+    })
+    .catch(err => {
+        console.error("Greška pri povezivanju na PostgreSQL:", err);
+    });
 
 // Automatsko kreiranje tabele scores ako ne postoji
 pool.query(`
