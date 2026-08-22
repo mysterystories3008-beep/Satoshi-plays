@@ -1558,7 +1558,11 @@ app.get("/api/status", (req, res) => {
         chainId: 56,
         competition: "Weekly Arena",
         competitionStatus: "LIVE",
-        serverStatus: "ONLINE"
+        serverStatus: "ONLINE",
+
+        DEBUG_CONTAINER: require("os").hostname(),
+        DEBUG_PID: process.pid,
+        DEBUG_STARTED: new Date(process.uptime() * -1000 + Date.now()).toISOString()
     });
 });
 
