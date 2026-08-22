@@ -1219,14 +1219,16 @@ app.get("/api/auth/nonce", async (req, res) => {
             expiresAt: expiresAt
         });
 
-    } catch (err) {
-    console.error("Greska:", err);
-    res.status(500).json({ 
-        success: false, 
-        error: err.message // <--- OVO ĆE OTKRITI SVE
+ } catch (err) {
+    console.error("[NONCE ERROR FULL]", err);
+    console.error("[NONCE ERROR MESSAGE]", err?.message);
+    console.error("[NONCE ERROR STACK]", err?.stack);
+
+    res.status(500).json({
+        success: false,
+        error: err?.message || String(err) || "Unknown error"
     });
 }
-});
 
 
 
@@ -1560,3 +1562,10 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+
+
+
+
+
+
