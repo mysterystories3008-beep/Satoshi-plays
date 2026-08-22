@@ -164,6 +164,8 @@ app.set("trust proxy", true);
 // Dozvoljeni domeni za CORS (lokalno testiranje + tvoj live domen)
 const allowedOrigins = [
     "http://localhost:5173",
+    "http://127.0.0.1:5501",
+
     "http://localhost:3000",
     "https://satoshiplays.com",
     "https://www.satoshiplays.com"
@@ -944,20 +946,16 @@ socket.emit("auth-session-created", {
             await client.query("ROLLBACK");
         } catch {}
 
-        console.error(
-            "Greška pri wallet autentifikaciji:",
-            err
-        );
+        // OVO JE JEDINO BITNO:
+        console.error("EVO TAČNA GREŠKA IZ BAZE:", err.message);
 
         socket.emit("error", {
-            message: "Authentication failed"
+            message: "Authentication failed: " + err.message
         });
-
     } finally {
         client.release();
     }
 });
-
 
 
     socket.on("jump", () => {
@@ -1105,12 +1103,36 @@ async function finishGame(socket, state, signature) {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `;
 
+      const vremePocetka = Number(new Date(session.startTime)) || Date.now();
+        const vremeKraja = Number(new Date(endTime)) || Date.now();
+
         await pool.query(queryText, [
-            session.gameId, session.wallet, session.startTime, endTime, finalScore, endTime, signature, duration, verified, "daily"
+            session.gameId, 
+            session.wallet, 
+            vremePocetka, 
+            vremeKraja, 
+            finalScore, 
+            vremeKraja, 
+            signature, 
+            duration, 
+            verified, 
+            "daily"
         ]);
+        
         await pool.query(queryText, [
-            session.gameId, session.wallet, session.startTime, endTime, finalScore, endTime, signature, duration, verified, "weekly"
+            session.gameId, 
+            session.wallet, 
+            vremePocetka, 
+            vremeKraja, 
+            finalScore, 
+            vremeKraja, 
+            signature, 
+            duration, 
+            verified, 
+            "weekly"
         ]);
+
+
 
         const userScoresQuery = `
             INSERT INTO user_scores (wallet_address, weekly_total, daily_best, updated_at)
@@ -1167,7 +1189,7 @@ app.get("/api/auth/nonce", async (req, res) => {
         const nonce = crypto.randomBytes(32).toString("hex");
 
         // Nonce važi 5 minuta (ovde je već Date objekat)
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+       const expiresAt = Date.now() + 5 * 60 * 1000;
 
         await pool.query(`
             INSERT INTO auth_nonces (
@@ -1185,14 +1207,14 @@ app.get("/api/auth/nonce", async (req, res) => {
         `, [
             normalizedWallet,
             nonce,
-            expiresAt // <--- PROSLEĐUJEŠ DIREKTNO DATE OBJEKAT, A NE .getTime()
+            expiresAt 
         ]);
 
         res.json({
             success: true,
             wallet: normalizedWallet,
             nonce,
-            expiresAt: expiresAt.getTime() // Ovde na frontend slobodno pošalji broj ako im treba
+            expiresAt: expiresAt
         });
 
     } catch (err) {
@@ -1536,3 +1558,10 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
+
+
+
+
+
+
