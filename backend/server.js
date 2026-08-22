@@ -1227,6 +1227,7 @@ await pool.query(`
         });
 
  } catch (err) {
+            console.error("[NONCE ERROR JSON]", JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
     console.error("[NONCE ERROR FULL]", err);
     console.error("[NONCE ERROR MESSAGE]", err?.message);
     console.error("[NONCE ERROR STACK]", err?.stack);
@@ -1569,4 +1570,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
