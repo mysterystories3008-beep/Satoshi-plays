@@ -1188,12 +1188,17 @@ app.get("/api/auth/nonce", async (req, res) => {
         }
 
         // Generisanje kriptografski sigurnog nonce-a
-        const nonce = crypto.randomBytes(32).toString("hex");
+        console.log("[NONCE DEBUG 1] Wallet validated");
 
-        // Nonce važi 5 minuta (ovde je već Date objekat)
-       const expiresAt = Date.now() + 5 * 60 * 1000;
+const nonce = crypto.randomBytes(32).toString("hex");
 
-        await pool.query(`
+console.log("[NONCE DEBUG 2] Nonce generated");
+
+const expiresAt = Date.now() + 5 * 60 * 1000;
+
+console.log("[NONCE DEBUG 3] About to execute PostgreSQL query");
+
+await pool.query(`
             INSERT INTO auth_nonces (
                 wallet_address,
                 nonce,
@@ -1211,6 +1216,8 @@ app.get("/api/auth/nonce", async (req, res) => {
             nonce,
             expiresAt 
         ]);
+
+                console.log("[NONCE DEBUG 4] PostgreSQL query completed");
 
         res.json({
             success: true,
