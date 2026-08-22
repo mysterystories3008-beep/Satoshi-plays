@@ -1166,6 +1166,8 @@ async function finishGame(socket, state, signature) {
 
 app.get("/api/auth/nonce", async (req, res) => {
     try {
+
+        console.log("[NONCE TEST] Request received:", req.query.wallet);
         const wallet = req.query.wallet;
 
         if (!wallet || typeof wallet !== "string") {
@@ -1558,10 +1560,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
-
-
-
-
-
-
-
